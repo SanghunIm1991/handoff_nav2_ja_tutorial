@@ -7,28 +7,28 @@
 <meta name="description" content="Windows 11 の WSL2 に Ubuntu 24.04 を入れ、ROS 2 Jazzy と開発の道具、Gazebo Harmonic を入れて動作を確かめる。ROS 2・Gazebo・WSL の公式の手順を日本語でまとめ直した非公式の教材。">
 <style>
 /* 構成: 1 段組み・左揃え。本文は約 42 字の幅、コマンド・出力・図は最大 960px まで広げる（Quickstart の章と同じ器）。
-   テーマ (A) 地図の方眼と経路: ページの頭は濃い緑の帯に方眼と点線の経路の線画（Nav2 の地図と経路から取った意匠）。
-   差し色 --accent（深い緑）: 節の見出しの左の線・注記の箱の縁・「期待する結果」の見出しだけに使う。
+   テーマ (B) 設計図: ページの頭は青地に白い方眼の帯（細い線 20px ごと、太い線 100px ごと）。色の値の正本は 01_quickstart.html の CSS。
+   差し色 --accent（橙）: 節の見出しの左の線・注記の箱の縁・「期待する結果」の見出しだけに使う。
    意味の色: このページでは使わない（Quickstart の章の青緑・赤紫は、ロボット・目標のためにとっておく）。
-   リンクは --accent-text（青）。--focus（琥珀）と帯の上の --band-focus は、リンク・差し色と別の値にし、隣の色と 3:1 以上にする。 */
+   リンクは --accent-text（青）。--focus は橙の差し色と近くならないよう、文字の色と同じ濃い色（暗い画面では明るい色）にする。 */
 :root{
-  --bg:#EEF3EF; --surface:#FFFFFF; --ink:#17231E; --sub:#4A5A52; --line:#C4D1C9;
-  --accent:#2E6B4F; --accent-soft:#E0ECE4;
-  --band-bg:#1F4D3A; --band-ink:#F1F7F3; --band-sub:#C5DDD0; --band-grid:#2B5E48; --band-path:#9FD3B5; --band-focus:#FFD27A;
+  --bg:#F1F5FA; --surface:#FFFFFF; --ink:#14213A; --sub:#47546E; --line:#C8D3E3;
+  --accent:#C2410C; --accent-soft:#E6EEF8;
+  --band-bg:#1E4B8F; --band-ink:#F2F6FC; --band-sub:#C9D8F0; --band-grid:#3563A6; --band-grid2:#3D6AAD; --band-focus:#FFFFFF;
   --accent-text:#1D5FA8;
-  --focus:#B45309;
-  --code-bg:#1E2925; --code-ink:#E6EEEA; --out-bg:#E7EEE9;
+  --focus:#14213A;
+  --code-bg:#17223A; --code-ink:#E6ECF6; --out-bg:#E9EEF6;
   --body:'Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic UI','Yu Gothic','Meiryo','Noto Sans CJK JP','Noto Sans JP',sans-serif;
   --mono:ui-monospace,'SFMono-Regular',Consolas,'Noto Sans Mono','DejaVu Sans Mono',monospace;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){:root{
-  --bg:#101815; --surface:#18221E; --ink:#E2EBE6; --sub:#A0B1A8; --line:#2C3A34;
-  --accent:#6FC79B; --accent-soft:#1A2B23;
-  --band-bg:#0B2A1F; --band-ink:#E2F1E8; --band-sub:#A9C9B8; --band-grid:#14382A; --band-path:#5FB98A; --band-focus:#FFD27A;
+  --bg:#0E1626; --surface:#16213A; --ink:#E6ECF6; --sub:#A7B3CA; --line:#2B3A57;
+  --accent:#FB923C; --accent-soft:#16233D;
+  --band-bg:#1E4B8F; --band-ink:#E6EEFA; --band-sub:#C3D3EE; --band-grid:#3563A6; --band-grid2:#3D6AAD; --band-focus:#FFFFFF;
   --accent-text:#7FB4F0;
-  --focus:#F5B041;
-  --code-bg:#0A0F0D; --code-ink:#DDE6E1; --out-bg:#16201C;
+  --focus:#E6ECF6;
+  --code-bg:#0A1222; --code-ink:#DDE6F2; --out-bg:#142039;
   color-scheme:dark }}
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -42,14 +42,12 @@ code{font-family:var(--mono);font-size:.92em}
 .prose{max-width:42rem;display:flex;flex-direction:column;gap:14px}
 .prose ul,.prose ol{padding-left:1.4em;display:flex;flex-direction:column;gap:4px}
 
-header{background-color:var(--band-bg);color:var(--band-ink);background-image:linear-gradient(var(--band-grid) 1px,transparent 1px),linear-gradient(90deg,var(--band-grid) 1px,transparent 1px);background-size:24px 24px}
+header{background-color:var(--band-bg);color:var(--band-ink);background-image:linear-gradient(var(--band-grid2) 1px,transparent 1px),linear-gradient(90deg,var(--band-grid2) 1px,transparent 1px),linear-gradient(var(--band-grid) 1px,transparent 1px),linear-gradient(90deg,var(--band-grid) 1px,transparent 1px);background-size:100px 100px,100px 100px,20px 20px,20px 20px}
 header a{color:var(--band-ink)}
 header a:focus-visible{outline-color:var(--band-focus)}
 .site{padding-block:20px 0;font-size:14px;color:var(--band-sub)}
-.hero{padding-block:16px 32px;display:flex;align-items:center;justify-content:space-between;gap:24px}
-.hero h1{font-size:clamp(26px,4.2vw,38px);letter-spacing:.01em;min-width:0}
-.band-art{flex:0 0 auto;width:220px;height:auto}
-@media (max-width:720px){ .band-art{display:none} }
+.hero{padding-block:16px 32px;display:flex;flex-direction:column;gap:16px}
+.hero h1{font-size:clamp(26px,4.2vw,38px);letter-spacing:.01em}
 
 .notes{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:0 6px 6px 0;padding:12px 16px;font-size:14px;color:var(--sub);display:flex;flex-direction:column;gap:6px;max-width:42rem}
 .notes ul{padding-left:1.2em;display:flex;flex-direction:column;gap:2px}
@@ -90,11 +88,6 @@ footer a{color:var(--sub)}
   <p class="site"><a href="index.html">Nav2 日本語ガイド</a>（非公式・作成中）</p>
   <div class="hero">
     <h1>環境構築：WSL2・ROS 2 Jazzy・Gazebo を入れる</h1>
-    <svg class="band-art" viewBox="0 0 220 110" aria-hidden="true">
-      <path d="M16 92 C 60 92 70 60 110 56 S 160 20 200 18" fill="none" stroke="var(--band-path)" stroke-width="3" stroke-dasharray="7 6"/>
-      <circle cx="16" cy="92" r="7" fill="var(--band-path)"/>
-      <circle cx="200" cy="18" r="7" fill="none" stroke="var(--band-path)" stroke-width="3"/>
-    </svg>
   </div>
 </div></header>
 
