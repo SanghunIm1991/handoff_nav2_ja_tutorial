@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# コミットの直前に、ステージした内容の壊れ方を機械で止め、手で動かしてきた点検の結果を知らせる。
+# 有効にする: git config core.hooksPath tools/git-hooks（PC ごとに 1 回）
+# 止めるもの: 空になったファイル、10 行以上から半分未満に減ったファイル、<!doctype や </html> が 2 つ以上ある HTML、列の数がそろわない Markdown の表。
+# 意図して大きく減らすときだけ ALLOW_SHRINK=1 を付けてコミットする（減り方の検査だけを通す。付ける前にユーザーに確かめる）。
+# 知らせるもの（止めない）: pages-html-page の点検、assets/site.css のクラスの使用、カタカナの用語の残り。
+set -u
+root=$(git rev-parse --show-toplevel) || exit 1
+cd "$root" || exit 1
+fail=0
+block(){ echo "[pre-commit] 止めた: $*" >&2; fail=1; }
+note(){ echo "[pre-commit] 知らせ: $*" >&2; }
+
+# 追加・変更したファイル（削除は除く）
+mapfile -t files < <(git diff --cached --name-only --diff-filter=AM)
+
+for f in "${files[@]}"; do
+  # バイナリは見ない
+  if git diff --cached --numstat -- "$f" | grep -q '^-'; then continue; fi
+  new=$(git show ":$f" | wc -l)
+  if [ "$(git show ":$f" | wc -c)" -eq 0 ]; then block "$f が空になる"; continue; fi
+  if git cat-file -e "HEAD:$f" 2>/dev/null; then
+    old=$(git show "HEAD:$f" | wc -l)
+    if [ "${ALLOW_SHRINK:-0}" != 1 ] && [ "$old" -ge 10 ] && [ $((new * 2)) -lt "$old" ]; then
+      block "$f が $old 行から $new 行に減る（意図したときだけ ALLOW_SHRINK=1）"
+    fi
+  fi
+  case "$f" in
+    *.html)
+      d=$(git show ":$f" | grep -ci '<!doctype')
+      e=$(git show ":$f" | grep -ci '</html>')
+      [ "$d" -gt 1 ] && block "$f に <!doctype が $d 個ある"
+      [ "$e" -gt 1 ] && block "$f に </html> が $e 個ある"
+      ;;
+    *.md)
+      bad=$(git show ":$f" | awk 'NR==1{n=0} /^\|/{l=$0; gsub(/\\\|/,"",l); c=gsub(/\|/,"",l); if(!n){n=c} else if(c!=n){print NR": 列の区切りが "c" 個（表の先頭は "n" 個）"}; next} {n=0}')
+      [ -n "$bad" ] && block "$f の表の列がそろっていない: $(echo "$bad" | head -3 | tr '\n' ' ')"
+      ;;
+  esac
+done
+
+# 止めない点検（作業ツリーの内容で見る）
+sc="$HOME/.claude/skills/pages-html-page/references/static-checks.sh"
+for f in "${files[@]}"; do
+  case "$f" in
+    *.html)
+      [ "${f#_layouts/}" != "$f" ] && continue
+      if [ -f "$sc" ]; then
+        out=$(bash "$sc" "$f" 2>&1 | grep -E '^\[' | grep -vE '^\[相対リンクの先が無い\]')
+        [ -n "$out" ] && note "$f の点検:"$'\n'"$out"
+      else
+        note "点検のスクリプトが無い（$sc）ので、HTML の点検をしなかった"
+      fi
+      ;;
+  esac
+done
+if [ -f assets/site.css ]; then
+  unused=""
+  for c in $(perl -0777 -pe 's{/\*.*?\*/}{}gs; s/\{[^}]*\}/ /g' assets/site.css | grep -oE '\.[A-Za-z][A-Za-z0-9_-]*' | sed 's/^\.//' | sort -u); do
+    grep -qE "class=\"([^\"]* )?$c( [^\"]*)?\"" ./*.html _layouts/*.html 2>/dev/null || unused="$unused .$c"
+  done
+  [ -n "$unused" ] && note "assets/site.css のクラスで、どのページにも出てこないもの:$unused"
+fi
+kata=$(for f in "${files[@]}"; do case "$f" in docs/qa_log.md) ;; *.html|*.md) grep -nHE 'ノード|トピック|オドメトリ|コンテナ|launch ファイル' "$f" 2>/dev/null;; esac; done)
+[ -n "$kata" ] && note "カタカナの用語が残っている（英語にする決まり）:"$'\n'"$kata"
+
+[ "$fail" -eq 1 ] && { echo "[pre-commit] コミットを止めた。直してから、もう一度コミットする" >&2; exit 1; }
+exit 0

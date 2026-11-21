@@ -5,3 +5,4 @@ exclude:
   - CLAUDE.md
   - docs/
   - notes/
+  - tools/

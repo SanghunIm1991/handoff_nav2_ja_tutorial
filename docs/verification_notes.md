@@ -8,6 +8,7 @@
 - 原稿をまとめて調べるときは、作業用の一時フォルダの空のフォルダに `git clone --depth 1 --branch jazzy --filter=blob:limit=100k <URL>` で取得する。画像を除いて全文を検索でき、基にしたコミットも `git log -1` で分かる。
 - 読むファイルが少ないときや、`jazzy` のブランチが無いリポジトリ（`gazebosim/docs`・`MicrosoftDocs/WSL` など）は、`--branch` を付けずに `git clone --depth 1 --filter=blob:limit=100k --no-checkout <URL>` で取得し、`git ls-tree -r --name-only HEAD` で探して、`git show HEAD:<パス> > <一時フォルダ>/<名前>` で必要なファイルだけを書き出す（2026-11-21 の環境構築では、書き出したファイルに `wsl_install.md` などの短い名前を付けた）。
 - 要件や対応版は、検索の要約ではなく安定版の公式のページで確かめる。
+- ページの元にした公式の文書とソースは、ページの出典と同じ版の写しを `notes/sources/<ページ>/` に残し、出どころを `notes/sources/README.md` に書く（作業用の一時フォルダはセッションが変わると消え、後のレビューで照合できなくなるため）。レビューを頼むときは、この写しを照合に使わせる。
 
 ## パッケージの版
 
