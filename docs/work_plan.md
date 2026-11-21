@@ -19,7 +19,7 @@
 | 順 | ページ | ファイル | 元にする公式のページ | 主に当たる到達点 | 状態 |
 | --- | --- | --- | --- | --- | --- |
 | 0 | 環境構築（WSL2 → Ubuntu 24.04 → ROS 2 Jazzy） | `00_setup.html` | なし（ROS 2 の公式の導入手順と WSL の公式の文書を基にする） | 1 | 未着手 |
-| 1 | Quickstart | `01_quickstart.html` | Getting Started / Quickstart | 1 | 構成案 |
+| 1 | Quickstart | `01_quickstart.html` | Getting Started / Quickstart | 1 | 初稿（画面なしの確認の前） |
 | 2 | Local Installation | `02_local_installation.html` | Getting Started / Build and Install / Local Installation | 1 | 未着手 |
 | 3 | Navigation Concepts | `03_navigation_concepts.html` | Getting Started / Navigation Concepts（下位 6 ページ。分けるかは構成案のときに決める） | 2 | 未着手 |
 
@@ -61,6 +61,7 @@ RViz の操作（4 節・5 節）は、ユーザーが撮影した写真を後�
 確かめたら、`[ ]` を `[x]` にする。気づいたことがあれば、項目の下に一言書く。Claude は次の作業のときに `[x]` の項目を見つけ、書かれたことをページに反映してから、項目を消す。
 
 - [ ] 環境: Quickstart の起動（`ros2 launch nav2_bringup tb3_simulation_launch.py headless:=False`）で Gazebo と RViz2 の画面が出て、RViz2 で初期位置と目標を指定するとロボットが目標へ動く（Quickstart のページを書く前の環境の確認）
+- [ ] Quickstart の 3〜5 節: 画面の表示と操作が本文と合っているか。とくに、RViz のツールバーのボタン名（「2D Pose Estimate」「Nav2 Goal」）、左下の Nav2 の欄（Startup と取り消しのボタン）、起動直後の地図の見え方、初期位置を与えた後の particle cloud と costmap。あわせて、4 節・5 節に差し込む画面の写真を撮る（写り込みに注意）
 
 ## 公開前の点検で扱う点
 

@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quickstart：シミュレーションのロボットを Nav2 で動かす</title>
+<meta name="description" content="Nav2 と TurtleBot 3 のシミュレーションを入れ、1 つのコマンドで起動し、RViz で初期位置と目標を与えてロボットを動かす。Nav2 の公式の Quickstart（Jazzy）を日本語で再構成した非公式の教材。">
+<style>
+/* 構成: 1 段組み・左揃え。本文は約 42 字の幅、コマンド・出力・図は最大 960px まで広げる。
+   地の色: 方眼紙のような淡い灰緑（Nav2 の地図は格子のマスでできているため）。
+   意味の色: --robot（青緑）＝ロボットと初期位置、--goal（赤紫）＝目標と経路。図と凡例だけに使い、見出しや飾りに使わない。
+   予約の色: なし。リンクは --accent-text（青）。
+   --focus（琥珀）は意味の色・リンクの色と別の値にし、両方の画面で隣の色と 3:1 以上にする。 */
+:root{
+  --bg:#F4F6F3; --surface:#FFFFFF; --ink:#18211E; --sub:#4D5B55; --line:#C9D2CD; --grid:#E1E7E3; --wall:#2E3A35;
+  --robot:#0E7490; --goal:#A3367A;
+  --accent-text:#1D5FA8;
+  --focus:#B45309;
+  --code-bg:#1E2925; --code-ink:#E6EEEA; --out-bg:#EAEFEC;
+  --body:'Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic UI','Yu Gothic','Meiryo','Noto Sans CJK JP','Noto Sans JP',sans-serif;
+  --mono:ui-monospace,'SFMono-Regular',Consolas,'Noto Sans Mono','DejaVu Sans Mono',monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#121816; --surface:#1A2220; --ink:#E3EAE6; --sub:#A3B1AA; --line:#2F3B37; --grid:#222C29; --wall:#C9D4CF;
+  --robot:#38BDD8; --goal:#E07AB8;
+  --accent-text:#7FB4F0;
+  --focus:#F5B041;
+  --code-bg:#0B100E; --code-ink:#DDE6E1; --out-bg:#18201D;
+  color-scheme:dark }}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.85}
+.wrap{max-width:960px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+a{color:var(--accent-text)}
+a:focus-visible,summary:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+h1,h2,h3{margin:0;line-height:1.35;text-wrap:balance;word-break:auto-phrase}
+p,ul,ol{margin:0}
+code{font-family:var(--mono);font-size:.92em}
+.prose{max-width:42rem;display:flex;flex-direction:column;gap:14px}
+.prose ul,.prose ol{padding-left:1.4em;display:flex;flex-direction:column;gap:4px}
+
+.site{padding-block:20px 0;font-size:14px;color:var(--sub)}
+.site a{color:var(--sub)}
+.hero{padding-block:16px 8px;display:flex;flex-direction:column;gap:16px}
+.hero h1{font-size:clamp(26px,4.2vw,38px);letter-spacing:.01em}
+.hero-map{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px}
+.hero-map svg{display:block;width:100%;height:auto}
+.key{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:14px;color:var(--sub)}
+.key span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.key .k-robot::before{background:var(--robot)}
+.key .k-goal::before{background:var(--goal)}
+
+.notes{border-left:4px solid var(--line);padding:4px 0 4px 16px;font-size:14px;color:var(--sub);display:flex;flex-direction:column;gap:6px;max-width:42rem}
+.notes ul{padding-left:1.2em;display:flex;flex-direction:column;gap:2px}
+
+main .wrap{padding-block:32px 24px;display:flex;flex-direction:column;gap:56px}
+section{display:flex;flex-direction:column;gap:16px}
+section h2{font-size:24px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+section h3{font-size:18px;margin-top:8px}
+.term{font-weight:700}
+
+pre{margin:0;overflow-x:auto;border-radius:6px;padding:14px 16px;font-family:var(--mono);font-size:14px;line-height:1.6}
+pre.cmd{background:var(--code-bg);color:var(--code-ink)}
+.expect{display:flex;flex-direction:column;gap:10px;max-width:960px}
+.expect h4{margin:0;font-size:15px}
+pre.out{background:var(--out-bg);color:var(--ink);border:1px solid var(--line)}
+
+figure{margin:0;display:flex;flex-direction:column;gap:8px}
+figcaption{font-size:14px;color:var(--sub);max-width:42rem}
+.diagram{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px}
+.diagram svg{display:block;min-width:640px;width:100%;height:auto}
+.d-box{fill:var(--surface);stroke:var(--ink);stroke-width:1.5}
+.d-name{fill:var(--ink);font-size:15px;font-weight:700;font-family:var(--body)}
+.d-sub{fill:var(--sub);font-size:13px;font-family:var(--body)}
+.d-lab{fill:var(--ink);font-size:13px;font-family:var(--mono)}
+.d-labj{fill:var(--ink);font-size:13px;font-family:var(--body)}
+.d-line{stroke:var(--sub);stroke-width:1.5;fill:none}
+.d-btn{fill:var(--out-bg);stroke:var(--line)}
+
+table{border-collapse:collapse;font-size:15px;width:100%;max-width:960px}
+th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{font-weight:700;color:var(--sub);font-size:14px}
+.table-wrap{overflow-x:auto}
+
+footer .wrap{padding-block:20px 40px;font-size:13px;color:var(--sub);border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+footer a{color:var(--sub)}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <p class="site"><a href="index.html">Nav2 日本語ガイド</a>（非公式・作成中）</p>
+  <div class="hero">
+    <h1>Quickstart：シミュレーションのロボットを Nav2 で動かす</h1>
+    <div class="hero-map">
+      <svg viewBox="0 0 640 280" role="img" aria-label="格子の地図の模式図。左下のロボットに初期位置を与え、右上の目標を与えると、ロボットが仕切りを避ける経路に沿って目標まで進む。">
+        <defs>
+          <pattern id="hero-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M20 0 L0 0 0 20" fill="none" stroke="var(--grid)" stroke-width="1"/>
+          </pattern>
+          <marker id="hero-ah-r" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="var(--robot)"/></marker>
+          <marker id="hero-ah-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="var(--goal)"/></marker>
+        </defs>
+        <rect x="20" y="20" width="600" height="240" fill="url(#hero-grid)"/>
+        <rect x="20" y="20" width="600" height="240" fill="none" stroke="var(--wall)" stroke-width="6"/>
+        <rect x="200" y="20" width="24" height="120" fill="var(--wall)"/>
+        <rect x="400" y="140" width="24" height="120" fill="var(--wall)"/>
+        <path id="hero-path" d="M90 210 C 180 210 260 200 300 160 S 330 90 400 90 S 500 80 540 70" fill="none" stroke="var(--goal)" stroke-width="3" stroke-dasharray="8 6"/>
+        <line x1="90" y1="210" x2="150" y2="210" stroke="var(--robot)" stroke-width="3" marker-end="url(#hero-ah-r)"/>
+        <circle cx="540" cy="70" r="9" fill="none" stroke="var(--goal)" stroke-width="3"/>
+        <line x1="540" y1="70" x2="596" y2="70" stroke="var(--goal)" stroke-width="3" marker-end="url(#hero-ah-g)"/>
+        <g>
+          <circle r="14" fill="var(--robot)"/>
+          <line x1="0" y1="0" x2="14" y2="0" stroke="var(--surface)" stroke-width="3"/>
+          <animateMotion dur="7s" begin="0s" fill="freeze" rotate="auto"><mpath href="#hero-path"/></animateMotion>
+        </g>
+      </svg>
+    </div>
+    <p class="key"><span class="k-robot">ロボットと、与える初期位置（4 節）</span><span class="k-goal">与える目標と、Nav2 が引く経路（5 節）</span></p>
+  </div>
+</div></header>
+
+<main><div class="wrap">
+
+  <div class="prose">
+    <p>Nav2 を自分たちの製品に組み込もうと考えたとき、最初に知りたいのは「Nav2 を入れると、何が、どう動くのか」だろう。仕組みの説明を読む前に、まず動くものを見ておくと、後の章の話がどこにつながるのかが分かりやすくなる。</p>
+    <p>このページでは、シミュレーターの中の小さなロボット（TurtleBot 3）を、Nav2 で目的地まで走らせる。コマンドを 1 つ打つと、シミュレーター・Nav2・地図を見る画面がまとめて立ち上がる。あとは画面の上で「ロボットは今ここにいる」「ここへ行ってほしい」と 2 回指示するだけで、ロボットは自分で経路を考え、壁を避けて進んでいく。</p>
+  </div>
+
+  <aside class="notes" aria-label="このページについての注記">
+    <p>このページについて</p>
+    <ul>
+      <li>Nav2 の公式の文書の <a href="https://docs.nav2.org/jazzy/getting_started/quickstart/quickstart/">Quickstart</a>（<code>jazzy</code> 版の原稿、コミット <code>b22554c</code>）を基に、日本語で説明し直したもの。逐語の翻訳ではない。出典とライセンスはページの末尾にある。</li>
+      <li>ROS 2 Jazzy と Ubuntu 24.04（Windows の WSL2 を含む）を前提にする。ROS 2 の導入は、環境構築のページで済ませておく。</li>
+      <li>期待する結果の出どころ: 2 節の版の表示は、作成時の環境で実際に確かめた。3 節〜6 節の表示は、Nav2 のソース（<code>navigation2</code> 1.3.14、<code>nav2_minimal_turtlebot_simulation</code> 1.0.1）から想定したもので、まだ実際の表示と照らし合わせていない。</li>
+    </ul>
+  </aside>
+
+  <section aria-labelledby="s0">
+    <h2 id="s0">0. 学習目標と完了条件</h2>
+    <div class="prose">
+      <p>このページを終えると、次のことができる。</p>
+      <ol>
+        <li>Nav2 と、シミュレーションの TurtleBot 3 のパッケージを入れられる。</li>
+        <li>1 つのコマンドで、シミュレーター・Nav2・RViz をまとめて起動できる。</li>
+        <li>RViz で初期位置と目標を与え、ロボットを目標まで動かせる。</li>
+        <li>起動したノードとトピックを、<code>ros2</code> コマンドで確かめられる。</li>
+      </ol>
+      <p>完了条件は、RViz で指定した目標まで、ロボットが自分で走って止まること。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s1">
+    <h2 id="s1">1. 全体像</h2>
+    <div class="prose">
+      <p>このページで起動するものは、大きく 4 つの役に分かれる。ROS 2 では、1 つの役目を持つプログラムの単位を<span class="term">ノード</span>（node）と呼び、ノードどうしは、決まった型のデータを流す名前つきの通り道である<span class="term">トピック</span>（topic）でつながる。下の図の矢印に付けた名前（<code>scan</code> など）が、トピックの名前である。</p>
+    </div>
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 960 310" role="img" aria-label="全体像の図。Gazebo から ros_gz_bridge を通って Nav2 へ scan・odom・tf が流れ、Nav2 から ros_gz_bridge を通って Gazebo へ cmd_vel が流れる。Nav2 から RViz へ地図・経路が流れ、RViz から Nav2 へ初期位置・目標が流れる。">
+          <defs>
+            <marker id="ov-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--sub)"/></marker>
+          </defs>
+          <rect class="d-box" x="20" y="40" width="200" height="64" rx="4"/>
+          <text class="d-name" x="120" y="66" text-anchor="middle">Gazebo</text>
+          <text class="d-sub" x="120" y="90" text-anchor="middle">ロボットと世界を模擬</text>
+
+          <rect class="d-box" x="380" y="40" width="200" height="64" rx="4"/>
+          <text class="d-name" x="480" y="66" text-anchor="middle">ros_gz_bridge</text>
+          <text class="d-sub" x="480" y="90" text-anchor="middle">Gazebo と ROS 2 の橋渡し</text>
+
+          <rect class="d-box" x="740" y="40" width="200" height="64" rx="4"/>
+          <text class="d-name" x="840" y="66" text-anchor="middle">Nav2</text>
+          <text class="d-sub" x="840" y="90" text-anchor="middle">位置の推定と移動</text>
+
+          <rect class="d-box" x="740" y="230" width="200" height="64" rx="4"/>
+          <text class="d-name" x="840" y="256" text-anchor="middle">RViz</text>
+          <text class="d-sub" x="840" y="280" text-anchor="middle">見る・指示する</text>
+
+          <line class="d-line" x1="220" y1="62" x2="378" y2="62" marker-end="url(#ov-ah)"/>
+          <text class="d-lab" x="300" y="54" text-anchor="middle">scan・odom・tf</text>
+          <line class="d-line" x1="380" y1="86" x2="222" y2="86" marker-end="url(#ov-ah)"/>
+          <text class="d-lab" x="300" y="104" text-anchor="middle">cmd_vel</text>
+
+          <line class="d-line" x1="580" y1="62" x2="738" y2="62" marker-end="url(#ov-ah)"/>
+          <text class="d-lab" x="660" y="54" text-anchor="middle">scan・odom・tf</text>
+          <line class="d-line" x1="740" y1="86" x2="582" y2="86" marker-end="url(#ov-ah)"/>
+          <text class="d-lab" x="660" y="104" text-anchor="middle">cmd_vel</text>
+
+          <line class="d-line" x1="770" y1="104" x2="770" y2="228" marker-end="url(#ov-ah)"/>
+          <text class="d-labj" x="762" y="172" text-anchor="end">地図・経路</text>
+          <line class="d-line" x1="900" y1="230" x2="900" y2="106" marker-end="url(#ov-ah)"/>
+          <text class="d-labj" x="892" y="172" text-anchor="end">初期位置・目標</text>
+        </svg>
+      </div>
+      <figcaption>図 1　このページで起動するものと、その間を流れる主なデータ。横に長い図は、狭い画面では横にスクロールして見る。</figcaption>
+    </figure>
+    <div class="prose">
+      <ul>
+        <li><span class="term">Gazebo</span>: ロボットと、ロボットが走る世界（壁や柱）を計算で再現するシミュレーター。レーザーの距離センサーの値や、車輪の回転から求めた移動量を作り出し、速度の指令を受けると車輪を回す。</li>
+        <li><span class="term">ros_gz_bridge</span>: Gazebo と ROS 2 は別の仕組みで通信しているので、その間でデータを受け渡すノード。Gazebo の値を ROS 2 のトピックとして出し、ROS 2 の速度の指令を Gazebo に渡す。</li>
+        <li><span class="term">Nav2</span>: ロボットの位置を推定し、目標までの経路を考え、その経路に沿って走るための速度の指令を出す。実体は 14 個のノードの集まりである（6 節で確かめる）。</li>
+        <li><span class="term">RViz</span>: ROS 2 のデータを画面に描く道具。地図・ロボットの位置・経路を表示し、このページでは初期位置と目標を Nav2 に伝える入り口にもなる。</li>
+      </ul>
+      <p>矢印のトピックは、それぞれ次のデータを運ぶ。<code>scan</code> はレーザーで測った周囲の距離（型は <a href="https://github.com/ros2/common_interfaces/blob/jazzy/sensor_msgs/msg/LaserScan.msg"><code>sensor_msgs/msg/LaserScan</code></a>）、<code>odom</code> は車輪の回転から求めた移動量（オドメトリ。型は <a href="https://github.com/ros2/common_interfaces/blob/jazzy/nav_msgs/msg/Odometry.msg"><code>nav_msgs/msg/Odometry</code></a>）、<code>tf</code> は座標系どうしの位置関係、<code>cmd_vel</code> は Nav2 がロボットに出す速度の指令（型は <a href="https://github.com/ros2/common_interfaces/blob/jazzy/geometry_msgs/msg/Twist.msg"><code>geometry_msgs/msg/Twist</code></a>）。図では省いたが、シミュレーターの時計を配る <code>/clock</code> も Gazebo から流れている。ロボットの各部品の位置関係を <code>tf</code> として配る <code>robot_state_publisher</code> というノードも、一緒に起動する。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s2">
+    <h2 id="s2">2. Nav2 を入れる</h2>
+    <div class="prose">
+      <p>Nav2 本体（<code>ros-jazzy-navigation2</code>）、起動のための設定と launch ファイルをまとめたパッケージ（<code>ros-jazzy-nav2-bringup</code>）、シミュレーションの TurtleBot 3（<code>ros-jazzy-nav2-minimal-tb3-sim</code> など）を、apt で入れる。</p>
+      <p>入れる前に <code>sudo apt upgrade</code> で、すでに入っている ROS 2 のパッケージを新しい版にそろえておく。Nav2 の一部を前に入れたまま更新せずに残りを足すと、新しい版の起動の設定を古い版の本体で読むことになり、食い違いで起動に失敗することがある。</p>
+    </div>
+<pre class="cmd"><code>sudo apt update
+
+sudo apt upgrade
+
+sudo apt install ros-jazzy-navigation2 ros-jazzy-nav2-bringup 'ros-jazzy-nav2-minimal-tb*'</code></pre>
+    <div class="prose">
+      <p>最後の行の <code>'ros-jazzy-nav2-minimal-tb*'</code> は、名前が <code>ros-jazzy-nav2-minimal-tb</code> で始まるパッケージをまとめて指定する書き方で、TurtleBot 3 と TurtleBot 4 のシミュレーションの部品が入る。引用符で囲むのは、<code>*</code> を bash に解釈させず、そのまま apt に渡すため。地図を作る <code>slam_toolbox</code> も、依存するパッケージとして一緒に入る。</p>
+      <p>入ったら、Nav2 のパッケージの版がそろっているかを確かめる。</p>
+    </div>
+<pre class="cmd"><code>dpkg-query -W -f='${Version}\n' 'ros-jazzy-nav2-*' ros-jazzy-navigation2 | cut -d- -f1 | sort | uniq -c</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>      3 1.0.1
+     32 1.3.14</code></pre>
+      <div class="prose">
+        <p>左の数が、その版のパッケージの数である。<code>1.0.1</code> の 3 個はシミュレーションのロボットの部品で、Nav2 本体とは別に版を数えているので、これで正しい。それ以外の Nav2 のパッケージが 1 つの版（ここでは <code>1.3.14</code>）にそろっていればよい。版の番号そのものは、更新されると変わる。2 つ以上の版が並んだら、<code>sudo apt upgrade</code> をやり直す。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s3">
+    <h2 id="s3">3. 起動する</h2>
+    <div class="prose">
+      <p>ターミナルを開き、次の 2 行を実行する。</p>
+    </div>
+<pre class="cmd"><code># T1
+source /opt/ros/jazzy/setup.bash
+
+ros2 launch nav2_bringup tb3_simulation_launch.py headless:=False</code></pre>
+    <div class="prose">
+      <p>1 行めの <code>source</code> は、ROS 2 のコマンドとパッケージの場所を、今のターミナルに教える。ターミナルを新しく開くたびに必要になる。</p>
+      <p>2 行めの <code>ros2 launch</code> は、<span class="term">launch ファイル</span>に書かれた複数のノードを、設定と一緒にまとめて起動するコマンドである。launch ファイルは、どのノードを、どの設定で起動するかを書いた Python のファイルで、ここでは <code>nav2_bringup</code> パッケージの <code>tb3_simulation_launch.py</code> を使う。</p>
+      <p>最後の <code>headless:=False</code> は、launch ファイルに渡す引数である。<code>headless</code> は「Gazebo の画面を出さずに動かすか」を表し、既定では <code>True</code>（画面を出さない）になっている。ロボットの動きを目で見るために、<code>False</code> にしている。</p>
+      <p>この launch ファイルは、図 1 の 4 つに加えて、Gazebo の中にロボットを置く処理と <code>robot_state_publisher</code> を起動する。地図には <code>nav2_bringup</code> に入っている <code>tb3_sandbox</code>、ロボットには TurtleBot 3 の <code>waffle</code> という型が使われる。Windows の WSL2 でも、Windows 11 なら Linux の画面のアプリがそのまま Windows のウィンドウとして開く。</p>
+    </div>
+    <div class="expect">
+      <h4>期待する結果</h4>
+      <div class="prose">
+        <p>しばらくすると、ウィンドウが 2 つ開く。</p>
+        <ul>
+          <li><strong>Gazebo</strong>: 壁と柱のある世界の中に、TurtleBot 3 が置かれている。</li>
+          <li><strong>RViz</strong>: 白と黒の地図が表示されている。この時点では、まだロボットの位置は定まっていない。</li>
+        </ul>
+        <p>Nav2 は、起動するとすぐに動き出す設定（<code>autostart</code> が既定で <code>true</code>）になっている。RViz の左下にある Nav2 の欄に「Startup」のボタンが出ていたら、それを押すと動き出す。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s4">
+    <h2 id="s4">4. 初期位置を与える</h2>
+    <div class="prose">
+      <p>起動した直後の Nav2 は、ロボットが地図のどこにいるかを知らない。位置を推定するのは <span class="term">AMCL</span> というノードで、レーザーで測った周囲の距離と地図を照らし合わせ、「地図のこのあたりにいるはずだ」と推定し続ける。ただし、照らし合わせを始めるには、だいたいの出発点が要る。それを人が与えるのが、この節の操作である。</p>
+      <p>Gazebo の画面でロボットがいる場所を見て、RViz の地図の同じ場所を探す。見つけたら、次のように操作する。</p>
+      <ol>
+        <li>RViz の上の端にある道具の並び（ツールバー）で、「2D Pose Estimate」を押す。</li>
+        <li>地図の上で、ロボットがいる点を押し、押したまま、ロボットの正面の向きへドラッグして離す。押した点が位置に、ドラッグした向きがロボットの向きになる。</li>
+      </ol>
+    </div>
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 480 160" role="img" aria-label="RViz の操作の模式図。上の端のツールバーに 2D Pose Estimate と Nav2 Goal のボタンがある。地図の上で点を押し、そのまま右へドラッグすると、押した点が位置、ドラッグの向きが向きになる。">
+          <defs>
+            <marker id="op-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="var(--robot)"/></marker>
+          </defs>
+          <rect class="d-btn" x="20" y="14" width="150" height="28" rx="3"/>
+          <text class="d-lab" x="95" y="33" text-anchor="middle">2D Pose Estimate</text>
+          <rect class="d-btn" x="184" y="14" width="110" height="28" rx="3"/>
+          <text class="d-lab" x="239" y="33" text-anchor="middle">Nav2 Goal</text>
+          <rect x="20" y="56" width="440" height="94" fill="url(#hero-grid)" stroke="var(--line)"/>
+          <circle cx="120" cy="100" r="6" fill="var(--robot)"/>
+          <line x1="120" y1="100" x2="210" y2="100" stroke="var(--robot)" stroke-width="3" marker-end="url(#op-ah)"/>
+          <text class="d-labj" x="120" y="134">押した点が位置、ドラッグの向きが向き</text>
+        </svg>
+      </div>
+      <figcaption>図 2　RViz の操作の模式図（実際の画面ではない）。ボタンの並びや見た目は、実際の画面と異なる場合がある。5 節の「Nav2 Goal」も、同じ押してドラッグする操作で使う。</figcaption>
+    </figure>
+    <div class="expect">
+      <h4>期待する結果</h4>
+      <div class="prose">
+        <p>ロボットの周りに、小さな矢印の群れ（particle cloud）が現れる。これは AMCL が考えている「ロボットがいるかもしれない位置」の候補の集まりで、ロボットが動くにつれて 1 か所に集まっていく。地図の上には、壁の周りに色の付いた帯（costmap）も現れる。costmap は、ロボットがぶつかる危険の大きさを地図のマスごとに表したもので、Nav2 はこれを見て経路を考える。</p>
+        <p>位置が多少ずれていてもかまわない。走り出すと、AMCL が少しずつ正しい位置に寄せていく。大きくずれたときは、もう一度「2D Pose Estimate」で与え直せばよい。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s5">
+    <h2 id="s5">5. 目標を与えて動かす</h2>
+    <div class="prose">
+      <ol>
+        <li>RViz のツールバーで「Nav2 Goal」を押す。</li>
+        <li>地図の上で行き先の点を押し、着いたときに向いていてほしい方へドラッグして離す（図 2 と同じ操作）。</li>
+      </ol>
+      <p>RViz は、この目標を Nav2 の <code>bt_navigator</code> というノードに送る。送る仕組みは <span class="term">action</span> と呼ばれ、「目標まで行く」のように時間のかかる依頼を送り、途中の経過と最後の結果を受け取れる。<code>bt_navigator</code> は依頼を受けると、経路を考える <code>planner_server</code> と、経路に沿って走らせる <code>controller_server</code> に順に仕事を割り振る。</p>
+    </div>
+    <div class="expect">
+      <h4>期待する結果</h4>
+      <div class="prose">
+        <p>RViz の地図に、ロボットから目標までの経路の線が引かれ、ロボットがその線に沿って走り出す。Gazebo の画面でも、同じようにロボットが動く。目標に着くと、指定した向きに向き直って止まる。ページの冒頭の図が、この流れを表している。</p>
+        <p>途中で止めたいときは、RViz の左下の Nav2 の欄にある取り消しのボタンを押す。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s6">
+    <h2 id="s6">6. 何が動いていたか</h2>
+    <div class="prose">
+      <p>起動したままの状態で、もう 1 つターミナルを開き、どんなノードとトピックが動いているかを確かめる。新しいターミナルでは、最初に <code>source</code> が要る。</p>
+    </div>
+<pre class="cmd"><code># T2
+source /opt/ros/jazzy/setup.bash
+
+ros2 node list
+
+ros2 topic list</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+      <div class="prose">
+        <p><code>ros2 node list</code> には、ノードの名前が並ぶ。次はそのうち Nav2 の 14 個で、実際の表示には、ほかのノード（RViz・ros_gz_bridge・robot_state_publisher など）の名前も混ざる。</p>
+      </div>
+<pre class="out"><code>/amcl
+/behavior_server
+/bt_navigator
+/collision_monitor
+/controller_server
+/docking_server
+/lifecycle_manager_localization
+/lifecycle_manager_navigation
+/map_server
+/planner_server
+/route_server
+/smoother_server
+/velocity_smoother
+/waypoint_follower</code></pre>
+      <div class="prose">
+        <p>位置の推定を受け持つのが <code>map_server</code>（地図を配る）と <code>amcl</code>、移動を受け持つのが <code>bt_navigator</code>・<code>planner_server</code>・<code>controller_server</code> などである。<code>lifecycle_manager_</code> で始まる 2 つは、ほかのノードを決まった順番で起動・停止させる係である。これだけの数のノードがあるが、この launch ファイルの既定では、Nav2 のノードは 1 つのプロセスの中にまとめて入れられている（<code>use_composition</code> が既定で <code>True</code>）。プロセスを分けないことで、ノード間のやり取りの手間を減らしている。</p>
+        <p><code>ros2 topic list</code> には、トピックの名前が並ぶ。1 節の図に出てきた <code>/scan</code>・<code>/odom</code>・<code>/tf</code>・<code>/cmd_vel</code>・<code>/clock</code> のほか、地図を運ぶ <code>/map</code>、<code>planner_server</code> が考えた経路を運ぶ <code>/plan</code> などが見つかる。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s7">
+    <h2 id="s7">7. 止め方</h2>
+    <div class="prose">
+      <p>T1（<code>ros2 launch</code> を実行したターミナル）で <kbd>Ctrl</kbd>+<kbd>C</kbd> を押す。launch ファイルで起動したノードがまとめて止まり、Gazebo と RViz のウィンドウも閉じる。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s8">
+    <h2 id="s8">8. 製品に組み込むなら</h2>
+    <div class="prose">
+      <p>このページでは、ロボットの体も、地図も、指示を出す人も、すべてシミュレーションと手の操作で代わりに用意した。製品では、それぞれを本物に置き換えることになる。</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th scope="col">このページで代わりに担っていたもの</th><th scope="col">製品では</th></tr></thead>
+        <tbody>
+          <tr><td>Gazebo と <code>ros_gz_bridge</code> が出す <code>scan</code>・<code>odom</code>・<code>tf</code>、受け取る <code>cmd_vel</code></td><td>実機のセンサーと車輪のドライバが、同じ名前と型のトピックを出し、受け取る。Nav2 から見て同じトピックがそろっていれば、Nav2 はつながる。ロボットの大きさや速度の上限などの設定は、自分のロボットに合わせて変える。</td></tr>
+          <tr><td><code>/clock</code> が配るシミュレーターの時計（<code>use_sim_time</code> が <code>true</code>）</td><td>実機では、コンピューターの時計を使う（<code>use_sim_time</code> を <code>false</code> にする）。Nav2 は時刻のずれに敏感なので、どの時計を使うかをそろえることが大切になる。</td></tr>
+          <tr><td>あらかじめ用意された地図 <code>tb3_sandbox</code></td><td>ロボットを走らせる場所の地図を、自分で作る。</td></tr>
+          <tr><td>RViz で手で与えた初期位置と目標</td><td>製品のアプリケーションから、プログラムで与える。</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">
+      <p>地図の作り方、プログラムからの指示の出し方、自分のロボットに合わせた設定は、この教材の後の章で扱う。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s9">
+    <h2 id="s9">次に読むもの・出典</h2>
+    <div class="prose">
+      <p>次は <a href="02_local_installation.html">Local Installation</a> の章で、Nav2 をソースからビルドする方法を見る。このページに出てきた用語は、<a href="glossary.html">用語集</a>にまとめてある。</p>
+      <p>出典: Nav2 の公式の文書「<a href="https://docs.nav2.org/jazzy/getting_started/quickstart/quickstart/">Quickstart</a>」（<a href="https://github.com/ros-navigation/docs.nav2.org/blob/b22554c/docs/getting_started/quickstart/quickstart.md">原稿</a>、<code>ros-navigation/docs.nav2.org</code> の <code>jazzy</code> ブランチ、コミット <code>b22554c</code>、2026-08-31）。<a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a> のもとで公開されている。このページは、その内容を日本語で再構成し、説明の追加（1 節・6 節・8 節など）と省略（Iron 以前の手順など）を加えたもので、逐語の翻訳ではない。公式の画像は使っておらず、図はすべてこの教材で作った。</p>
+      <p>起動ファイルの引数や起動されるノードは、<a href="https://github.com/ros-navigation/navigation2/tree/1.3.14/nav2_bringup/launch"><code>ros-navigation/navigation2</code> のタグ 1.3.14</a> と、<a href="https://github.com/ros-navigation/nav2_minimal_turtlebot_simulation/tree/1.0.1"><code>ros-navigation/nav2_minimal_turtlebot_simulation</code> のタグ 1.0.1</a> のソースで確かめた（どちらも Apache License 2.0）。</p>
+    </div>
+  </section>
+
+</div></main>
+
+<footer><div class="wrap">
+  <p>Nav2 日本語ガイドは、Nav2 の公式の文書を基にした非公式の学習教材で、Nav2 のプロジェクトとは関係がない。ライセンスは <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>。</p>
+  <p>Nav2・TurtleBot・Gazebo・ROS などの名前は、それぞれの持ち主の商標でありうる。</p>
+</div></footer>
+
+<script>
+(function(){
+  // SVG の <animateMotion> は CSS では止まらないので、「動きを減らす」設定のときはここで止める
+  try{
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+      document.querySelectorAll('svg').forEach(function(s){ if(s.pauseAnimations){ s.pauseAnimations(); s.setCurrentTime(0); } });
+    }
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
