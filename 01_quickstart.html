@@ -7,26 +7,30 @@
 <meta name="description" content="Nav2 と TurtleBot 3 のシミュレーションを入れ、1 つのコマンドで起動し、RViz で初期位置と目標を与えてロボットを動かす。Nav2 の公式の Quickstart（Jazzy）を日本語で再構成した非公式の教材。">
 <style>
 /* 構成: 1 段組み・左揃え。本文は約 42 字の幅、コマンド・出力・図は最大 960px まで広げる。
-   地の色: 方眼紙のような淡い灰緑（Nav2 の地図は格子のマスでできているため）。
+   テーマ (B) 設計図: ページの頭は青地に白い方眼の帯（細い線 20px ごと、太い線 100px ごと）。
+   差し色 --accent（橙）: 節の見出しの左の線・注記の箱の縁・「期待する結果」の見出しだけに使う。
    意味の色: --robot（青緑）＝ロボットと初期位置、--goal（赤紫）＝目標と経路。図と凡例だけに使い、見出しや飾りに使わない。
-   予約の色: なし。リンクは --accent-text（青）。
-   --focus（琥珀）は意味の色・リンクの色と別の値にし、両方の画面で隣の色と 3:1 以上にする。 */
+   リンクは --accent-text（青）。--focus は橙の差し色と近くならないよう、文字の色と同じ濃い色（暗い画面では明るい色）にする。 */
 :root{
-  --bg:#F4F6F3; --surface:#FFFFFF; --ink:#18211E; --sub:#4D5B55; --line:#C9D2CD; --grid:#E1E7E3; --wall:#2E3A35;
+  --bg:#F1F5FA; --surface:#FFFFFF; --ink:#14213A; --sub:#47546E; --line:#C8D3E3; --grid:#E2E8F1; --wall:#24324D;
   --robot:#0E7490; --goal:#A3367A;
+  --accent:#C2410C; --accent-soft:#E6EEF8;
+  --band-bg:#1E4B8F; --band-ink:#F2F6FC; --band-sub:#C9D8F0; --band-grid:#3563A6; --band-grid2:#3D6AAD; --band-focus:#FFFFFF;
   --accent-text:#1D5FA8;
-  --focus:#B45309;
-  --code-bg:#1E2925; --code-ink:#E6EEEA; --out-bg:#EAEFEC;
+  --focus:#14213A;
+  --code-bg:#17223A; --code-ink:#E6ECF6; --out-bg:#E9EEF6;
   --body:'Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic UI','Yu Gothic','Meiryo','Noto Sans CJK JP','Noto Sans JP',sans-serif;
   --mono:ui-monospace,'SFMono-Regular',Consolas,'Noto Sans Mono','DejaVu Sans Mono',monospace;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){:root{
-  --bg:#121816; --surface:#1A2220; --ink:#E3EAE6; --sub:#A3B1AA; --line:#2F3B37; --grid:#222C29; --wall:#C9D4CF;
+  --bg:#0E1626; --surface:#16213A; --ink:#E6ECF6; --sub:#A7B3CA; --line:#2B3A57; --grid:#1C2842; --wall:#C9D4E6;
   --robot:#38BDD8; --goal:#E07AB8;
+  --accent:#FB923C; --accent-soft:#16233D;
+  --band-bg:#0F2A57; --band-ink:#E6EEFA; --band-sub:#AFC3E6; --band-grid:#1F4380; --band-grid2:#2C56A0; --band-focus:#FFFFFF;
   --accent-text:#7FB4F0;
-  --focus:#F5B041;
-  --code-bg:#0B100E; --code-ink:#DDE6E1; --out-bg:#18201D;
+  --focus:#E6ECF6;
+  --code-bg:#0A1222; --code-ink:#DDE6F2; --out-bg:#142039;
   color-scheme:dark }}
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -40,30 +44,32 @@ code{font-family:var(--mono);font-size:.92em}
 .prose{max-width:42rem;display:flex;flex-direction:column;gap:14px}
 .prose ul,.prose ol{padding-left:1.4em;display:flex;flex-direction:column;gap:4px}
 
-.site{padding-block:20px 0;font-size:14px;color:var(--sub)}
-.site a{color:var(--sub)}
-.hero{padding-block:16px 8px;display:flex;flex-direction:column;gap:16px}
+header{background-color:var(--band-bg);color:var(--band-ink);background-image:linear-gradient(var(--band-grid2) 1px,transparent 1px),linear-gradient(90deg,var(--band-grid2) 1px,transparent 1px),linear-gradient(var(--band-grid) 1px,transparent 1px),linear-gradient(90deg,var(--band-grid) 1px,transparent 1px);background-size:100px 100px,100px 100px,20px 20px,20px 20px}
+header a{color:var(--band-ink)}
+header a:focus-visible{outline-color:var(--band-focus)}
+.site{padding-block:20px 0;font-size:14px;color:var(--band-sub)}
+.hero{padding-block:16px 32px;display:flex;flex-direction:column;gap:16px}
 .hero h1{font-size:clamp(26px,4.2vw,38px);letter-spacing:.01em}
-.hero-map{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px}
+.hero-map{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:10px}
 .hero-map svg{display:block;width:100%;height:auto}
 .key{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:14px;color:var(--sub)}
 .key span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px}
 .key .k-robot::before{background:var(--robot)}
 .key .k-goal::before{background:var(--goal)}
 
-.notes{border-left:4px solid var(--line);padding:4px 0 4px 16px;font-size:14px;color:var(--sub);display:flex;flex-direction:column;gap:6px;max-width:42rem}
+.notes{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:0 6px 6px 0;padding:12px 16px;font-size:14px;color:var(--sub);display:flex;flex-direction:column;gap:6px;max-width:42rem}
 .notes ul{padding-left:1.2em;display:flex;flex-direction:column;gap:2px}
 
 main .wrap{padding-block:32px 24px;display:flex;flex-direction:column;gap:56px}
 section{display:flex;flex-direction:column;gap:16px}
-section h2{font-size:24px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+section h2{font-size:24px;padding:2px 0 6px 14px;border-left:6px solid var(--accent);border-bottom:1px solid var(--line)}
 section h3{font-size:18px;margin-top:8px}
 .term{font-weight:700}
 
 pre{margin:0;overflow-x:auto;border-radius:6px;padding:14px 16px;font-family:var(--mono);font-size:14px;line-height:1.6}
 pre.cmd{background:var(--code-bg);color:var(--code-ink)}
 .expect{display:flex;flex-direction:column;gap:10px;max-width:960px}
-.expect h4{margin:0;font-size:15px}
+.expect h4{margin:0;font-size:15px;color:var(--accent)}
 pre.out{background:var(--out-bg);color:var(--ink);border:1px solid var(--line)}
 
 figure{margin:0;display:flex;flex-direction:column;gap:8px}
@@ -83,7 +89,8 @@ th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;verti
 th{font-weight:700;color:var(--sub);font-size:14px}
 .table-wrap{overflow-x:auto}
 
-footer .wrap{padding-block:20px 40px;font-size:13px;color:var(--sub);border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+footer{background:var(--accent-soft);border-top:3px solid var(--accent)}
+footer .wrap{padding-block:20px 40px;font-size:13px;color:var(--sub);display:flex;flex-direction:column;gap:6px}
 footer a{color:var(--sub)}
 </style>
 </head>
@@ -115,8 +122,8 @@ footer a{color:var(--sub)}
           <animateMotion dur="7s" begin="0s" fill="freeze" rotate="auto"><mpath href="#hero-path"/></animateMotion>
         </g>
       </svg>
+      <p class="key"><span class="k-robot">ロボットと、与える初期位置（4 節）</span><span class="k-goal">与える目標と、Nav2 が引く経路（5 節）</span></p>
     </div>
-    <p class="key"><span class="k-robot">ロボットと、与える初期位置（4 節）</span><span class="k-goal">与える目標と、Nav2 が引く経路（5 節）</span></p>
   </div>
 </div></header>
 
