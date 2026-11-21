@@ -45,6 +45,15 @@
 
 RViz の操作（4 節・5 節）は、ユーザーが撮影した写真を後から差し込む。それまでは文章と SVG の模式図で説明する。
 
+### 確かめた事実（ソースを読んで確認。起動はまだ）
+
+出どころ: `ros-navigation/navigation2` のタグ `1.3.14`（コミット `58e4019`）の `nav2_bringup/launch/`、`ros-navigation/nav2_minimal_turtlebot_simulation` のタグ `1.0.1`（コミット `6b64127`。Apache 2.0）の `nav2_minimal_tb3_sim/`。どちらも手元に入っている版と同じ番号。
+
+- `tb3_simulation_launch.py` の主な引数と既定値: `headless`=True（True なら Gazebo はサーバー〈`gz sim -s`〉だけで、画面〈`-g`〉は False のときだけ起動）、`use_rviz`=True、`autostart`=true（RViz の Startup を押さなくても動き出す）、`use_composition`=True（Nav2 のノードを 1 つのコンテナ `component_container_isolated` にまとめる）、`slam`=False、`map`=`nav2_bringup/maps/tb3_sandbox.yaml`、`params_file`=`nav2_bringup/params/nav2_params.yaml`、`world`=`tb3_sandbox.sdf.xacro`、`robot_name`=`turtlebot3_waffle`、初期の置き場所 (x, y)=(-2.00, -0.50)。
+- 起動されるもの: Gazebo（サーバーと、`headless:=False` なら画面）、ロボットの出現（`ros_gz_sim` の `create`）、Gazebo と ROS 2 の橋渡し（`ros_gz_bridge` の `parameter_bridge`）、`robot_state_publisher`、RViz（`rviz_launch.py`）、Nav2 の本体（`bringup_launch.py`）。
+- Nav2 の本体のノード: 位置の推定（`localization_launch.py`）が `map_server`・`amcl`・`lifecycle_manager_localization`。移動（`navigation_launch.py`）が `controller_server`・`smoother_server`・`planner_server`・`route_server`・`behavior_server`・`velocity_smoother`・`collision_monitor`・`bt_navigator`・`waypoint_follower`・`docking_server`・`lifecycle_manager_navigation`。
+- 橋渡しのトピック（Gazebo → ROS 2）: `/clock`（`rosgraph_msgs/msg/Clock`）・`joint_states`・`odom`（`nav_msgs/msg/Odometry`）・`tf`・`imu`・`scan`（`sensor_msgs/msg/LaserScan`）。（ROS 2 → Gazebo）: `cmd_vel`（`geometry_msgs/msg/Twist`）。
+
 ## 確認待ちの一覧
 
 ユーザーの確認が要る重大な部分だけを載せる（`CLAUDE.md` の「役割分担」）。対象は、読者がそこで止まると先へ進めない手順と、読者の環境を壊しうる手順。
