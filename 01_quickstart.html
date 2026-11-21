@@ -132,7 +132,8 @@ footer a{color:var(--sub)}
     <ul>
       <li>Nav2 の公式の文書の <a href="https://docs.nav2.org/jazzy/getting_started/quickstart/quickstart/">Quickstart</a>（<code>jazzy</code> 版の原稿、コミット <code>b22554c</code>）を基に、日本語で説明し直したもの。逐語の翻訳ではない。出典とライセンスはページの末尾にある。</li>
       <li>ROS 2 Jazzy と Ubuntu 24.04（Windows の WSL2 を含む）を前提にする。ROS 2 の導入は、環境構築のページで済ませておく。</li>
-      <li>期待する結果の出どころ: 2 節の版の表示は、作成時の環境で実際に確かめた。3 節〜6 節の表示は、Nav2 のソース（<code>navigation2</code> 1.3.14、<code>nav2_minimal_turtlebot_simulation</code> 1.0.1）から想定したもので、まだ実際の表示と照らし合わせていない。</li>
+      <li>期待する結果の出どころ: ターミナルに出る表示（2 節〜7 節のコードの箱）は、作成時の環境（<code>navigation2</code> 1.3.14、<code>nav2_minimal_turtlebot_simulation</code> 1.0.1）で実際に確かめたもの。ただし 3 節〜7 節は、Gazebo と RViz の画面を出さずに起動し、RViz での初期位置と目標の指定は、同じ内容をコマンドで送って確かめた。Gazebo と RViz の画面の見え方と、RViz の操作（3 節〜5 節の画面の説明）は、ソースと公式の説明から想定したもので、まだ実際の画面と照らし合わせていない。</li>
+      <li>ログの角括弧の中の長い数字は時刻（UNIX 時刻）で、実行するたびに変わる。<code>-6</code> のような番号や、名前の後ろに付く数字・英数字も、実行するたびに変わることがある。</li>
     </ul>
   </aside>
 
@@ -199,7 +200,7 @@ footer a{color:var(--sub)}
       <ul>
         <li><span class="term">Gazebo</span>: ロボットと、ロボットが走る世界（壁や柱）を計算で再現するシミュレーター。レーザーの距離センサーの値や、車輪の回転から求めた移動量を作り出し、速度の指令を受けると車輪を回す。</li>
         <li><span class="term">ros_gz_bridge</span>: Gazebo と ROS 2 は別の仕組みで通信しているので、その間でデータを受け渡すノード。Gazebo の値を ROS 2 のトピックとして出し、ROS 2 の速度の指令を Gazebo に渡す。</li>
-        <li><span class="term">Nav2</span>: ロボットの位置を推定し、目標までの経路を考え、その経路に沿って走るための速度の指令を出す。実体は 14 個のノードの集まりである（6 節で確かめる）。</li>
+        <li><span class="term">Nav2</span>: ロボットの位置を推定し、目標までの経路を考え、その経路に沿って走るための速度の指令を出す。実体は、主なものだけで 14 個のノードの集まりである（6 節で確かめる）。</li>
         <li><span class="term">RViz</span>: ROS 2 のデータを画面に描く道具。地図・ロボットの位置・経路を表示し、このページでは初期位置と目標を Nav2 に伝える入り口にもなる。</li>
       </ul>
       <p>矢印のトピックは、それぞれ次のデータを運ぶ。<code>scan</code> はレーザーで測った周囲の距離（型は <a href="https://github.com/ros2/common_interfaces/blob/jazzy/sensor_msgs/msg/LaserScan.msg"><code>sensor_msgs/msg/LaserScan</code></a>）、<code>odom</code> は車輪の回転から求めた移動量（オドメトリ。型は <a href="https://github.com/ros2/common_interfaces/blob/jazzy/nav_msgs/msg/Odometry.msg"><code>nav_msgs/msg/Odometry</code></a>）、<code>tf</code> は座標系どうしの位置関係、<code>cmd_vel</code> は Nav2 がロボットに出す速度の指令（型は <a href="https://github.com/ros2/common_interfaces/blob/jazzy/geometry_msgs/msg/Twist.msg"><code>geometry_msgs/msg/Twist</code></a>）。図では省いたが、シミュレーターの時計を配る <code>/clock</code> も Gazebo から流れている。ロボットの各部品の位置関係を <code>tf</code> として配る <code>robot_state_publisher</code> というノードも、一緒に起動する。</p>
@@ -250,13 +251,32 @@ ros2 launch nav2_bringup tb3_simulation_launch.py headless:=False</code></pre>
     <div class="expect">
       <h4>期待する結果</h4>
       <div class="prose">
-        <p>しばらくすると、ウィンドウが 2 つ開く。</p>
+        <p>T1 には大量のログが流れる。数秒〜十数秒で、次の行が出る（作成時は起動から約 7 秒）。</p>
+      </div>
+<pre class="out"><code>[component_container_isolated-6] [INFO] [1795242858.189862897] [lifecycle_manager_localization]: Managed nodes are active</code></pre>
+      <div class="prose">
+        <p>Nav2 のノードは、<code>lifecycle_manager_</code> で始まる 2 つの係が、決まった順番で動かし始める（この launch ファイルでは、それを自動で始める設定 <code>autostart</code> が既定で <code>true</code> になっている）。上の行は、位置の推定を受け持つ側（<code>lifecycle_manager_localization</code>）が、受け持つノードをすべて動かし終えたという知らせである。</p>
+        <p>一方、移動を受け持つ側（<code>lifecycle_manager_navigation</code>）は、この時点ではまだ動き終えない。経路を考える部品が「地図の上のどこにロボットがいるか」を必要としているのに、それがまだ分からないからである。代わりに、次の警告が繰り返し出る。</p>
+      </div>
+<pre class="out"><code>[component_container_isolated-6] [WARN] [1795242413.769624260] [amcl]: AMCL cannot publish a pose or update the transform. Please set the initial pose...</code></pre>
+      <div class="prose">
+        <p>AMCL（4 節で説明する、位置を推定するノード）が「初期位置を与えてほしい」と言っている。4 節で初期位置を与えると止まる。</p>
+        <p>画面では、ウィンドウが 2 つ開く。</p>
         <ul>
           <li><strong>Gazebo</strong>: 壁と柱のある世界の中に、TurtleBot 3 が置かれている。</li>
           <li><strong>RViz</strong>: 白と黒の地図が表示されている。この時点では、まだロボットの位置は定まっていない。</li>
         </ul>
-        <p>Nav2 は、起動するとすぐに動き出す設定（<code>autostart</code> が既定で <code>true</code>）になっている。RViz の左下にある Nav2 の欄に「Startup」のボタンが出ていたら、それを押すと動き出す。</p>
       </div>
+    </div>
+    <h3>初期位置を与えずに待ちすぎたとき</h3>
+    <div class="prose">
+      <p>移動を受け持つ側は、ロボットの位置が分かるのを、決まった時間だけ待つ。その間に 4 節の初期位置を与えないと、起動をあきらめてしまう。作成時の環境では、起動から約 85 秒後に、次のエラーが出た。</p>
+    </div>
+<pre class="out"><code>[component_container_isolated-6] [ERROR] [1795242475.734356106] [global_costmap.global_costmap]: Failed to activate global_costmap because transform from base_link to map did not become available before timeout
+[component_container_isolated-6] [ERROR] [1795242475.735565668] [lifecycle_manager_navigation]: Failed to change state for node: planner_server
+[component_container_isolated-6] [ERROR] [1795242475.735696263] [lifecycle_manager_navigation]: Failed to bring up all requested nodes. Aborting bringup.</code></pre>
+    <div class="prose">
+      <p>1 行めは、経路を考えるための costmap（4 節で説明する）が、地図（<code>map</code>）とロボットの体（<code>base_link</code>）の位置関係を時間内に得られなかった、という意味である。続く 2 行で、移動を受け持つ側が起動を打ち切ったことが分かる。この状態では、目標を与えてもロボットは動かない。7 節の方法でいったん止め、もう一度起動して、今度は早めに 4 節の初期位置を与える。</p>
     </div>
   </section>
 
@@ -293,6 +313,12 @@ ros2 launch nav2_bringup tb3_simulation_launch.py headless:=False</code></pre>
       <div class="prose">
         <p>ロボットの周りに、小さな矢印の群れ（particle cloud）が現れる。これは AMCL が考えている「ロボットがいるかもしれない位置」の候補の集まりで、ロボットが動くにつれて 1 か所に集まっていく。地図の上には、壁の周りに色の付いた帯（costmap）も現れる。costmap は、ロボットがぶつかる危険の大きさを地図のマスごとに表したもので、Nav2 はこれを見て経路を考える。</p>
         <p>位置が多少ずれていてもかまわない。走り出すと、AMCL が少しずつ正しい位置に寄せていく。大きくずれたときは、もう一度「2D Pose Estimate」で与え直せばよい。</p>
+        <p>T1 のログには、AMCL が初期位置を受け取ったことと、移動を受け持つ側が動き終えたことが出る（作成時は、初期位置を与えてから約 3.5 秒後）。</p>
+      </div>
+<pre class="out"><code>[component_container_isolated-6] [INFO] [1795242860.608735354] [amcl]: Setting pose (2.613000): -2.000 -0.500 0.000
+[component_container_isolated-6] [INFO] [1795242864.088389389] [lifecycle_manager_navigation]: Managed nodes are active</code></pre>
+      <div class="prose">
+        <p>1 行めの <code>-2.000 -0.500 0.000</code> は、与えた初期位置（地図の上の x と y〈メートル〉、向き〈ラジアン〉）である。その前の括弧の中の数字は、シミュレーターの時計での時刻（秒）で、実行するたびに変わる。作成時は x が -2.0、y が -0.5、向きが 0（地図の x の正の向き）の位置を与えた。これは、この launch ファイルがロボットを置く位置と同じである。2 行めが出れば、Nav2 全体が動ける状態になっている。</p>
       </div>
     </div>
   </section>
@@ -311,6 +337,13 @@ ros2 launch nav2_bringup tb3_simulation_launch.py headless:=False</code></pre>
       <div class="prose">
         <p>RViz の地図に、ロボットから目標までの経路の線が引かれ、ロボットがその線に沿って走り出す。Gazebo の画面でも、同じようにロボットが動く。目標に着くと、指定した向きに向き直って止まる。ページの冒頭の図が、この流れを表している。</p>
         <p>途中で止めたいときは、RViz の左下の Nav2 の欄にある取り消しのボタンを押す。</p>
+        <p>T1 のログには、走り始めと到着が出る。作成時は、スタートから x の正の向きへ約 1 m 先（x が -1.0、y が -0.5）を目標にした。</p>
+      </div>
+<pre class="out"><code>[component_container_isolated-6] [INFO] [1795242870.777356354] [bt_navigator]: Begin navigating from current location (-1.96, -0.52) to (-1.00, -0.50)
+[component_container_isolated-6] [INFO] [1795242873.249784538] [controller_server]: Reached the goal!
+[component_container_isolated-6] [INFO] [1795242873.278012470] [bt_navigator]: Goal succeeded</code></pre>
+      <div class="prose">
+        <p>1 行めの「current location」は、AMCL が推定した今の位置で、与えた初期位置（-2.0, -0.5）から少しずれている。走り出す前でも、AMCL がレーザーの測定と地図を照らし合わせて、推定を寄せ直しているためである。<code>Goal succeeded</code> が出れば、目標に着いている。</p>
       </div>
     </div>
   </section>
@@ -329,25 +362,60 @@ ros2 topic list</code></pre>
     <div class="expect">
       <h4>期待する結果</h4>
       <div class="prose">
-        <p><code>ros2 node list</code> には、ノードの名前が並ぶ。次はそのうち Nav2 の 14 個で、実際の表示には、ほかのノード（RViz・ros_gz_bridge・robot_state_publisher など）の名前も混ざる。</p>
+        <p><code>ros2 node list</code> には、ノードの名前が並ぶ。作成時は、RViz を起動しない形で確かめたので 24 個だった。RViz を起動していれば、RViz のノードも加わる。</p>
       </div>
 <pre class="out"><code>/amcl
 /behavior_server
 /bt_navigator
+/bt_navigator_navigate_through_poses_rclcpp_node
+/bt_navigator_navigate_to_pose_rclcpp_node
 /collision_monitor
 /controller_server
 /docking_server
+/global_costmap/global_costmap
+/launch_ros_19729
 /lifecycle_manager_localization
 /lifecycle_manager_navigation
+/local_costmap/local_costmap
 /map_server
+/nav2_container
 /planner_server
+/robot_state_publisher
+/ros_gz_bridge
 /route_server
 /smoother_server
+/transform_listener_impl_7ed3d4002080
+/transform_listener_impl_7ed4100020e0
 /velocity_smoother
 /waypoint_follower</code></pre>
       <div class="prose">
-        <p>位置の推定を受け持つのが <code>map_server</code>（地図を配る）と <code>amcl</code>、移動を受け持つのが <code>bt_navigator</code>・<code>planner_server</code>・<code>controller_server</code> などである。<code>lifecycle_manager_</code> で始まる 2 つは、ほかのノードを決まった順番で起動・停止させる係である。これだけの数のノードがあるが、この launch ファイルの既定では、Nav2 のノードは 1 つのプロセスの中にまとめて入れられている（<code>use_composition</code> が既定で <code>True</code>）。プロセスを分けないことで、ノード間のやり取りの手間を減らしている。</p>
-        <p><code>ros2 topic list</code> には、トピックの名前が並ぶ。1 節の図に出てきた <code>/scan</code>・<code>/odom</code>・<code>/tf</code>・<code>/cmd_vel</code>・<code>/clock</code> のほか、地図を運ぶ <code>/map</code>、<code>planner_server</code> が考えた経路を運ぶ <code>/plan</code> などが見つかる。</p>
+        <p>Nav2 の主なノードは 14 個ある。位置の推定を受け持つのが <code>map_server</code>（地図を配る）と <code>amcl</code>、移動を受け持つのが <code>bt_navigator</code>・<code>planner_server</code>・<code>controller_server</code> などである。<code>lifecycle_manager_</code> で始まる 2 つは、ほかのノードを決まった順番で動かし始め、止める係である。<code>global_costmap</code>・<code>local_costmap</code> は、<code>planner_server</code> と <code>controller_server</code> がそれぞれ中に持つ costmap、<code>bt_navigator_</code> で始まる 2 つは <code>bt_navigator</code> が中で使うノードである。<code>/launch_ros_</code> と <code>/transform_listener_impl_</code> の後ろの数字・英数字は、実行するたびに変わる。</p>
+        <p>これだけの数のノードがあるが、この launch ファイルの既定では、Nav2 のノードは <code>nav2_container</code> という 1 つのプロセスの中にまとめて入れられている（<code>use_composition</code> が既定で <code>True</code>）。プロセスを分けないことで、ノード間のやり取りの手間を減らしている。</p>
+        <p><code>ros2 topic list</code> には、トピックの名前が並ぶ。作成時は 76 個あった。1 節の図に出てきた <code>/scan</code>・<code>/odom</code>・<code>/tf</code>・<code>/cmd_vel</code>・<code>/clock</code> のほか、地図を運ぶ <code>/map</code>、<code>planner_server</code> が考えた経路を運ぶ <code>/plan</code>、AMCL の推定を運ぶ <code>/amcl_pose</code> と <code>/particle_cloud</code> などが見つかる。</p>
+        <p>ただし作成時の環境では、<code>ros2 topic list</code> を普通に実行すると、<code>/map</code> などコンテナの中のノードのトピックが抜け、11 個しか表示されなかった。トピックを探し終える前に表示を終えてしまうためで、待つ時間を延ばすと全部が表示された。表示が少ないと感じたら、次のように 10 秒かけて集め直す。</p>
+      </div>
+    </div>
+<pre class="cmd"><code># T2
+ros2 topic list --no-daemon --spin-time 10</code></pre>
+    <div class="prose">
+      <p>最後に、5 節でロボットが走っている間に、Nav2 が出している速度の指令を 1 つだけ読んでみる。ロボットが止まっている間は、指令が流れてくるまで待ち続けるので、<kbd>Ctrl</kbd>+<kbd>C</kbd> で止める。</p>
+    </div>
+<pre class="cmd"><code># T2
+ros2 topic echo /cmd_vel --once</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>linear:
+  x: 0.1441907286643982
+  y: 0.0
+  z: 0.0
+angular:
+  x: 0.0
+  y: 0.0
+  z: 0.0
+---</code></pre>
+      <div class="prose">
+        <p>型は <code>geometry_msgs/msg/Twist</code>（1 節）で、<code>linear.x</code> が前に進む速さ（メートル毎秒）、<code>angular.z</code> がその場で向きを変える速さ（ラジアン毎秒）である。作成時は、まっすぐ前の目標へ向かっていたので、前向きに約 0.14 m/s の指令だけが出ていた。値は、読んだ瞬間によって変わる。</p>
+        <p>トピックの一覧にあった <code>/cmd_vel_nav</code> と <code>/cmd_vel_smoothed</code> は、この指令ができるまでの途中の段である。<code>controller_server</code> が出した指令（<code>/cmd_vel_nav</code>）を、<code>velocity_smoother</code> が急な変化をならし（<code>/cmd_vel_smoothed</code>）、<code>collision_monitor</code> がぶつかりそうなら止めたうえで、<code>/cmd_vel</code> としてロボットに渡している。</p>
       </div>
     </div>
   </section>
@@ -356,6 +424,26 @@ ros2 topic list</code></pre>
     <h2 id="s7">7. 止め方</h2>
     <div class="prose">
       <p>T1（<code>ros2 launch</code> を実行したターミナル）で <kbd>Ctrl</kbd>+<kbd>C</kbd> を押す。launch ファイルで起動したノードがまとめて止まり、Gazebo と RViz のウィンドウも閉じる。</p>
+    </div>
+    <div class="expect">
+      <h4>期待する結果</h4>
+      <div class="prose">
+        <p>ノードが止まっていくログが流れ、数秒〜十数秒でコマンドの入力に戻る。作成時は 2 回とも、終わり際に次のようなエラーが出た。</p>
+      </div>
+<pre class="out"><code>[component_container_isolated-6] Magick: abort due to signal 11 (SIGSEGV) "Segmentation Fault"...
+[ERROR] [component_container_isolated-6]: process[component_container_isolated-6] failed to terminate '5' seconds after receiving 'SIGINT', escalating to 'SIGTERM'
+[INFO] [component_container_isolated-6]: sending signal 'SIGTERM' to process[component_container_isolated-6]
+[ERROR] [component_container_isolated-6]: process has died [pid 20842, exit code -6, cmd '/opt/ros/jazzy/lib/rclcpp_components/component_container_isolated --ros-args ...</code></pre>
+      <div class="prose">
+        <p>Nav2 のノードを入れたコンテナのプロセスが、止まる途中で異常な終わり方をした、という表示である。<kbd>Ctrl</kbd>+<kbd>C</kbd> の合図（SIGINT）で 5 秒以内に止まらなかったので、より強い合図（SIGTERM）が送られている。見た目は物々しいが、作成時はどちらの回も、関連するプロセスはすべて止まっていた。気になるときは、次のコマンドで、残っているプロセスが無いことを確かめられる。</p>
+      </div>
+    </div>
+<pre class="cmd"><code>pgrep -af 'gz sim|component_container|parameter_bridge'</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+      <div class="prose">
+        <p>何も表示されなければ、残っているプロセスは無い。</p>
+      </div>
     </div>
   </section>
 
