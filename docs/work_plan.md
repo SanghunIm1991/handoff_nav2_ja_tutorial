@@ -18,8 +18,8 @@
 
 | 順 | ページ | ファイル | 元にする公式のページ | 主に当たる到達点 | 状態 |
 | --- | --- | --- | --- | --- | --- |
-| 0 | 環境構築（WSL2 → Ubuntu 24.04 → ROS 2 Jazzy） | `00_setup.html` | なし（ROS 2 の公式の導入手順と WSL の公式の文書を基にする） | 1 | 初稿（低コストの確認済み、レビューの前） |
-| 1 | Quickstart | `01_quickstart.html` | Getting Started / Quickstart | 1 | 画面なしで確認済み（レビューの前） |
+| 0 | 環境構築（WSL2 → Ubuntu 24.04 → ROS 2 Jazzy） | `00_setup.html` | なし（ROS 2 の公式の導入手順と WSL の公式の文書を基にする） | 1 | レビュー済み（ユーザーの確認待ち） |
+| 1 | Quickstart | `01_quickstart.html` | Getting Started / Quickstart | 1 | レビュー済み（ユーザーの確認待ち） |
 | 2 | Local Installation | `02_local_installation.html` | Getting Started / Build and Install / Local Installation | 1 | 未着手 |
 | 3 | Navigation Concepts | `03_navigation_concepts.html` | Getting Started / Navigation Concepts（下位 6 ページ。分けるかは構成案のときに決める） | 2 | 未着手 |
 
