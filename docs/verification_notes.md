@@ -29,6 +29,22 @@ dpkg-query -W -f='${Version}\n' 'ros-jazzy-nav2-*' ros-jazzy-navigation2 | cut -
 - **止めたときの異常終了**: SIGINT で止めると、Nav2 の container が `SIGSEGV`・`exit code -6` を出して終わる（1.3.14 で 2 回とも）。プロセスは残らない。止めた後は、`gz sim`・`component_container`・`parameter_bridge`・`robot_state_publisher`・`rviz2` が残っていないかを確かめる。`ros2 node list` などが裏で起動する `_ros2_daemon` は残る作りなので、確かめた後に要らなければ、起動したときと同じ `ROS_DOMAIN_ID` を付けて `ros2 daemon stop` で止める（2026-11-21 の確認では、次のセッションの時点で残っていなかった）。
 - **言語の取り違え**: rclpy の node は `qos_overrides.*` の parameter を宣言しない（C++ の node だけ）。`ros2 param list` の期待する結果で、言語を取り違えない。
 
+## CSS を直したとき
+
+- `pages-html-page` スキルの `static-checks.sh` は、ページの `<style>` だけを見る。`assets/site.css` のクラスは、すべてのページを横断して、使われているかを確かめる（使われていないクラスは消す）。
+
+```bash
+for c in $(perl -0777 -pe 's{/\*.*?\*/}{}gs; s/\{[^}]*\}/ /g' assets/site.css | grep -oE '\.[A-Za-z][A-Za-z0-9_-]*' | sed 's/^\.//' | sort -u); do grep -qE "class=\"([^\"]* )?$c( [^\"]*)?\"" *.html || echo ".$c"; done
+```
+
+- 見た目を変えるつもりの無い整理（ファイルへの切り出しなど）では、前後の CSS を「セレクタ | 宣言」の 1 件ずつに分解して比べ、違いが意図したものだけかを確かめる（2026-11-21 の切り出しでは、Quickstart の 223 件が一致した）。
+- 色を変えたら、ライトとダークの両方で、文字と背景の主な組み合わせのコントラスト比を計算する（本文 4.5 以上、線や枠 3 以上）。
+
+## ファイルを書き換える道具の注意
+
+- `perl -i` の中で、ほかのファイルを `<>` で読まない。`-i` はその読み込みにも効き、読んだファイルまで書き換えてしまう（2026-11-21、CSS の断片のファイルをページの中身で上書きし、2 つのページを空にした）。ほかのファイルの中身は、Python などで明示的に開いて読む。
+- 差し込む断片のファイルは、差し込む前に中身（行数・先頭・混ざってはいけないものの有無）を確かめる。書き換えた後は、変えるつもりの無い部分に差が無いことを `diff` で確かめてから、次へ進む。
+
 ## 図と作業の環境
 
 - **SVG の図**: WSL にはレンダラが無いので、生成スクリプトと機械の点検で作る（`learning-text-authoring` スキル）。目視はユーザーに頼む。

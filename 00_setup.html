@@ -5,82 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>環境構築：WSL2・ROS 2 Jazzy・Gazebo を入れる</title>
 <meta name="description" content="Windows 11 の WSL2 に Ubuntu 24.04 を入れ、ROS 2 Jazzy と開発の道具、Gazebo Harmonic を入れて動作を確かめる。ROS 2・Gazebo・WSL の公式の手順を日本語でまとめ直した非公式の教材。">
+<link rel="stylesheet" href="assets/site.css">
 <style>
-/* 構成: 1 段組み・左揃え。本文は約 42 字の幅、コマンド・出力・図は最大 960px まで広げる（Quickstart の章と同じ器）。
-   テーマ (B) 設計図: ページの頭は青地に白い方眼の帯（細い線 20px ごと、太い線 100px ごと）。色の値の正本は 01_quickstart.html の CSS。
-   差し色 --accent（橙）: 節の見出しの左の線・注記の箱の縁・「期待する結果」の見出しだけに使う。
-   意味の色: このページでは使わない（Quickstart の章の青緑・赤紫は、ロボット・目標のためにとっておく）。
-   リンクは --accent-text（青）。--focus は橙の差し色と近くならないよう、文字の色と同じ濃い色（暗い画面では明るい色）にする。 */
-:root{
-  --bg:#F1F5FA; --surface:#FFFFFF; --ink:#14213A; --sub:#47546E; --line:#C8D3E3;
-  --accent:#C2410C; --accent-soft:#E6EEF8;
-  --band-bg:#1E4B8F; --band-ink:#F2F6FC; --band-sub:#C9D8F0; --band-grid:#3563A6; --band-grid2:#3D6AAD; --band-focus:#FFFFFF;
-  --accent-text:#1D5FA8;
-  --focus:#14213A;
-  --code-bg:#17223A; --code-ink:#E6ECF6; --out-bg:#E9EEF6;
-  --body:'Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic UI','Yu Gothic','Meiryo','Noto Sans CJK JP','Noto Sans JP',sans-serif;
-  --mono:ui-monospace,'SFMono-Regular',Consolas,'Noto Sans Mono','DejaVu Sans Mono',monospace;
-  color-scheme:light;
-}
-@media (prefers-color-scheme: dark){:root{
-  --bg:#0E1626; --surface:#16213A; --ink:#E6ECF6; --sub:#A7B3CA; --line:#2B3A57;
-  --accent:#FB923C; --accent-soft:#16233D;
-  --band-bg:#1E4B8F; --band-ink:#E6EEFA; --band-sub:#C3D3EE; --band-grid:#3563A6; --band-grid2:#3D6AAD; --band-focus:#FFFFFF;
-  --accent-text:#7FB4F0;
-  --focus:#E6ECF6;
-  --code-bg:#0A1222; --code-ink:#DDE6F2; --out-bg:#142039;
-  color-scheme:dark }}
-*,*::before,*::after{box-sizing:border-box}
-[hidden]{display:none!important}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.85}
-.wrap{max-width:960px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-a{color:var(--accent-text)}
-a:focus-visible,summary:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
-h1,h2,h3{margin:0;line-height:1.35;text-wrap:balance;word-break:auto-phrase}
-p,ul,ol{margin:0}
-code{font-family:var(--mono);font-size:.92em}
-.prose{max-width:42rem;display:flex;flex-direction:column;gap:14px}
-.prose ul,.prose ol{padding-left:1.4em;display:flex;flex-direction:column;gap:4px}
-
-header{background-color:var(--band-bg);color:var(--band-ink);background-image:linear-gradient(var(--band-grid2) 1px,transparent 1px),linear-gradient(90deg,var(--band-grid2) 1px,transparent 1px),linear-gradient(var(--band-grid) 1px,transparent 1px),linear-gradient(90deg,var(--band-grid) 1px,transparent 1px);background-size:100px 100px,100px 100px,20px 20px,20px 20px}
-header a{color:var(--band-ink)}
-header a:focus-visible{outline-color:var(--band-focus)}
-.site{padding-block:20px 0;font-size:14px;color:var(--band-sub)}
-.hero{padding-block:16px 32px;display:flex;flex-direction:column;gap:16px}
-.hero h1{font-size:clamp(26px,4.2vw,38px);letter-spacing:.01em}
-
-.notes{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:0 6px 6px 0;padding:12px 16px;font-size:14px;color:var(--sub);display:flex;flex-direction:column;gap:6px;max-width:42rem}
-.notes ul{padding-left:1.2em;display:flex;flex-direction:column;gap:2px}
-
-main .wrap{padding-block:32px 24px;display:flex;flex-direction:column;gap:56px}
-section{display:flex;flex-direction:column;gap:16px}
-section h2{font-size:24px;padding:2px 0 6px 14px;border-left:6px solid var(--accent);border-bottom:1px solid var(--line)}
-section h3{font-size:18px;margin-top:8px}
-.term{font-weight:700}
-
-pre{margin:0;overflow-x:auto;border-radius:6px;padding:14px 16px;font-family:var(--mono);font-size:14px;line-height:1.6}
-pre.cmd{background:var(--code-bg);color:var(--code-ink)}
-.expect{display:flex;flex-direction:column;gap:10px;max-width:960px}
-.expect h4{margin:0;font-size:15px;color:var(--accent)}
-pre.out{background:var(--out-bg);color:var(--ink);border:1px solid var(--line)}
-
-figure{margin:0;display:flex;flex-direction:column;gap:8px}
-figcaption{font-size:14px;color:var(--sub);max-width:42rem}
-.diagram{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px}
-.diagram svg{display:block;min-width:560px;width:100%;height:auto}
-.d-box{fill:var(--surface);stroke:var(--ink);stroke-width:1.5}
+/* 環境構築の章だけの CSS。共通の器は assets/site.css。このページでは意味の色を使わない。 */
+.diagram svg{min-width:560px}
 .d-box-next{fill:var(--surface);stroke:var(--sub);stroke-width:1.5;stroke-dasharray:6 4}
-.d-name{fill:var(--ink);font-size:15px;font-weight:700;font-family:var(--body)}
-.d-sub{fill:var(--sub);font-size:13px;font-family:var(--body)}
-
-table{border-collapse:collapse;font-size:15px;width:100%;max-width:960px}
-th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
-th{font-weight:700;color:var(--sub);font-size:14px}
-.table-wrap{overflow-x:auto}
-
-footer{background:var(--accent-soft);border-top:3px solid var(--accent)}
-footer .wrap{padding-block:20px 40px;font-size:13px;color:var(--sub);display:flex;flex-direction:column;gap:6px}
-footer a{color:var(--sub)}
 </style>
 </head>
 <body>
