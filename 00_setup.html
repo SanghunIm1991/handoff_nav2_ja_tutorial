@@ -117,11 +117,11 @@ footer a{color:var(--sub)}
   <section aria-labelledby="s1">
     <h2 id="s1">1. 全体像</h2>
     <div class="prose">
-      <p>この章で入れるものは、下から順に積み重なる。上のものは、すぐ下のものの上で動く。</p>
+      <p>この章で入れるものは、下から順に積み重なる。上のものは、下のものがそろっていることを前提にして入れる。</p>
     </div>
     <figure>
       <div class="diagram">
-        <svg viewBox="0 0 640 316" role="img" aria-label="積み重ねの図。下から、使っている PC の Windows 11、WSL2（2 節）、Ubuntu 24.04（2 節と 3 節）、ROS 2 Jazzy と開発の道具（4 節から 7 節）、Gazebo Harmonic（8 節）、いちばん上に次の Quickstart の章で入れる Nav2。">
+        <svg viewBox="0 0 640 316" role="img" aria-label="積み重ねの図。下から、使っている PC の Windows 11、WSL2（2 節）、Ubuntu 24.04（2 節と 3 節）、ROS 2 Jazzy と開発の道具（4 節から 7 節）、Gazebo Harmonic と ros_gz（8 節）、いちばん上に次の Quickstart の章で入れる Nav2。">
           <rect class="d-box-next" x="20" y="16" width="480" height="40" rx="4"/>
           <text class="d-name" x="36" y="42">Nav2</text>
           <text class="d-sub" x="516" y="42">Quickstart の章</text>
@@ -153,8 +153,8 @@ footer a{color:var(--sub)}
       <ul>
         <li><span class="term">WSL2</span>（Windows Subsystem for Linux 2）: Windows の中で Linux を動かす、Microsoft の仕組み。Windows 11 では、Linux の画面のアプリも Windows のウィンドウとして開ける（この働きを WSLg と呼ぶ）。</li>
         <li><span class="term">Ubuntu 24.04</span>: Linux の配布の 1 つ。ROS 2 Jazzy は、この版の Ubuntu の上で使うことを前提に作られ、試されている。</li>
-        <li><span class="term">ROS 2 Jazzy</span>: ロボットのプログラムを、役目ごとの node に分けて組み合わせるための仕組みと道具の集まり。Jazzy はその版の名前で、Nav2 もこの上で動く。</li>
-        <li><span class="term">Gazebo Harmonic</span>: ロボットと世界を計算で再現するシミュレーター。Harmonic は、ROS 2 Jazzy と組み合わせるよう勧められている版である。</li>
+        <li><span class="term">ROS 2 Jazzy</span>: ロボットのプログラムを、役目ごとの <span class="term">node</span>（1 つの役目を持つプログラムの単位）に分けて組み合わせるための仕組みと道具の集まり。Jazzy はその版の名前で、Nav2 もこの上で動く。</li>
+        <li><span class="term">Gazebo Harmonic</span>: ロボットと世界を計算で再現するシミュレーター。Harmonic は、ROS 2 Jazzy と組み合わせるよう勧められている版である。Gazebo 自体は ROS 2 とは別のソフトで、この教材では ROS 2 のリポジトリから入れ、ROS 2 とは ros_gz（Gazebo と ROS 2 をつなぐパッケージ群）でつなぐ。</li>
       </ul>
     </div>
   </section>
@@ -187,7 +187,23 @@ wsl --install -d Ubuntu-24.04</code></pre>
     </div>
     <h3>画面のアプリを使うための準備</h3>
     <div class="prose">
-      <p>8 節の Gazebo や、Quickstart の章の RViz は、画面を持つアプリである。Windows 11 の WSL2 では、これらがそのまま Windows のウィンドウとして開く。公式の文書は、そのために PC の GPU（Intel・AMD・NVIDIA）に合ったドライバを Windows に入れておくよう求めている。以前から WSL を入れていた PC では、管理者の PowerShell で <code>wsl --update</code> を実行して、WSL を新しくしておく。</p>
+      <p>8 節の Gazebo や、Quickstart の章で使う <span class="term">RViz</span>（ROS 2 のデータを画面に描く道具）は、画面を持つアプリである。Windows 11 の WSL2 では、これらがそのまま Windows のウィンドウとして開く。公式の文書は、そのために PC の GPU（Intel・AMD・NVIDIA）に合ったドライバを Windows に入れておくよう求めている。</p>
+      <p>以前から WSL を入れていた PC では、管理者の PowerShell で WSL を新しくし、新しくした内容を効かせるために WSL を再起動する（<code>wsl --shutdown</code> は、動いている WSL をすべて止める。次に Ubuntu を開くと、また起動する）。</p>
+    </div>
+<pre class="cmd"><code># PowerShell（管理者）
+wsl --update
+
+wsl --shutdown</code></pre>
+    <div class="prose">
+      <p>画面のアプリは WSL 2 でしか動かず、WSL 1 では動かない。<code>wsl --install</code> で新しく入れた Linux は WSL 2 になるが、以前の設定が残っている PC もあるので、確かめておく。</p>
+    </div>
+<pre class="cmd"><code># PowerShell（管理者）
+wsl -l -v</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+      <div class="prose">
+        <p>入っている Linux の名前（<code>NAME</code>）・状態（<code>STATE</code>）・版（<code>VERSION</code>）が並ぶ（想定）。<code>Ubuntu-24.04</code> の行の <code>VERSION</code> が <code>2</code> であればよい。<code>1</code> なら、<code>wsl --set-version Ubuntu-24.04 2</code> で WSL 2 に変える。</p>
+      </div>
     </div>
   </section>
 
@@ -201,7 +217,7 @@ sudo apt update
 
 sudo apt upgrade</code></pre>
     <div class="prose">
-      <p>コマンドの箱の 1 行めの <code># T1</code> は、「1 つめの Ubuntu のターミナルで実行する」という印である（<code>#</code> から後はコメントなので、打たなくてよい）。7 節では、2 つめのターミナルを <code># T2</code> で表す。<code>sudo apt update</code> はパッケージの一覧を新しくし、<code>sudo apt upgrade</code> は入っているパッケージを新しい版にする。<code>upgrade</code> は、続けてよいかを <code>[Y/n]</code> で聞いてくるので、<kbd>Y</kbd> を押す。</p>
+      <p>コマンドの箱の 1 行めの <code># T1</code> は、「1 つめの Ubuntu のターミナルで実行する」という印である（<code>#</code> から後はコメントなので、打たなくてよい）。7 節では、2 つめのターミナルを <code># T2</code> で表す。<code>sudo</code> は、続くコマンドを管理者の権限で実行する指定で、最初にパスワードを聞かれる（Ubuntu を入れたときに決めたもの）。<code>sudo apt update</code> はパッケージの一覧を新しくし、<code>sudo apt upgrade</code> は入っているパッケージを新しい版にする。<code>upgrade</code> は、続けてよいかを <code>[Y/n]</code> で聞いてくるので、<kbd>Y</kbd> を押す。</p>
       <p>次に、<span class="term">locale</span>（言語や文字の符号化など、地域ごとの設定）が UTF-8 になっているかを確かめる。ROS 2 は UTF-8 を前提にしている。</p>
     </div>
 <pre class="cmd"><code># T1
@@ -212,7 +228,7 @@ locale</code></pre>
 LANGUAGE=
 LC_CTYPE="en_US.UTF-8"</code></pre>
       <div class="prose">
-        <p>実際にはこの後にも <code>LC_</code> で始まる行が続く。<code>LANG</code> の値が <code>.UTF-8</code> で終わっていればよい（<code>ja_JP.UTF-8</code> など、ほかの言語でも UTF-8 ならかまわない）。</p>
+        <p>実際にはこの後にも <code>LC_</code> で始まる行が続く。<code>LANG</code> の値が <code>.UTF-8</code> で終わっていればよい（<code>ja_JP.UTF-8</code> や <code>C.UTF-8</code> など、ほかの値でも UTF-8 ならかまわない）。</p>
         <p>もし <code>LANG=C</code> や <code>POSIX</code> のように UTF-8 でなければ、ROS 2 の公式の手順どおり、次のように UTF-8 の locale を入れて設定する。最後の <code>locale</code> で、<code>LANG=en_US.UTF-8</code> になったことを確かめる。</p>
       </div>
     </div>
@@ -239,16 +255,18 @@ sudo apt install software-properties-common
 
 sudo add-apt-repository universe</code></pre>
     <div class="prose">
-      <p>次に、ROS 2 のリポジトリの設定と鍵をまとめたパッケージ <code>ros2-apt-source</code> を入れる。1 行めで GitHub の公開ページから最新の版の番号を調べ、2 行めでその版のパッケージを <code>/tmp</code> に取り寄せ、3 行めで入れる。2 行めの URL には、3 行めで使う Ubuntu の版の名前（24.04 なら <code>noble</code>）が、自動で埋め込まれる。</p>
+      <p>次に、ROS 2 のリポジトリの設定と鍵をまとめたパッケージ <code>ros2-apt-source</code> を入れる。1 つめのコマンドで、取り寄せに使う <code>curl</code> を入れる。2 つめで GitHub の公開ページから最新の版の番号を調べ、3 つめでその版のパッケージを <code>/tmp</code> に取り寄せ、4 つめで入れる。3 つめの取り寄せるファイルの名前には、Ubuntu の版の名前（24.04 なら <code>noble</code>）が自動で入る。</p>
     </div>
 <pre class="cmd"><code># T1
+sudo apt update &amp;&amp; sudo apt install curl -y
+
 export ROS_APT_SOURCE_VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' https://github.com/ros-infrastructure/ros-apt-source/releases/latest | awk -F/ '{print $NF}')
 
 curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release && echo ${UBUNTU_CODENAME:-${VERSION_CODENAME}})_all.deb"
 
 sudo dpkg -i /tmp/ros2-apt-source.deb</code></pre>
     <div class="prose">
-      <p><code>curl</code> が入っていないと言われたら、先に <code>sudo apt install curl</code> を実行する。入ったかどうかは、次のコマンドで確かめる。</p>
+      <p>入ったかどうかは、次のコマンドで確かめる。</p>
     </div>
 <pre class="cmd"><code># T1
 dpkg-query -W ros2-apt-source</code></pre>
@@ -276,9 +294,15 @@ Suites: noble noble-updates noble-backports
 ## Ubuntu security updates. Aside from URIs and Suites,
 Suites: noble-security</code></pre>
       <div class="prose">
-        <p><code>##</code> で始まる行は説明のコメントで、見るのは <code>Suites:</code> で始まる行である。そこに <code>noble-updates</code> と <code>noble-backports</code> が入っていればよい。入っていなければ、そのファイルの <code>Suites: noble</code> の行を <code>Suites: noble noble-updates noble-backports</code> に書き換えてから、<code>sudo apt update</code> と <code>sudo apt upgrade</code> をやり直す（ファイルの書き換えには <code>sudo</code> が要る）。</p>
+        <p><code>##</code> で始まる行は説明のコメントで、見るのは <code>Suites:</code> で始まる行である。そこに <code>noble-updates</code> と <code>noble-backports</code> が入っていればよい。入っていなければ、そのファイルの <code>Suites: noble</code> の行を <code>Suites: noble noble-updates noble-backports</code> に書き換える。ファイルの書き換えには <code>sudo</code> が要るので、たとえば <code>sudo nano /etc/apt/sources.list.d/ubuntu.sources</code> で開いて直す。直したら、ROS 2 の公式の手順どおり、次の 3 つを実行する。</p>
       </div>
     </div>
+<pre class="cmd"><code># T1
+sudo apt clean
+
+sudo apt update
+
+sudo apt full-upgrade -y</code></pre>
     <div class="prose">
       <p>ROS 2 Jazzy と、開発の道具を入れる。</p>
     </div>
@@ -291,14 +315,14 @@ sudo apt install ros-jazzy-desktop
 
 sudo apt install ros-dev-tools</code></pre>
     <div class="prose">
-      <p><code>ros-jazzy-desktop</code> は、ROS 2 の本体に、RViz などの画面の道具とサンプルを加えたまとまりで、公式の手順が勧めているものである。量が多いので、この章でいちばん待ち時間が長い。</p>
+      <p><code>ros-jazzy-desktop</code> は、ROS 2 の本体に、RViz などの画面の道具とサンプルを加えたまとまりで、公式の手順が勧めているものである。量が多く、待ち時間が長い。</p>
       <p><code>ros-dev-tools</code> は、ROS 2 のプログラムをソースから組み立てるための道具のまとまりである。この章では使わないが、待ち時間を先に済ませるため、ここで入れておく。主な中身と、使う場面は次のとおり。</p>
     </div>
     <div class="table-wrap">
       <table>
         <thead><tr><th scope="col">道具</th><th scope="col">何をするか</th><th scope="col">使う章</th></tr></thead>
         <tbody>
-          <tr><td><span class="term">colcon</span></td><td>複数の ROS 2 のパッケージを、依存の順にまとめてビルドする</td><td>Local Installation の章（Nav2 をソースからビルドする）。以後、自分のパッケージを作る章でも使う</td></tr>
+          <tr><td><span class="term">colcon</span></td><td>複数の ROS 2 のパッケージを、依存の順にまとめてビルドする</td><td>Local Installation の章（Nav2 をソースからビルドする）</td></tr>
           <tr><td><span class="term">rosdep</span></td><td>ソースのパッケージが必要とするほかのパッケージを調べ、apt でまとめて入れる</td><td>Local Installation の章</td></tr>
           <tr><td><span class="term">vcstool</span>（コマンドは <code>vcs</code>）</td><td>複数の Git のリポジトリを、一覧のファイルからまとめて取得する</td><td>Local Installation の章</td></tr>
         </tbody>
@@ -337,19 +361,19 @@ echo $ROS_DISTRO</code></pre>
     </div>
     <h3>毎回の <code>source</code> を省く方法と、この教材で使わない理由</h3>
     <div class="prose">
-      <p>ターミナルを開くたびに自動で読み込まれる設定のファイル <code>~/.bashrc</code> に、<code>source</code> の行を 1 回だけ書き足しておく方法がある。</p>
+      <p>ターミナルを開くたびに自動で読み込まれる設定のファイル <code>~/.bashrc</code> に、<code>source</code> の行を 1 回だけ書き足しておく方法がある。次のコマンドは参考として載せるもので、この教材の手順では実行しない。</p>
     </div>
 <pre class="cmd"><code>echo "source /opt/ros/jazzy/setup.bash" &gt;&gt; ~/.bashrc</code></pre>
     <div class="prose">
       <p>こうすると、以後に開くターミナルでは最初から ROS 2 が使え、<code>source</code> を打ち忘れて「コマンドが見つからない」と困ることもなくなる。ROS 2 だけを使う PC なら、手間が大きく減る。</p>
-      <p>一方で、この設定は、その PC で開くすべてのターミナルに効く。同じ PC で、ROS 2 を使わないほかのプロジェクトや、別の版の ROS 2 を扱うと、意図しない環境が読み込まれて、原因の分かりにくい食い違いが起きうる。後の Local Installation の章で、ソースからビルドした Nav2 を読み込むときにも、どの環境を読み込んでいるかが見えにくくなる。そのため、この教材では書き足さず、ターミナルごとに <code>source</code> する形にしている。書き足した後で外したいときは、<code>~/.bashrc</code> の最後の行を消す。</p>
+      <p>一方で、この設定は、その PC で開くすべてのターミナルに効く。同じ PC で、ROS 2 を使わないほかのプロジェクトや、別の版の ROS 2 を扱うと、意図しない環境が読み込まれて、原因の分かりにくい食い違いが起きうる。後の Local Installation の章で、ソースからビルドした Nav2 を読み込むときにも、どの環境を読み込んでいるかが見えにくくなる。そのため、この教材では書き足さず、ターミナルごとに <code>source</code> する形にしている。書き足した後で外したいときは、<code>~/.bashrc</code> から、書き足した <code>source /opt/ros/jazzy/setup.bash</code> の行を消す。</p>
     </div>
   </section>
 
   <section aria-labelledby="s7">
     <h2 id="s7">7. 動作を確かめる</h2>
     <div class="prose">
-      <p>ROS 2 のサンプルの node を 2 つ動かし、やり取りできるかを確かめる。talker は「Hello World」という文を 1 秒ごとに topic へ送り、listener はそれを受け取って表示する。T1 で talker を動かしたまま、新しい Ubuntu のターミナル（T2）を開いて listener を動かす。</p>
+      <p>ROS 2 のサンプルの node を 2 つ動かし、やり取りできるかを確かめる。talker は「Hello World」という文を 1 秒ごとに <span class="term">topic</span>（node どうしが決まった型のデータを流す、名前つきの通り道）へ送り、listener はそれを受け取って表示する。T1 で talker を動かしたまま、新しい Ubuntu のターミナル（T2）を開いて listener を動かす。</p>
     </div>
 <pre class="cmd"><code># T1
 source /opt/ros/jazzy/setup.bash
@@ -379,7 +403,7 @@ ros2 run demo_nodes_py listener</code></pre>
 [INFO] [1795261366.552076670] [listener]: I heard: [Hello World: 6]
 [INFO] [1795261367.551799647] [listener]: I heard: [Hello World: 7]</code></pre>
       <div class="prose">
-        <p>talker の <code>Publishing</code> の番号と、listener の <code>I heard</code> の番号が対応していれば、やり取りできている。listener は、起動した時点より後に送られたものから受け取るので、最初の番号は 1 とは限らない（作成時は 4 から）。<code>ros2 run</code> は起動に数秒かかることがあり、表示が出るまで少し待つ。確かめたら、T1 と T2 の両方で <kbd>Ctrl</kbd>+<kbd>C</kbd> を押して止める。</p>
+        <p>talker の <code>Publishing</code> の番号と、listener の <code>I heard</code> の番号が対応していれば、やり取りできている。listener は、起動した時点より後に送られたものから受け取るので、最初の番号は 1 とは限らない（作成時は 4 から）。<code>ros2 run</code> は起動に時間がかかることがあり、作成時の環境では、表示が出るまで 10 秒以上かかることもあった。表示が出るまで待つ。確かめたら、T1 と T2 の両方で <kbd>Ctrl</kbd>+<kbd>C</kbd> を押して止める。</p>
       </div>
     </div>
   </section>
@@ -415,7 +439,8 @@ gz sim empty.sdf</code></pre>
       <h4>期待する結果</h4>
       <div class="prose">
         <p>Gazebo のウィンドウが開き、地面だけの世界が表示される（想定）。画面のアプリを初めて開くときは、ウィンドウが出るまで時間がかかることがある。確かめたら、T1 で <kbd>Ctrl</kbd>+<kbd>C</kbd> を押すか、ウィンドウを閉じる。</p>
-        <p>画面を出さずに、Gazebo の計算の部分（サーバー）だけが動くかを確かめることもできる。<code>-s</code> はサーバーだけを動かす指定、<code>-r</code> は読み込んだらすぐに時間を進める指定である。</p>
+        <p>ウィンドウが開かないときは、2 節の「画面のアプリを使うための準備」（GPU のドライバ、<code>wsl --update</code>、<code>wsl -l -v</code> で WSL 2 であること）を確かめる。それでも開かなければ、WSL の公式の案内「<a href="https://github.com/microsoft/wslg/wiki/Diagnosing-%22cannot-open-display%22-type-issues-with-WSLg">Diagnosing "cannot open display" type issues with WSLg</a>」で切り分ける。</p>
+        <p>画面を出さずに、Gazebo の計算の部分（サーバー）だけが動くかを確かめることもできる。<code>-s</code> はサーバーだけを動かす指定、<code>-r</code> は読み込んだらすぐに時間を進める指定、<code>-v 3</code> は表示するログの詳しさの指定である。</p>
       </div>
     </div>
 <pre class="cmd"><code># T1
@@ -455,9 +480,9 @@ gz sim -s -r -v 3 empty.sdf</code></pre>
       <p>次は <a href="01_quickstart.html">Quickstart</a> の章で、Nav2 を入れ、シミュレーションのロボットを動かす。このページに出てきた用語は、<a href="glossary.html">用語集</a>にまとめてある。</p>
       <p>出典（どれも <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> のもとで公開されている）:</p>
       <ul>
-        <li>ROS 2 の公式の文書「<a href="https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html">Ubuntu (deb packages)</a>」（<a href="https://github.com/ros2/ros2_documentation/blob/bb5ba42/source/Installation/Ubuntu-Install-Debs.rst">原稿</a>、<code>ros2/ros2_documentation</code> の <code>jazzy</code> ブランチ、コミット <code>bb5ba42</code>、2026-11-19）。3 節〜7 節のコマンドは、この文書のものと同等である。</li>
-        <li>Gazebo の公式の文書「<a href="https://gazebosim.org/docs/latest/ros_installation/">Installing Gazebo with ROS</a>」（<a href="https://github.com/gazebosim/docs/blob/93e26c0/common/ros_installation.md">原稿</a>、<code>gazebosim/docs</code>、コミット <code>93e26c0</code>、2026-11-19）。8 節の導入のコマンドは、この文書のものと同等である。</li>
-        <li>Microsoft の WSL の文書「<a href="https://learn.microsoft.com/windows/wsl/install">How to install Linux on Windows with WSL</a>」と「<a href="https://learn.microsoft.com/windows/wsl/tutorials/gui-apps">Run Linux GUI apps on the Windows Subsystem for Linux</a>」（<a href="https://github.com/MicrosoftDocs/WSL/tree/526e577/WSL">原稿</a>、<code>MicrosoftDocs/WSL</code>、コミット <code>526e577</code>、2026-11-06。文書のコードの部分は MIT License）。2 節の手順は、この文書を基にした。</li>
+        <li>ROS 2 の公式の文書「<a href="https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html">Ubuntu (deb packages)</a>」（<a href="https://github.com/ros2/ros2_documentation/blob/bb5ba42/source/Installation/Ubuntu-Install-Debs.rst">原稿</a>、<code>ros2/ros2_documentation</code> の <code>jazzy</code> ブランチ、コミット <code>bb5ba42</code>、2026-11-19。著作者: ROS 2 の文書の寄稿者）。3 節〜7 節のコマンドは、この文書のものと同等である。</li>
+        <li>Gazebo の公式の文書「<a href="https://gazebosim.org/docs/latest/ros_installation/">Installing Gazebo with ROS</a>」（<a href="https://github.com/gazebosim/docs/blob/93e26c0/common/ros_installation.md">原稿</a>、<code>gazebosim/docs</code>、コミット <code>93e26c0</code>、2026-11-19。著作者: Gazebo の文書の寄稿者）。8 節の導入のコマンドは、この文書のものと同等である。</li>
+        <li>Microsoft の WSL の文書「<a href="https://learn.microsoft.com/windows/wsl/install">How to install Linux on Windows with WSL</a>」と「<a href="https://learn.microsoft.com/windows/wsl/tutorials/gui-apps">Run Linux GUI apps on the Windows Subsystem for Linux</a>」（<a href="https://github.com/MicrosoftDocs/WSL/tree/526e577/WSL">原稿</a>、<code>MicrosoftDocs/WSL</code>、コミット <code>526e577</code>、2026-11-06。著作者: Microsoft とその寄稿者。文書のコードの部分は MIT License）。2 節の手順は、この文書を基にした。</li>
       </ul>
       <p>このページは、これらの内容を日本語で再構成し、説明の追加（1 節・6 節の後半・9 節など）と省略（ほかの版の手順、RMW の切り替え、アンインストールの手順など）を加えたもので、逐語の翻訳ではない。公式の画像は使っておらず、図はこの教材で作った。</p>
     </div>
