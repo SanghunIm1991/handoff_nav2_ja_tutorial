@@ -43,6 +43,7 @@ Nav2 の公式の文書（https://docs.nav2.org/ ）を、日本語の学習教�
 ## サイトの形
 
 - 教材の本文のページは HTML で作る。間章・Tips・用語集・作業計画は Markdown にすることがある。
+- **置き場所**: Pages はブランチの直下から公開する。サイトに載せるもの（本文・Tips・用語集 `glossary.md`）は直下の側に、開発の記録（QA 表 `docs/qa_log.md`・作業計画 `docs/work_plan.md`）は `docs/` に置く。`_config.yml` の `exclude` で `CLAUDE.md`・`docs/`・`notes/` をサイトから外す。新しく開発用のファイルやフォルダを足したら、`exclude` にも足す。
 - HTML のページの器は `pages-html-page` スキル、図解のページの中身は `tech-explainer-page` スキル、見た目の方向は `frontend-design` スキルに従う。
 - Markdown のページは Jekyll で変換されるので、GitHub の画面とは表示が違う。mermaid と数式（`$…$`）は既定では描かれず、`.md` へのリンクは `.html` で書く必要がありうる。Markdown のページに mermaid・数式を置く前に、どう描くかを決めて QA 表に残す（`markdown-mermaid` スキルの罠は、採用した描き方で確かめ直す）。
 - **症状から引くページ**: 困ったときの入口として、症状から原因の候補と該当する節を引くページを置く。項目は、ユーザーが学習中に実際に困ったことだけから作り、想定では書かない（膨れ上がるのを避けるため）。
@@ -97,7 +98,6 @@ Nav2 の公式の文書（https://docs.nav2.org/ ）を、日本語の学習教�
 
 ## 未決のこと
 
-- Pages の公開元（リポジトリの直下か `docs/` か）と、用語集・作業計画のファイルの置き場所。`docs/qa_log.md` をサイトに載せるかどうかにも関わる。
 - C++ のプラグインの章の詳細（ROS 2 の C++ のライブラリをどこで説明するか）。
 - Configuration Guide で解説のページを作る「主要な部品」の範囲（到達点を基準に選ぶ）。
 - HTML のページでの「期待する結果」の具体の形。Markdown のページでの mermaid・数式の描き方。

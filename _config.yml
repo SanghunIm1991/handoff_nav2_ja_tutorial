@@ -1,0 +1,7 @@
+# GitHub Pages（ブランチの直下から公開）の Jekyll の設定
+# 開発の記録と Claude Code 向けの文書は、サイトに載せない。
+# 開発用のファイルやフォルダを足したら、ここにも足す（CLAUDE.md の「置き場所」）。
+exclude:
+  - CLAUDE.md
+  - docs/
+  - notes/
