@@ -97,6 +97,13 @@ RViz の操作（4 節・5 節）は、ユーザーが撮影した写真を後�
 - [ ] Quickstart の 2 節: `sudo apt update`・`sudo apt upgrade`・`sudo apt install …` の手順と、版の確かめ方の表示が本文と合っているか（読者の環境を変える手順のため）
 - [ ] Quickstart の 3〜5 節と 7 節: 画面の表示と操作が本文と合っているか。とくに、RViz のツールバーのボタン名（「2D Pose Estimate」「Nav2 Goal」）、左下の Nav2 の欄（Startup と取り消しのボタン）、起動直後の地図の見え方、初期位置を与えた後の particle cloud と costmap、Ctrl+C で Gazebo と RViz のウィンドウが閉じること。あわせて、4 節・5 節に差し込む画面の写真を撮る（写り込みに注意）
 
+## Pages に載せた後に確かめること
+
+手元には Jekyll が無く、載せるまで確かめられないもの。
+
+- 用語集（`glossary.md`）に、共通の枠 `_layouts/default.html` が当たり、帯・見出しの線・表が設計図の見た目になっているか。ページの名前（`<title>`）が「用語集」になっているか
+- 各ページの `assets/site.css` の読み込みと、ページの間のリンク（`.md` へのリンクを `.html` で書いたもの）が働くか
+
 ## 公開前の点検で扱う点
 
 最初の push の前の `public-release-review` で、扱いを判断する。

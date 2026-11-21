@@ -32,7 +32,7 @@
     <ul>
       <li>ROS 2・Gazebo・WSL の公式の文書の手順を基に、日本語でまとめ直したもの。逐語の翻訳ではない。出典とライセンスはページの末尾にある。</li>
       <li>Windows 11 の WSL2 の上の Ubuntu 24.04 と、ROS 2 Jazzy を前提にする。Ubuntu 24.04 を直接入れた PC では、2 節を飛ばす。</li>
-      <li>期待する結果の出どころ: 3 節の <code>locale</code>、5 節の <code>Suites</code> の行とパッケージの版、6 節の <code>ROS_DISTRO</code>、7 節の talker と listener、8 節の Gazebo の版と画面を出さない起動は、作成時の環境で、画面を出さずに確かめた。ただし作成時の環境は導入済みだったので、2 節〜5 節と 8 節の導入の手順そのものは頭から実行し直しておらず、導入のコマンドの表示（ダウンロードの進み方など）は載せていない。2 節の WSL の手順と、8 節の Gazebo の画面は、公式の文書から想定したもので、まだ確かめていない。</li>
+      <li>期待する結果の出どころ: 3 節の <code>locale</code>、4 節の <code>ros2-apt-source</code> の版、5 節の <code>Suites</code> の行とパッケージの版、6 節の <code>ROS_DISTRO</code>、7 節の talker と listener、8 節の Gazebo の版と画面を出さない起動は、作成時の環境で、画面を出さずに確かめた。ただし作成時の環境は導入済みだったので、2 節〜5 節と 8 節の導入の手順そのものは頭から実行し直しておらず、導入のコマンドの表示（ダウンロードの進み方など）は載せていない。2 節の WSL の手順と、8 節の Gazebo の画面は、公式の文書から想定したもので、まだ確かめていない。</li>
       <li>ログの角括弧の中の長い数字は時刻（UNIX 時刻）で、実行するたびに変わる。版の番号は、更新されると変わる。</li>
     </ul>
   </aside>
@@ -199,7 +199,7 @@ sudo apt update &amp;&amp; sudo apt install curl -y
 
 export ROS_APT_SOURCE_VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' https://github.com/ros-infrastructure/ros-apt-source/releases/latest | awk -F/ '{print $NF}')
 
-curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release && echo ${UBUNTU_CODENAME:-${VERSION_CODENAME}})_all.deb"
+curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release &amp;&amp; echo${UBUNTU_CODENAME:-${VERSION_CODENAME}})_all.deb"
 
 sudo dpkg -i /tmp/ros2-apt-source.deb</code></pre>
     <div class="prose">

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{%- comment -%}
+Markdown のページ（用語集・Tips・間章など）の共通の枠。Jekyll が front matter の無い .md にも既定でこの枠を当てる。
+HTML の教材のページ（00_setup.html など）は front matter が無いので、この枠は当たらない。見た目は assets/site.css が正本。
+{%- endcomment %}
+<title>{{ page.title | default: "Nav2 日本語ガイド" }}｜Nav2 日本語ガイド（非公式）</title>
+<link rel="stylesheet" href="{{ '/assets/site.css' | relative_url }}">
+</head>
+<body>
+<header><div class="wrap band-slim">
+  <p class="site"><a href="{{ '/' | relative_url }}">Nav2 日本語ガイド</a>（非公式・作成中）</p>
+</div></header>
+
+<main><div class="wrap md">
+{{ content }}
+</div></main>
+
+<footer><div class="wrap">
+  <p>Nav2 日本語ガイドは、Nav2 の公式の文書を基にした非公式の学習教材で、Nav2 のプロジェクトとは関係がない。ライセンスは <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>。</p>
+</div></footer>
+</body>
+</html>

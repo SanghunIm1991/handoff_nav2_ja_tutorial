@@ -6,6 +6,7 @@
 
 - docs.ros.org と docs.nav2.org は、本文を取得できないことがある。GitHub にある原稿（`ros2/ros2_documentation`・`ros-navigation/docs.nav2.org`）を読む。
 - 原稿をまとめて調べるときは、作業用の一時フォルダの空のフォルダに `git clone --depth 1 --branch jazzy --filter=blob:limit=100k <URL>` で取得する。画像を除いて全文を検索でき、基にしたコミットも `git log -1` で分かる。
+- 読むファイルが少ないときや、`jazzy` のブランチが無いリポジトリ（`gazebosim/docs`・`MicrosoftDocs/WSL` など）は、`--branch` を付けずに `git clone --depth 1 --filter=blob:limit=100k --no-checkout <URL>` で取得し、`git ls-tree -r --name-only HEAD` で探して、`git show HEAD:<パス> > <一時フォルダ>/<名前>` で必要なファイルだけを書き出す（2026-11-21 の環境構築では、書き出したファイルに `wsl_install.md` などの短い名前を付けた）。
 - 要件や対応版は、検索の要約ではなく安定版の公式のページで確かめる。
 
 ## パッケージの版
@@ -31,10 +32,10 @@ dpkg-query -W -f='${Version}\n' 'ros-jazzy-nav2-*' ros-jazzy-navigation2 | cut -
 
 ## CSS を直したとき
 
-- `pages-html-page` スキルの `static-checks.sh` は、ページの `<style>` だけを見る。`assets/site.css` のクラスは、すべてのページを横断して、使われているかを確かめる（使われていないクラスは消す）。
+- `pages-html-page` スキルの `static-checks.sh` は、ページの `<style>` だけを見る。`assets/site.css` のクラスは、すべてのページと Markdown の枠（`_layouts/`）を横断して、使われているかを確かめる（使われていないクラスは消す）。
 
 ```bash
-for c in $(perl -0777 -pe 's{/\*.*?\*/}{}gs; s/\{[^}]*\}/ /g' assets/site.css | grep -oE '\.[A-Za-z][A-Za-z0-9_-]*' | sed 's/^\.//' | sort -u); do grep -qE "class=\"([^\"]* )?$c( [^\"]*)?\"" *.html || echo ".$c"; done
+for c in $(perl -0777 -pe 's{/\*.*?\*/}{}gs; s/\{[^}]*\}/ /g' assets/site.css | grep -oE '\.[A-Za-z][A-Za-z0-9_-]*' | sed 's/^\.//' | sort -u); do grep -qE "class=\"([^\"]* )?$c( [^\"]*)?\"" *.html _layouts/*.html || echo ".$c"; done
 ```
 
 - 見た目を変えるつもりの無い整理（ファイルへの切り出しなど）では、前後の CSS を「セレクタ | 宣言」の 1 件ずつに分解して比べ、違いが意図したものだけかを確かめる（2026-11-21 の切り出しでは、Quickstart の 223 件が一致した）。
@@ -44,6 +45,8 @@ for c in $(perl -0777 -pe 's{/\*.*?\*/}{}gs; s/\{[^}]*\}/ /g' assets/site.css | 
 
 - `perl -i` の中で、ほかのファイルを `<>` で読まない。`-i` はその読み込みにも効き、読んだファイルまで書き換えてしまう（2026-11-21、CSS の断片のファイルをページの中身で上書きし、2 つのページを空にした）。ほかのファイルの中身は、Python などで明示的に開いて読む。
 - 差し込む断片のファイルは、差し込む前に中身（行数・先頭・混ざってはいけないものの有無）を確かめる。書き換えた後は、変えるつもりの無い部分に差が無いことを `diff` で確かめてから、次へ進む。
+- コミットの前に `git diff --stat` を見て、意図しない行の削除が無いかを確かめる。確かめる前にコミットまで続けて実行しない（2026-11-21、用語集の並べ替えで行を 1 つ消したまま、続けてコミットした）。
+- `git restore` などで作業中の変更を捨てる前に、捨てる対象を一時フォルダに写しておく（捨てた後では戻せないため）。
 
 ## 図と作業の環境
 
