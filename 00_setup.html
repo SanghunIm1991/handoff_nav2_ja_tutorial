@@ -199,7 +199,7 @@ sudo apt update &amp;&amp; sudo apt install curl -y
 
 export ROS_APT_SOURCE_VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' https://github.com/ros-infrastructure/ros-apt-source/releases/latest | awk -F/ '{print $NF}')
 
-curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release &amp;&amp; echo${UBUNTU_CODENAME:-${VERSION_CODENAME}})_all.deb"
+curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release &amp;&amp; echo ${UBUNTU_CODENAME:-${VERSION_CODENAME}})_all.deb"
 
 sudo dpkg -i /tmp/ros2-apt-source.deb</code></pre>
     <div class="prose">
