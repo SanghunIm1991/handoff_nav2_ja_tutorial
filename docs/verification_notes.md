@@ -21,13 +21,13 @@ dpkg-query -W -f='${Version}\n' 'ros-jazzy-nav2-*' ros-jazzy-navigation2 | cut -
 
 - **起動の形**: `ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST` を付け、ログは `stdbuf -oL -eL` で行ごとに出す（`timeout` で止めたときの出力の欠けを防ぐ）。止めるときは `pkill -f` ではなく PID で止める。
 - **Gazebo は画面なしで動かす**: `gz sim -s` と、手で起動する `parameter_bridge` で確かめる。`GZ_IP`・`GZ_PARTITION`・`ROS_DOMAIN_ID` で、ほかのプロセスと分ける。Nav2 の `tb3_simulation_launch.py` は `headless` の既定が true（Gazebo の画面が出ない）。
-- **WSL の壁時計**: 約 36 秒ごとに約 3.6 秒進むことがある。経過時間は STEADY_TIME で測り、ログの時刻の飛びをノードの停止と取り違えない。Nav2 は TF の時刻と `use_sim_time` に敏感なので、特に注意する。
+- **WSL の壁時計**: 約 36 秒ごとに約 3.6 秒進むことがある。経過時間は STEADY_TIME で測り、ログの時刻の飛びを node の停止と取り違えない。Nav2 は TF の時刻と `use_sim_time` に敏感なので、特に注意する。
 - **Gazebo の導入後**: `gz` が見つからないときは `source` をやり直す。vendor パッケージの中身は `find` ではなく `dpkg -L` で探す。
 - **裏で起動したときの待ち方**: `source /opt/ros/jazzy/setup.bash` に十数秒かかることがある。ログを見張る処理を別に動かすときは、ログと PID のファイルができるのを待ってから見張る（先に見張ると、ファイルが無いまま終わる）。
 - **Nav2 の起動の完了**: `lifecycle_manager_localization` と `lifecycle_manager_navigation` の 2 つが `Managed nodes are active` を出せば完了。移動の側は、初期位置を与えるまで完了しない。与えないまま約 85 秒たつと `Aborting bringup.` で打ち切られる（1.3.14）。画面なしで確かめるときは、位置の推定の側の完了を待って、すぐに `/initialpose` を送る。
-- **トピックの一覧の取りこぼし**: `ros2 topic list` を既定のまま実行すると、Nav2 のコンテナの中のノードのトピックが抜けることがある（`ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST` で 11 個だけ）。`ros2 topic list --no-daemon --spin-time 10` で集め直す（76 個）。
-- **止めたときの異常終了**: SIGINT で止めると、Nav2 のコンテナが `SIGSEGV`・`exit code -6` を出して終わる（1.3.14 で 2 回とも）。プロセスは残らない。止めた後は、`gz sim`・`component_container`・`parameter_bridge` が残っていないかを確かめる。
-- **言語の取り違え**: rclpy のノードは `qos_overrides.*` のパラメータを宣言しない（C++ のノードだけ）。`ros2 param list` の期待する結果で、言語を取り違えない。
+- **topic の一覧の取りこぼし**: `ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST` のもとで `ros2 topic list` を既定のまま実行すると、Nav2 の container の中の node の topic が抜け、11 個だけだった。`ros2 topic list --no-daemon --spin-time 10` では 76 個出た。daemon を使わないことと待ち時間を延ばすことのどちらが効いたか、既定の discovery の設定でも起きるかは、切り分けていない。
+- **止めたときの異常終了**: SIGINT で止めると、Nav2 の container が `SIGSEGV`・`exit code -6` を出して終わる（1.3.14 で 2 回とも）。プロセスは残らない。止めた後は、`gz sim`・`component_container`・`parameter_bridge`・`robot_state_publisher`・`rviz2` が残っていないかを確かめる。`ros2 node list` などが裏で起動する `_ros2_daemon` は残る作りなので、確かめた後に要らなければ、起動したときと同じ `ROS_DOMAIN_ID` を付けて `ros2 daemon stop` で止める（2026-11-21 の確認では、次のセッションの時点で残っていなかった）。
+- **言語の取り違え**: rclpy の node は `qos_overrides.*` の parameter を宣言しない（C++ の node だけ）。`ros2 param list` の期待する結果で、言語を取り違えない。
 
 ## 図と作業の環境
 

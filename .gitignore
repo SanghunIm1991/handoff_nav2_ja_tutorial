@@ -1,2 +1,5 @@
 # 下準備の申し送りと Claude の作業メモ（公開しない）
 notes/
+
+# Claude Code の PC ごとの承認の設定（公開しない）
+.claude/settings.local.json
