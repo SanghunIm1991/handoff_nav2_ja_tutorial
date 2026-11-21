@@ -131,7 +131,7 @@ footer a{color:var(--sub)}
     <p>このページについて</p>
     <ul>
       <li>Nav2 の公式の文書の <a href="https://docs.nav2.org/jazzy/getting_started/quickstart/quickstart/">Quickstart</a>（<code>jazzy</code> 版の原稿、コミット <code>b22554c</code>）を基に、日本語で説明し直したもの。逐語の翻訳ではない。出典とライセンスはページの末尾にある。</li>
-      <li>ROS 2 Jazzy と Ubuntu 24.04（Windows の WSL2 を含む）を前提にする。ROS 2 の導入は、環境構築のページで済ませておく。</li>
+      <li>ROS 2 Jazzy と Ubuntu 24.04（Windows の WSL2 を含む）を前提にする。ROS 2 の導入は、<a href="00_setup.html">環境構築</a>の章で済ませておく。</li>
       <li>期待する結果の出どころ: ターミナルに出る表示（2 節〜7 節のコードの箱）は、作成時の環境（<code>navigation2</code> 1.3.14、<code>nav2_minimal_turtlebot_simulation</code> 1.0.1）で実際に確かめたもの。ただし 3 節〜7 節は、Gazebo と RViz の画面を出さずに起動し、RViz での初期位置と目標の指定は、同じ内容をコマンドで送って確かめた。Gazebo と RViz の画面の見え方と、RViz の操作（3 節〜5 節と 7 節の画面の説明）は、ソースと公式の説明から想定したもので、まだ実際の画面と照らし合わせていない。</li>
       <li>ログの角括弧の中の長い数字は時刻（UNIX 時刻）で、実行するたびに変わる。<code>-6</code> のような番号や、名前の後ろに付く数字・英数字も、実行するたびに変わることがある。</li>
     </ul>
@@ -143,7 +143,7 @@ footer a{color:var(--sub)}
       <p>このページを終えると、次のことができる。</p>
       <ol>
         <li>Nav2 と、シミュレーションの TurtleBot 3 のパッケージを入れられる。</li>
-        <li>1 つのコマンドで、シミュレーター・Nav2・RViz をまとめて起動できる。</li>
+        <li>1 つのコマンドで、シミュレーター・Nav2・RViz（地図を見て指示を出す画面）をまとめて起動できる。</li>
         <li>RViz で初期位置と目標を与え、ロボットを目標まで動かせる。</li>
         <li>起動した node と topic を、<code>ros2</code> コマンドで確かめられる。</li>
       </ol>
@@ -154,7 +154,7 @@ footer a{color:var(--sub)}
   <section aria-labelledby="s1">
     <h2 id="s1">1. 全体像</h2>
     <div class="prose">
-      <p>このページで起動するものは、大きく 4 つの役に分かれる。ROS 2 では、1 つの役目を持つプログラムの単位を <span class="term">node</span> と呼び、node どうしは、決まった型のデータを流す名前つきの通り道である <span class="term">topic</span> でつながる。下の図の矢印に付けた名前（<code>scan</code> など）が、topic の名前である。</p>
+      <p>このページで起動するものは、大きく 4 つの役に分かれる。ROS 2 では、1 つの役目を持つプログラムの単位を <span class="term">node</span> と呼び、node どうしは、決まった型のデータを流す名前つきの通り道である <span class="term">topic</span> でつながる。下の図で、横の矢印に付けた英語の名前（<code>scan</code> など）が、topic の名前である。縦の矢印の言葉は運ぶものの説明で、topic の名前ではない（目標は、5 節で見る action という別の仕組みで送られる）。</p>
     </div>
     <figure>
       <div class="diagram">
@@ -203,7 +203,7 @@ footer a{color:var(--sub)}
         <li><span class="term">Nav2</span>: ロボットの位置を推定し、目標までの経路を考え、その経路に沿って走るための速度の指令を出す。実体は、主なものだけで 14 個の node の集まりである（6 節で確かめる）。</li>
         <li><span class="term">RViz</span>: ROS 2 のデータを画面に描く道具。地図・ロボットの位置・経路を表示し、このページでは初期位置と目標を Nav2 に伝える入り口にもなる。</li>
       </ul>
-      <p>矢印の topic は、それぞれ次のデータを運ぶ。<code>scan</code> はレーザーで測った周囲の距離（型は <a href="https://github.com/ros2/common_interfaces/blob/jazzy/sensor_msgs/msg/LaserScan.msg"><code>sensor_msgs/msg/LaserScan</code></a>）、<code>odom</code> は車輪の回転から求めた移動量（odometry。型は <a href="https://github.com/ros2/common_interfaces/blob/jazzy/nav_msgs/msg/Odometry.msg"><code>nav_msgs/msg/Odometry</code></a>）、<code>tf</code> は座標系どうしの位置関係、<code>cmd_vel</code> は Nav2 がロボットに出す速度の指令（型は <a href="https://github.com/ros2/common_interfaces/blob/jazzy/geometry_msgs/msg/Twist.msg"><code>geometry_msgs/msg/Twist</code></a>）。図では省いたが、シミュレーターの時計を配る <code>/clock</code> も Gazebo から流れている。ロボットの各部品の位置関係を <code>tf</code> として配る <code>robot_state_publisher</code> という node も、一緒に起動する。</p>
+      <p>矢印の topic は、それぞれ次のデータを運ぶ。<code>scan</code> はレーザーで測った周囲の距離（型は <a href="https://github.com/ros2/common_interfaces/blob/jazzy/sensor_msgs/msg/LaserScan.msg"><code>sensor_msgs/msg/LaserScan</code></a>）、<code>odom</code> は車輪の回転から求めた移動量（odometry。型は <a href="https://github.com/ros2/common_interfaces/blob/jazzy/nav_msgs/msg/Odometry.msg"><code>nav_msgs/msg/Odometry</code></a>）、<code>tf</code> は座標系どうしの位置関係（型は <a href="https://github.com/ros2/geometry2/blob/jazzy/tf2_msgs/msg/TFMessage.msg"><code>tf2_msgs/msg/TFMessage</code></a>）、<code>cmd_vel</code> は Nav2 がロボットに出す速度の指令（型は <a href="https://github.com/ros2/common_interfaces/blob/jazzy/geometry_msgs/msg/Twist.msg"><code>geometry_msgs/msg/Twist</code></a>）。図では省いたが、シミュレーターの時計を配る <code>/clock</code>（型は <a href="https://github.com/ros2/rcl_interfaces/blob/jazzy/rosgraph_msgs/msg/Clock.msg"><code>rosgraph_msgs/msg/Clock</code></a>）も Gazebo から流れている。ロボットの各部品の位置関係を <code>tf</code> として配る <code>robot_state_publisher</code> という node も、一緒に起動する。</p>
     </div>
   </section>
 
@@ -228,7 +228,7 @@ sudo apt install ros-jazzy-navigation2 ros-jazzy-nav2-bringup 'ros-jazzy-nav2-mi
 <pre class="out"><code>      3 1.0.1
      32 1.3.14</code></pre>
       <div class="prose">
-        <p>左の数が、その版のパッケージの数である。<code>1.0.1</code> の 3 個はシミュレーションのロボットの部品で、Nav2 本体とは別に版を数えているので、これで正しい。それ以外の Nav2 のパッケージが 1 つの版（ここでは <code>1.3.14</code>）にそろっていればよい。版の番号そのものは、更新されると変わる。2 つ以上の版が並んだら、<code>sudo apt upgrade</code> をやり直す。</p>
+        <p>左の数が、その版のパッケージの数である。<code>1.0.1</code> の 3 個はシミュレーションのロボットの部品で、Nav2 本体とは別に版を数えているので、これで正しい。それ以外の Nav2 のパッケージが 1 つの版（ここでは <code>1.3.14</code>）にそろっていればよい。版の番号そのものは、更新されると変わる。<code>1.0.1</code> の行を除いて 2 つ以上の版が並んだら、<code>sudo apt upgrade</code> をやり直す。</p>
       </div>
     </div>
   </section>
@@ -236,7 +236,8 @@ sudo apt install ros-jazzy-navigation2 ros-jazzy-nav2-bringup 'ros-jazzy-nav2-mi
   <section aria-labelledby="s3">
     <h2 id="s3">3. 起動する</h2>
     <div class="prose">
-      <p>ターミナルを開き、次の 2 行を実行する。</p>
+      <p>起動したら、すぐに 4 節の操作（RViz で初期位置を与える）をする。初期位置を与えないまま時間がたつと、Nav2 の移動を受け持つ側が起動をあきらめてしまう（作成時の環境では約 85 秒。この節の最後で説明する）。先に 4 節まで読んでから起動するとよい。</p>
+      <p>ターミナルを開き、次の 2 行を実行する。コマンドの箱の 1 行めの <code># T1</code> は、「1 つめのターミナルで実行する」という印である（<code>#</code> から後はコメントなので、打たなくてよい）。6 節では、2 つめのターミナルを <code># T2</code> で表す。</p>
     </div>
 <pre class="cmd"><code># T1
 source /opt/ros/jazzy/setup.bash
@@ -276,7 +277,7 @@ ros2 launch nav2_bringup tb3_simulation_launch.py headless:=False</code></pre>
 [component_container_isolated-6] [ERROR] [1795242475.735565668] [lifecycle_manager_navigation]: Failed to change state for node: planner_server
 [component_container_isolated-6] [ERROR] [1795242475.735696263] [lifecycle_manager_navigation]: Failed to bring up all requested nodes. Aborting bringup.</code></pre>
     <div class="prose">
-      <p>1 行めは、経路を考えるための <span class="term">costmap</span>（ロボットがぶつかる危険の大きさを地図のマスごとに表したもの。4 節で画面に現れる）が、地図（<code>map</code>）とロボットの体（<code>base_link</code>）の位置関係を時間内に得られなかった、という意味である。続く 2 行で、移動を受け持つ側が起動を打ち切ったことが分かる。この状態では、目標を与えてもロボットは動かない。7 節の方法でいったん止め、もう一度起動して、今度は早めに 4 節の初期位置を与える。</p>
+      <p>1 行めは、経路を考えるための <span class="term">costmap</span>（ロボットがぶつかる危険の大きさを地図のマスごとに表したもの。4 節で画面に現れる）が、地図（<code>map</code>）とロボットの体（<code>base_link</code>）の位置関係を時間内に得られなかった、という意味である。続く 2 行で、移動を受け持つ側が起動を打ち切ったことが分かる。この状態では、目標を与えてもロボットは動かない。7 節の方法（T1 で <kbd>Ctrl</kbd>+<kbd>C</kbd>）でいったん止め、もう一度起動して、今度は早めに 4 節の初期位置を与える。</p>
     </div>
   </section>
 
@@ -284,7 +285,7 @@ ros2 launch nav2_bringup tb3_simulation_launch.py headless:=False</code></pre>
     <h2 id="s4">4. 初期位置を与える</h2>
     <div class="prose">
       <p>起動した直後の Nav2 は、ロボットが地図のどこにいるかを知らない。位置を推定するのは、3 節の警告に出てきた AMCL という node で、レーザーで測った周囲の距離と地図を照らし合わせ、「地図のこのあたりにいるはずだ」と推定し続ける。ただし、照らし合わせを始めるには、だいたいの出発点が要る。それを人が与えるのが、この節の操作である。</p>
-      <p>Gazebo の画面でロボットがいる場所を見て、RViz の地図の同じ場所を探す。見つけたら、次のように操作する。</p>
+      <p>この launch file は、ロボットを地図の (x, y) = (-2.0, -0.5) 付近に、地図の x の正の向きを向けて置く。Gazebo の画面でロボットがいる場所を見て、RViz の地図の同じ場所を探す。見つけたら、次のように操作する。</p>
       <ol>
         <li>RViz の上の端にある道具の並び（ツールバー）で、「2D Pose Estimate」を押す。</li>
         <li>地図の上で、ロボットがいる点を押し、押したまま、ロボットの正面の向きへドラッグして離す。押した点が位置に、ドラッグした向きがロボットの向きになる。</li>
@@ -389,14 +390,50 @@ ros2 topic list</code></pre>
 /velocity_smoother
 /waypoint_follower</code></pre>
       <div class="prose">
-        <p>Nav2 の主な node は 14 個ある。位置の推定を受け持つのが <code>map_server</code>（地図を配る）と <code>amcl</code>、移動を受け持つのが <code>bt_navigator</code>・<code>planner_server</code>・<code>controller_server</code> などである。<code>lifecycle_manager_</code> で始まる 2 つは、ほかの node を決まった順番で動かし始め、止める係である。<code>global_costmap</code>・<code>local_costmap</code> は、<code>planner_server</code> と <code>controller_server</code> がそれぞれ中に持つ costmap、<code>bt_navigator_</code> で始まる 2 つは <code>bt_navigator</code> が中で使う node である。<code>/launch_ros_</code> と <code>/transform_listener_impl_</code> の後ろの数字・英数字は、実行するたびに変わる。</p>
-        <p>これだけの数の node があるが、この launch file の既定では、Nav2 の node は <code>nav2_container</code> という 1 つのプロセスの中にまとめて入れられている（<code>use_composition</code> が既定で <code>True</code>）。プロセスを分けないことで、node 間のやり取りの手間を減らしている。</p>
-        <p><code>ros2 topic list</code> には、topic の名前が並ぶ。作成時は、RViz と Gazebo の画面を出さない形で 76 個あった。1 節の図に出てきた <code>/scan</code>・<code>/odom</code>・<code>/tf</code>・<code>/cmd_vel</code>・<code>/clock</code> のほか、地図を運ぶ <code>/map</code>、<code>planner_server</code> が考えた経路を運ぶ <code>/plan</code>、AMCL の推定を運ぶ <code>/amcl_pose</code> と <code>/particle_cloud</code> などが見つかる。</p>
-        <p>ただし作成時の環境（ほかの PC の ROS 2 と混ざらないよう、node を探す範囲をその PC の中だけに限る設定 <code>ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST</code> にしていた）では、<code>ros2 topic list</code> を普通に実行すると、<code>/map</code> など <code>nav2_container</code> の中の node の topic が抜け、11 個しか表示されなかった。次のように、daemon（<code>ros2</code> コマンドが裏で使う、一覧を覚えておく補助のプロセス）を使わず、10 秒かけて集め直すと、全部が表示された。原因は確かめていない。表示が少ないと感じたら、試してみる。</p>
+        <p>Nav2 の主な node は 14 個ある。位置の推定を受け持つのが <code>map_server</code>（地図を配る）・<code>amcl</code>・<code>lifecycle_manager_localization</code> の 3 個、移動を受け持つのが <code>bt_navigator</code>・<code>planner_server</code>・<code>controller_server</code>・<code>smoother_server</code>・<code>route_server</code>・<code>behavior_server</code>・<code>velocity_smoother</code>・<code>collision_monitor</code>・<code>waypoint_follower</code>・<code>docking_server</code>・<code>lifecycle_manager_navigation</code> の 11 個である。<code>lifecycle_manager_</code> で始まる 2 つは、ほかの node を決まった順番で動かし始め、止める係である。<code>global_costmap</code>・<code>local_costmap</code> は、<code>planner_server</code> と <code>controller_server</code> がそれぞれ中に持つ costmap、<code>bt_navigator_</code> で始まる 2 つは <code>bt_navigator</code> が中で使う node である。<code>/launch_ros_</code> と <code>/transform_listener_impl_</code> の後ろの数字・英数字は、実行するたびに変わる。</p>
+        <p>これだけの数の node があるが、この launch file の既定では、Nav2 の node は <code>nav2_container</code> という 1 つのプロセスの中にまとめて入れられている（<code>use_composition</code> が既定で <code>True</code>）。</p>
+        <p><code>ros2 topic list</code> には、topic の名前が並ぶ。ただし作成時の環境（ほかの PC の ROS 2 と混ざらないよう、node を探す範囲をその PC の中だけに限る設定 <code>ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST</code> にしていた）では、次の 11 個しか表示されなかった。<code>/map</code> など、<code>nav2_container</code> の中の node の topic が抜けている。</p>
+      </div>
+<pre class="out"><code>/clock
+/cmd_vel
+/imu
+/joint_states
+/odom
+/parameter_events
+/robot_description
+/rosout
+/scan
+/tf
+/tf_static</code></pre>
+      <div class="prose">
+        <p>次のように、daemon（<code>ros2</code> コマンドが裏で使う、一覧を覚えておく補助のプロセス）を使わず、10 秒かけて集め直すと、全部が表示された。原因は確かめていない。表示が少ないと感じたら、試してみる。</p>
       </div>
     </div>
 <pre class="cmd"><code># T2
 ros2 topic list --no-daemon --spin-time 10</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+      <div class="prose">
+        <p>作成時は、RViz と Gazebo の画面を出さない形で 76 個が表示された。次は、その抜粋である。</p>
+      </div>
+<pre class="out"><code>/amcl_pose
+/clock
+/cmd_vel
+/cmd_vel_nav
+/cmd_vel_smoothed
+/global_costmap/costmap
+/initialpose
+/local_costmap/costmap
+/map
+/odom
+/particle_cloud
+/plan
+/scan
+/tf</code></pre>
+      <div class="prose">
+        <p>1 節の図に出てきた <code>/scan</code>・<code>/odom</code>・<code>/tf</code>・<code>/cmd_vel</code>・<code>/clock</code> のほか、地図を運ぶ <code>/map</code>、<code>planner_server</code> が考えた経路を運ぶ <code>/plan</code>、AMCL の推定を運ぶ <code>/amcl_pose</code> と <code>/particle_cloud</code>、4 節で RViz が初期位置を送る <code>/initialpose</code> などが見つかる。</p>
+      </div>
+    </div>
     <div class="prose">
       <p>最後に、ロボットが走っている間に Nav2 が出す速度の指令を、1 つだけ読んでみる。この時点のロボットは 5 節の目標に着いて止まっているので、先に T2 で次のコマンドを実行してから、RViz の「Nav2 Goal」で別の目標を与える。コマンドは、指令が 1 つ流れてくるまで待ち、受け取ると表示して終わる。待ち続けて止めたいときは、<kbd>Ctrl</kbd>+<kbd>C</kbd> を押す。</p>
     </div>
@@ -414,7 +451,7 @@ angular:
   z: 0.0
 ---</code></pre>
       <div class="prose">
-        <p>型は <code>geometry_msgs/msg/Twist</code>（1 節）で、<code>linear.x</code> が前に進む速さ（メートル毎秒）、<code>angular.z</code> がその場で向きを変える速さ（ラジアン毎秒）である。作成時は、まっすぐ前の目標へ向かっていたので、前向きに約 0.14 m/s の指令だけが出ていた。値は、読んだ瞬間によって変わる。</p>
+        <p>型は <code>geometry_msgs/msg/Twist</code>（1 節）で、<code>linear.x</code> が前に進む速さ（メートル毎秒）、<code>angular.z</code> がその場で向きを変える速さ（ラジアン毎秒）である。上の値は、作成時に 5 節の目標（正面の約 1 m 先）へ向かう途中で読んだもので、前向きに約 0.14 m/s、向きを変える速さは 0 だった。別の目標を与えて読むと、向かう方向によっては <code>angular.z</code> も 0 でない値になる。値は、読んだ瞬間によって変わる。</p>
         <p>topic の一覧にあった <code>/cmd_vel_nav</code> と <code>/cmd_vel_smoothed</code> は、この指令ができるまでの途中の段である。<code>controller_server</code> が出した指令（<code>/cmd_vel_nav</code>）を、<code>velocity_smoother</code> が急な変化をならし（<code>/cmd_vel_smoothed</code>）、<code>collision_monitor</code> がぶつかりそうなら止めたうえで、<code>/cmd_vel</code> としてロボットに渡している。</p>
       </div>
     </div>
@@ -456,8 +493,9 @@ angular:
       <table>
         <thead><tr><th scope="col">このページで代わりに担っていたもの</th><th scope="col">製品では</th></tr></thead>
         <tbody>
-          <tr><td>Gazebo と <code>ros_gz_bridge</code> が出す <code>scan</code>・<code>odom</code>・<code>tf</code>、受け取る <code>cmd_vel</code></td><td>実機のセンサーと車輪のドライバが、同じ名前と型の topic を出し、受け取る。Nav2 から見て同じ topic がそろっていれば、Nav2 はつながる。ロボットの大きさや速度の上限などの設定は、自分のロボットに合わせて変える。</td></tr>
-          <tr><td><code>/clock</code> が配るシミュレーターの時計（<code>use_sim_time</code> が <code>true</code>）</td><td>実機では、コンピューターの時計を使う（<code>use_sim_time</code> を <code>false</code> にする）。Nav2 は時刻のずれに敏感なので、どの時計を使うかをそろえることが大切になる。</td></tr>
+          <tr><td>Gazebo と <code>ros_gz_bridge</code> が出す <code>scan</code>・<code>odom</code>・<code>tf</code>、受け取る <code>cmd_vel</code></td><td>実機のセンサーと車輪のドライバが、同じ名前と型の topic を出し、受け取る。同じ topic をそろえることが、Nav2 につなぐための出発点になる。ロボットの大きさや速度の上限などの設定は、自分のロボットに合わせて変える。</td></tr>
+          <tr><td><code>robot_state_publisher</code> が配る、TurtleBot 3 の形（ロボットの形を記述するファイル URDF）と座標系の名前（<code>base_link</code> など）</td><td>自分のロボットの形を URDF で書き、座標系の名前を Nav2 の設定とそろえる。</td></tr>
+          <tr><td><code>/clock</code> が配るシミュレーターの時計（<code>use_sim_time</code>〈node がシミュレーターの時計を使うかどうかの設定〉が <code>true</code>）</td><td>実機では、コンピューターの時計を使う（<code>use_sim_time</code> を <code>false</code> にする）。Nav2 は時刻のずれに敏感なので、どの時計を使うかをそろえることが大切になる。</td></tr>
           <tr><td>あらかじめ用意された地図 <code>tb3_sandbox</code></td><td>ロボットを走らせる場所の地図を、自分で作る。</td></tr>
           <tr><td>RViz で手で与えた初期位置と目標</td><td>製品のアプリケーションから、プログラムで与える。</td></tr>
         </tbody>

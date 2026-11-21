@@ -56,6 +56,15 @@ RViz の操作（4 節・5 節）は、ユーザーが撮影した写真を後�
 - Nav2 の本体の node: 位置の推定（`localization_launch.py`）が `map_server`・`amcl`・`lifecycle_manager_localization`。移動（`navigation_launch.py`）が `controller_server`・`smoother_server`・`planner_server`・`route_server`・`behavior_server`・`velocity_smoother`・`collision_monitor`・`bt_navigator`・`waypoint_follower`・`docking_server`・`lifecycle_manager_navigation`。
 - 橋渡しの topic（Gazebo → ROS 2）: `/clock`（`rosgraph_msgs/msg/Clock`）・`joint_states`・`odom`（`nav_msgs/msg/Odometry`）・`tf`・`imu`・`scan`（`sensor_msgs/msg/LaserScan`）。（ROS 2 → Gazebo）: `cmd_vel`（`geometry_msgs/msg/Twist`）。
 
+## トップのページ（`index.html`）に書くこと
+
+まだ作っていない。作るときに、次をそろえる。
+
+- 「作成中で、まだ読者の案内はしていない」旨（`CLAUDE.md` の「当面と読者を迎える時期」）
+- 読む順番（範囲と順番の表）
+- 期待する結果の方針（各ページでは繰り返さない）
+- `# T1`・`# T2` の意味
+
 ## 確認待ちの一覧
 
 ユーザーの確認が要る重大な部分だけを載せる（`CLAUDE.md` の「役割分担」）。対象は、読者がそこで止まると先へ進めない手順と、読者の環境を壊しうる手順。
