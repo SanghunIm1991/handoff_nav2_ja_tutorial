@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nav2 日本語ガイド（非公式）</title>
+<meta name="description" content="ROS 2 でロボットを目的地まで動かすソフトウェア群 Nav2 を、自分たちの製品に組み込みたい開発者のために、公式の文書（Jazzy）を基に日本語で再構成した非公式の教材。作成中。">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><div class="wrap">
+  <p class="site">非公式の学習教材（作成中）</p>
+  <div class="hero">
+    <h1>Nav2 日本語ガイド</h1>
+    <p>ROS 2 でロボットを目的地まで動かすソフトウェア群 Nav2 を、実際に動かしながら学ぶ。</p>
+  </div>
+</div></header>
+
+<main><div class="wrap">
+
+  <aside class="notes" aria-label="作成中であることの注記">
+    <p>このサイトは作成中</p>
+    <ul>
+      <li>まだ読者の案内はしていない。ページの中身は、予告なく書き直すことがある。</li>
+      <li>読む順番の表で「準備中」としたページは、まだ無い。</li>
+    </ul>
+  </aside>
+
+  <div class="prose">
+    <p>Nav2 は、ROS 2 の上で動く、ロボットの移動のためのソフトウェア群である。地図の上で自分の位置を推定し、障害物を避ける経路を考え、その経路に沿ってロボットを動かす。このサイトは、Nav2 の公式の文書（<a href="https://docs.nav2.org/jazzy/">docs.nav2.org</a> の Jazzy 版）を基に、学ぶ順番に並べ直し、日本語で説明し直したものである。逐語の翻訳ではない。</p>
+    <p>読者として、Nav2 を自分たちの製品に組み込もうとしている開発者を考えている。Python と C++ の文法と、Linux の基本的なコマンドを知っていれば読める。ROS 2・Nav2・Gazebo（ロボットのシミュレーター）は知らなくてよい。ROS 2 の考え方は、理論から入らず、手を動かす場面で要る分だけ、その場で説明する。</p>
+    <p>前提の版は ROS 2 Jazzy と、Nav2 の Jazzy 版である。シミュレーターは Gazebo Harmonic を使う。PC は Windows 11 に WSL2 で Ubuntu 24.04 を入れた形を主にし、Ubuntu を直接入れた PC でも読めるようにしている。</p>
+  </div>
+
+  <section aria-labelledby="s-order">
+    <h2 id="s-order">読む順番</h2>
+    <div class="prose">
+      <p>上から順に読む。各ページは、前のページを終えていることを前提にしている。</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>順</th><th>ページ</th><th>すること</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td><a href="00_setup.html">環境構築</a></td><td>WSL2・Ubuntu 24.04・ROS 2 Jazzy・Gazebo を入れ、動くことを確かめる。Ubuntu を直接入れた PC では、WSL の部分を飛ばす</td></tr>
+          <tr><td>1</td><td><a href="01_quickstart.html">Quickstart</a></td><td>Nav2 とシミュレーションのロボット（TurtleBot 3）を入れ、ロボットを目標まで動かす</td></tr>
+          <tr><td>2</td><td>Local Installation（準備中）</td><td>Nav2 の入れ方（パッケージで入れる方法と、ソースからビルドする方法）を知る</td></tr>
+          <tr><td>3</td><td>Navigation Concepts（準備中）</td><td>Nav2 を形作る考え方（部品の起動と止め方、振る舞いの組み立て方、自分の位置の推定、周りの表し方など）を知る</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">
+      <p>ページの名前のうち、英語のものは、元にした公式のページの名前である。公式と見比べるときの手がかりにする。本文に出てきた用語は、<a href="glossary.html">用語集</a>で引ける。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-howto">
+    <h2 id="s-howto">ページの読み方</h2>
+
+    <h3>コマンドの箱</h3>
+    <div class="prose">
+      <p>コマンドの箱には、実行するコマンドだけを書いている。箱の 1 行めの <code># T1</code> は、「1 つめのターミナルで実行する」という印である。<code>#</code> から後はコメントなので、打たなくてよい。2 つめのターミナルを開いて実行するものは <code># T2</code> で表す。コマンドとコマンドの間の空行は、区切りを見やすくするためのもので、1 行ずつ順に実行する。</p>
+      <p>次は、<a href="00_setup.html#s7">環境構築の 7 節</a>の例である。T1 でサンプルの node（ROS 2 のプログラムの単位）を動かしたまま、新しいターミナルを開き、T2 で別の node を動かす。</p>
+    </div>
+<pre class="cmd"><code># T1
+source /opt/ros/jazzy/setup.bash
+
+ros2 run demo_nodes_cpp talker</code></pre>
+<pre class="cmd"><code># T2
+source /opt/ros/jazzy/setup.bash
+
+ros2 run demo_nodes_py listener</code></pre>
+
+    <h3>期待する結果</h3>
+    <div class="prose">
+      <p>コマンドを実行する手順の直後には、「期待する結果」の箱を置いている。箱の中には、画面に出る表示の例と、その読み方を書く。上の例では、次のようになる（表示は一部を抜き出した）。</p>
+    </div>
+    <div class="expect">
+      <h4>期待する結果</h4>
+      <div class="prose">
+        <p>T1（talker）:</p>
+      </div>
+<pre class="out"><code>[INFO] [1795261363.550229313] [talker]: Publishing: 'Hello World: 3'
+[INFO] [1795261364.550583601] [talker]: Publishing: 'Hello World: 4'</code></pre>
+      <div class="prose">
+        <p>T2（listener）:</p>
+      </div>
+<pre class="out"><code>[INFO] [1795261364.568141991] [listener]: I heard: [Hello World: 4]
+[INFO] [1795261365.552197188] [listener]: I heard: [Hello World: 5]</code></pre>
+      <div class="prose">
+        <p>talker の <code>Publishing</code> の番号と、listener の <code>I heard</code> の番号が対応していれば、やり取りできている。</p>
+      </div>
+    </div>
+    <div class="prose">
+      <p>灰色の箱が表示の例、その後の文が読み方である。この例の詳しい読み方は、<a href="00_setup.html#s7">環境構築の 7 節</a>にある。</p>
+    </div>
+    <div class="prose">
+      <p>表示の例には、ページを作成したときの環境で実際に出たものと、ソースと公式の説明から想定したものがある。実際に出たものも、画面（Gazebo や RViz）を出して確かめたか、画面を出さずに確かめたかに分かれる。どれに当たるかは、各ページの冒頭の「このページについて」の注記に書いている。</p>
+      <p>時刻（角括弧の中の長い数字）・プロセスの番号・パスなど、実行するたびに変わる部分は、各ページでその旨を書いている。自分の表示が例と違うときは、読み方の説明を見て、どこが違うのかを比べる。</p>
+    </div>
+
+    <h3>参照の書き方</h3>
+    <div class="prose">
+      <p>ほかのページは「Quickstart の章」のように名前で、同じページの中の節は「4 節」「4-2 節」のように番号で示す。各ページの終わりの近く（出典の前）には「製品に組み込むなら」の節を置き、そのページでシミュレーションや手の操作が代わりに担っていたことを、製品ではどう考えるかを書いている。</p>
+      <p>Nav2 と ROS 2 の専門用語（node・topic・costmap など）は、英語のまま書く。公式の文書やエラーの表示と同じ語で覚えられるようにするためである。初めて出てくる場所で、意味を 1 文で書いている。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-about">
+    <h2 id="s-about">このサイトについて</h2>
+    <div class="prose">
+      <p>このサイトは非公式の教材で、Nav2・ROS 2・Gazebo のプロジェクトや Microsoft とは関係がない。各ページの末尾に、元にした公式の文書（ページ・版・コミット）とそのライセンス、改変した旨を書いている。公式の画像・動画・ロゴは載せず、図はこのサイトで描いたものを使い、公式の画像はリンクで案内する。</p>
+      <p>「ページの読み方」のコマンドの例（talker と listener）は、環境構築の章から引いたもので、ROS 2 の公式の文書「<a href="https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html">Ubuntu (deb packages)</a>」（<a href="https://github.com/ros2/ros2_documentation/blob/bb5ba42/source/Installation/Ubuntu-Install-Debs.rst">原稿</a>、<code>ros2/ros2_documentation</code> の <code>jazzy</code> ブランチ、コミット <code>bb5ba42</code>、2026-11-19。著作者: ROS 2 の文書の寄稿者。ライセンス: <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>）のコマンドと同等である。原稿の <code>{DISTRO}</code> を <code>jazzy</code> にし、行頭の <code>$</code> を除いた。表示の例は、作成時の環境で出たものである。</p>
+    </div>
+  </section>
+
+</div></main>
+
+<footer><div class="wrap">
+  <p>Nav2 日本語ガイドは、Nav2 の公式の文書を基にした非公式の学習教材で、Nav2・ROS 2・Gazebo のプロジェクトや Microsoft とは関係がない。ライセンスは <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>（出典の文書から引き継いだ部分は、それぞれのライセンスに従う）。</p>
+  <p>この教材は、作成者の指示のもとで、Anthropic の AI である Claude（Claude Code）が作成した。</p>
+  <p>Nav2・TurtleBot・ROS・Gazebo・Ubuntu・Windows などの名前は、それぞれの持ち主の商標でありうる。</p>
+</div></footer>
+</body>
+</html>
