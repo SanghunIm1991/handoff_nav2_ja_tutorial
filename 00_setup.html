@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>環境構築：WSL2・ROS 2 Jazzy・Gazebo を入れる</title>
+<meta name="description" content="Windows 11 の WSL2 に Ubuntu 24.04 を入れ、ROS 2 Jazzy と開発の道具、Gazebo Harmonic を入れて動作を確かめる。ROS 2・Gazebo・WSL の公式の手順を日本語でまとめ直した非公式の教材。">
+<style>
+/* 構成: 1 段組み・左揃え。本文は約 42 字の幅、コマンド・出力・図は最大 960px まで広げる（Quickstart の章と同じ器）。
+   地の色: 方眼紙のような淡い灰緑（シリーズで共通）。
+   意味の色: このページでは使わない（Quickstart の章の青緑・赤紫は、ロボット・目標のためにとっておく）。
+   リンクは --accent-text（青）。--focus（琥珀）はリンクの色と別の値にし、両方の画面で隣の色と 3:1 以上にする。 */
+:root{
+  --bg:#F4F6F3; --surface:#FFFFFF; --ink:#18211E; --sub:#4D5B55; --line:#C9D2CD;
+  --accent-text:#1D5FA8;
+  --focus:#B45309;
+  --code-bg:#1E2925; --code-ink:#E6EEEA; --out-bg:#EAEFEC;
+  --body:'Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic UI','Yu Gothic','Meiryo','Noto Sans CJK JP','Noto Sans JP',sans-serif;
+  --mono:ui-monospace,'SFMono-Regular',Consolas,'Noto Sans Mono','DejaVu Sans Mono',monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#121816; --surface:#1A2220; --ink:#E3EAE6; --sub:#A3B1AA; --line:#2F3B37;
+  --accent-text:#7FB4F0;
+  --focus:#F5B041;
+  --code-bg:#0B100E; --code-ink:#DDE6E1; --out-bg:#18201D;
+  color-scheme:dark }}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.85}
+.wrap{max-width:960px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+a{color:var(--accent-text)}
+a:focus-visible,summary:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+h1,h2,h3{margin:0;line-height:1.35;text-wrap:balance;word-break:auto-phrase}
+p,ul,ol{margin:0}
+code{font-family:var(--mono);font-size:.92em}
+.prose{max-width:42rem;display:flex;flex-direction:column;gap:14px}
+.prose ul,.prose ol{padding-left:1.4em;display:flex;flex-direction:column;gap:4px}
+
+.site{padding-block:20px 0;font-size:14px;color:var(--sub)}
+.site a{color:var(--sub)}
+.hero{padding-block:16px 8px;display:flex;flex-direction:column;gap:16px}
+.hero h1{font-size:clamp(26px,4.2vw,38px);letter-spacing:.01em}
+
+.notes{border-left:4px solid var(--line);padding:4px 0 4px 16px;font-size:14px;color:var(--sub);display:flex;flex-direction:column;gap:6px;max-width:42rem}
+.notes ul{padding-left:1.2em;display:flex;flex-direction:column;gap:2px}
+
+main .wrap{padding-block:32px 24px;display:flex;flex-direction:column;gap:56px}
+section{display:flex;flex-direction:column;gap:16px}
+section h2{font-size:24px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+section h3{font-size:18px;margin-top:8px}
+.term{font-weight:700}
+
+pre{margin:0;overflow-x:auto;border-radius:6px;padding:14px 16px;font-family:var(--mono);font-size:14px;line-height:1.6}
+pre.cmd{background:var(--code-bg);color:var(--code-ink)}
+.expect{display:flex;flex-direction:column;gap:10px;max-width:960px}
+.expect h4{margin:0;font-size:15px}
+pre.out{background:var(--out-bg);color:var(--ink);border:1px solid var(--line)}
+
+figure{margin:0;display:flex;flex-direction:column;gap:8px}
+figcaption{font-size:14px;color:var(--sub);max-width:42rem}
+.diagram{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px}
+.diagram svg{display:block;min-width:560px;width:100%;height:auto}
+.d-box{fill:var(--surface);stroke:var(--ink);stroke-width:1.5}
+.d-box-next{fill:var(--surface);stroke:var(--sub);stroke-width:1.5;stroke-dasharray:6 4}
+.d-name{fill:var(--ink);font-size:15px;font-weight:700;font-family:var(--body)}
+.d-sub{fill:var(--sub);font-size:13px;font-family:var(--body)}
+
+table{border-collapse:collapse;font-size:15px;width:100%;max-width:960px}
+th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{font-weight:700;color:var(--sub);font-size:14px}
+.table-wrap{overflow-x:auto}
+
+footer .wrap{padding-block:20px 40px;font-size:13px;color:var(--sub);border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+footer a{color:var(--sub)}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <p class="site"><a href="index.html">Nav2 日本語ガイド</a>（非公式・作成中）</p>
+  <div class="hero">
+    <h1>環境構築：WSL2・ROS 2 Jazzy・Gazebo を入れる</h1>
+  </div>
+</div></header>
+
+<main><div class="wrap">
+
+  <div class="prose">
+    <p>Nav2 を試すには、その土台として Linux（Ubuntu）、ROS 2、シミュレーターの Gazebo が要る。Windows の PC なら、まず Windows の中で Linux を動かす仕組み（WSL2）を用意し、その上に順に積み上げていく。</p>
+    <p>この章の作業は、手を動かす時間よりも、ダウンロードと導入を待つ時間の方が長い。先にこの章を済ませておけば、次の Quickstart の章からは、Nav2 そのものに集中できる。後の章で使う開発の道具も、ここでまとめて入れておく。</p>
+  </div>
+
+  <aside class="notes" aria-label="このページについての注記">
+    <p>このページについて</p>
+    <ul>
+      <li>ROS 2・Gazebo・WSL の公式の文書の手順を基に、日本語でまとめ直したもの。逐語の翻訳ではない。出典とライセンスはページの末尾にある。</li>
+      <li>Windows 11 の WSL2 の上の Ubuntu 24.04 と、ROS 2 Jazzy を前提にする。Ubuntu 24.04 を直接入れた PC では、2 節を飛ばす。</li>
+      <li>期待する結果の出どころ: 3 節の <code>locale</code>、5 節の <code>Suites</code> の行とパッケージの版、6 節の <code>ROS_DISTRO</code>、7 節の talker と listener、8 節の Gazebo の版と画面を出さない起動は、作成時の環境で、画面を出さずに確かめた。ただし作成時の環境は導入済みだったので、2 節〜5 節と 8 節の導入の手順そのものは頭から実行し直しておらず、導入のコマンドの表示（ダウンロードの進み方など）は載せていない。2 節の WSL の手順と、8 節の Gazebo の画面は、公式の文書から想定したもので、まだ確かめていない。</li>
+      <li>ログの角括弧の中の長い数字は時刻（UNIX 時刻）で、実行するたびに変わる。版の番号は、更新されると変わる。</li>
+    </ul>
+  </aside>
+
+  <section aria-labelledby="s0">
+    <h2 id="s0">0. 学習目標と完了条件</h2>
+    <div class="prose">
+      <p>この章を終えると、次のことができる。</p>
+      <ol>
+        <li>Windows 11 の WSL2 に、Ubuntu 24.04 を入れられる。</li>
+        <li>ROS 2 Jazzy と、後の章で使う開発の道具を、apt で入れられる。</li>
+        <li>2 つのターミナルでサンプルのプログラムを動かし、ROS 2 が動くことを確かめられる。</li>
+        <li>Gazebo を入れて、起動できる。</li>
+      </ol>
+      <p>完了条件は、7 節で listener が <code>I heard</code> と表示し、8 節で Gazebo が起動すること。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s1">
+    <h2 id="s1">1. 全体像</h2>
+    <div class="prose">
+      <p>この章で入れるものは、下から順に積み重なる。上のものは、すぐ下のものの上で動く。</p>
+    </div>
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 640 316" role="img" aria-label="積み重ねの図。下から、使っている PC の Windows 11、WSL2（2 節）、Ubuntu 24.04（2 節と 3 節）、ROS 2 Jazzy と開発の道具（4 節から 7 節）、Gazebo Harmonic（8 節）、いちばん上に次の Quickstart の章で入れる Nav2。">
+          <rect class="d-box-next" x="20" y="16" width="480" height="40" rx="4"/>
+          <text class="d-name" x="36" y="42">Nav2</text>
+          <text class="d-sub" x="516" y="42">Quickstart の章</text>
+
+          <rect class="d-box" x="20" y="64" width="480" height="40" rx="4"/>
+          <text class="d-name" x="36" y="90">Gazebo Harmonic（ros_gz）</text>
+          <text class="d-sub" x="516" y="90">8 節</text>
+
+          <rect class="d-box" x="20" y="112" width="480" height="40" rx="4"/>
+          <text class="d-name" x="36" y="138">ROS 2 Jazzy ＋ 開発の道具</text>
+          <text class="d-sub" x="516" y="138">4〜7 節</text>
+
+          <rect class="d-box" x="20" y="160" width="480" height="40" rx="4"/>
+          <text class="d-name" x="36" y="186">Ubuntu 24.04</text>
+          <text class="d-sub" x="516" y="186">2・3 節</text>
+
+          <rect class="d-box" x="20" y="208" width="480" height="40" rx="4"/>
+          <text class="d-name" x="36" y="234">WSL2</text>
+          <text class="d-sub" x="516" y="234">2 節</text>
+
+          <rect class="d-box" x="20" y="256" width="480" height="40" rx="4"/>
+          <text class="d-name" x="36" y="282">Windows 11</text>
+          <text class="d-sub" x="516" y="282">使っている PC</text>
+        </svg>
+      </div>
+      <figcaption>図 1　この章で入れるものの積み重なり。右の欄は、入れる節。いちばん上の点線の Nav2 は、次の Quickstart の章で入れる。Ubuntu 24.04 を直接入れた PC には、下の 2 段（Windows 11 と WSL2）は無い。</figcaption>
+    </figure>
+    <div class="prose">
+      <ul>
+        <li><span class="term">WSL2</span>（Windows Subsystem for Linux 2）: Windows の中で Linux を動かす、Microsoft の仕組み。Windows 11 では、Linux の画面のアプリも Windows のウィンドウとして開ける（この働きを WSLg と呼ぶ）。</li>
+        <li><span class="term">Ubuntu 24.04</span>: Linux の配布の 1 つ。ROS 2 Jazzy は、この版の Ubuntu の上で使うことを前提に作られ、試されている。</li>
+        <li><span class="term">ROS 2 Jazzy</span>: ロボットのプログラムを、役目ごとの node に分けて組み合わせるための仕組みと道具の集まり。Jazzy はその版の名前で、Nav2 もこの上で動く。</li>
+        <li><span class="term">Gazebo Harmonic</span>: ロボットと世界を計算で再現するシミュレーター。Harmonic は、ROS 2 Jazzy と組み合わせるよう勧められている版である。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section aria-labelledby="s2">
+    <h2 id="s2">2. WSL2 と Ubuntu 24.04 を入れる</h2>
+    <div class="prose">
+      <p>Ubuntu 24.04 を直接入れた PC では、この節を飛ばして 3 節へ進む。</p>
+      <p>Windows のスタートメニューで PowerShell を右クリックし、「管理者として実行」で開く。まず、入れられる Linux の名前の一覧を確かめる。コマンドの箱の 1 行めの <code># PowerShell（管理者）</code> は、「管理者の PowerShell で実行する」という印で、打たなくてよい。</p>
+    </div>
+<pre class="cmd"><code># PowerShell（管理者）
+wsl --list --online</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+      <div class="prose">
+        <p>入れられる Linux の名前（<code>NAME</code> の列）と説明が並ぶ。その中に <code>Ubuntu-24.04</code> があることを確かめる（この表示は想定で、並び方や説明の文は時期によって変わる）。</p>
+      </div>
+    </div>
+<pre class="cmd"><code># PowerShell（管理者）
+wsl --install -d Ubuntu-24.04</code></pre>
+    <div class="prose">
+      <p><code>-d</code> の後には、一覧で確かめた名前をそのまま書く。WSL がまだ入っていない PC では、このコマンドが WSL2 そのものと Ubuntu 24.04 をまとめて入れる。途中で PC の再起動を求められたら、再起動する。</p>
+    </div>
+    <div class="expect">
+      <h4>期待する結果</h4>
+      <div class="prose">
+        <p>導入が終わると Ubuntu が起動し、Linux で使うユーザー名とパスワードを決めるよう求められる（想定）。ここで決めるのは Ubuntu の中だけのもので、Windows のユーザー名やパスワードとは別である。パスワードは、後の <code>sudo</code>（管理者の権限でコマンドを実行する）で使う。</p>
+        <p>以後、Ubuntu のターミナルは、スタートメニューの「Ubuntu 24.04」から開ける。3 節からのコマンドは、すべてこの Ubuntu のターミナルで実行する。</p>
+      </div>
+    </div>
+    <h3>画面のアプリを使うための準備</h3>
+    <div class="prose">
+      <p>8 節の Gazebo や、Quickstart の章の RViz は、画面を持つアプリである。Windows 11 の WSL2 では、これらがそのまま Windows のウィンドウとして開く。公式の文書は、そのために PC の GPU（Intel・AMD・NVIDIA）に合ったドライバを Windows に入れておくよう求めている。以前から WSL を入れていた PC では、管理者の PowerShell で <code>wsl --update</code> を実行して、WSL を新しくしておく。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s3">
+    <h2 id="s3">3. Ubuntu を最新にし、locale を確かめる</h2>
+    <div class="prose">
+      <p>ROS 2 のパッケージは、更新の進んだ Ubuntu の上で作られている。入れる前に、Ubuntu を最新の状態にしておく（ROS 2 の公式の手順も、こうするよう勧めている）。</p>
+    </div>
+<pre class="cmd"><code># T1
+sudo apt update
+
+sudo apt upgrade</code></pre>
+    <div class="prose">
+      <p>コマンドの箱の 1 行めの <code># T1</code> は、「1 つめの Ubuntu のターミナルで実行する」という印である（<code>#</code> から後はコメントなので、打たなくてよい）。7 節では、2 つめのターミナルを <code># T2</code> で表す。<code>sudo apt update</code> はパッケージの一覧を新しくし、<code>sudo apt upgrade</code> は入っているパッケージを新しい版にする。<code>upgrade</code> は、続けてよいかを <code>[Y/n]</code> で聞いてくるので、<kbd>Y</kbd> を押す。</p>
+      <p>次に、<span class="term">locale</span>（言語や文字の符号化など、地域ごとの設定）が UTF-8 になっているかを確かめる。ROS 2 は UTF-8 を前提にしている。</p>
+    </div>
+<pre class="cmd"><code># T1
+locale</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>LANG=en_US.UTF-8
+LANGUAGE=
+LC_CTYPE="en_US.UTF-8"</code></pre>
+      <div class="prose">
+        <p>実際にはこの後にも <code>LC_</code> で始まる行が続く。<code>LANG</code> の値が <code>.UTF-8</code> で終わっていればよい（<code>ja_JP.UTF-8</code> など、ほかの言語でも UTF-8 ならかまわない）。</p>
+        <p>もし <code>LANG=C</code> や <code>POSIX</code> のように UTF-8 でなければ、ROS 2 の公式の手順どおり、次のように UTF-8 の locale を入れて設定する。最後の <code>locale</code> で、<code>LANG=en_US.UTF-8</code> になったことを確かめる。</p>
+      </div>
+    </div>
+<pre class="cmd"><code># T1
+sudo apt install locales
+
+sudo locale-gen en_US en_US.UTF-8
+
+sudo update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+
+export LANG=en_US.UTF-8
+
+locale</code></pre>
+  </section>
+
+  <section aria-labelledby="s4">
+    <h2 id="s4">4. ROS 2 のリポジトリを足す</h2>
+    <div class="prose">
+      <p>ROS 2 のパッケージは、Ubuntu が最初から見ている取り寄せ先（リポジトリ）には無い。ROS 2 のリポジトリを apt に教える。</p>
+      <p>まず、Ubuntu の universe というリポジトリ（コミュニティが保守するパッケージの置き場）を有効にする。ROS 2 は、そこにあるパッケージにも依存している。</p>
+    </div>
+<pre class="cmd"><code># T1
+sudo apt install software-properties-common
+
+sudo add-apt-repository universe</code></pre>
+    <div class="prose">
+      <p>次に、ROS 2 のリポジトリの設定と鍵をまとめたパッケージ <code>ros2-apt-source</code> を入れる。1 行めで GitHub の公開ページから最新の版の番号を調べ、2 行めでその版のパッケージを <code>/tmp</code> に取り寄せ、3 行めで入れる。2 行めの URL には、3 行めで使う Ubuntu の版の名前（24.04 なら <code>noble</code>）が、自動で埋め込まれる。</p>
+    </div>
+<pre class="cmd"><code># T1
+export ROS_APT_SOURCE_VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' https://github.com/ros-infrastructure/ros-apt-source/releases/latest | awk -F/ '{print $NF}')
+
+curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release && echo ${UBUNTU_CODENAME:-${VERSION_CODENAME}})_all.deb"
+
+sudo dpkg -i /tmp/ros2-apt-source.deb</code></pre>
+    <div class="prose">
+      <p><code>curl</code> が入っていないと言われたら、先に <code>sudo apt install curl</code> を実行する。入ったかどうかは、次のコマンドで確かめる。</p>
+    </div>
+<pre class="cmd"><code># T1
+dpkg-query -W ros2-apt-source</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>ros2-apt-source	1.3.0~noble</code></pre>
+      <div class="prose">
+        <p>パッケージの名前と版が表示されれば、入っている。版の番号は、取り寄せた時期によって変わる。このパッケージは、以後の <code>apt</code> の更新で自動的に新しくなる。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s5">
+    <h2 id="s5">5. ROS 2 Jazzy と開発の道具を入れる</h2>
+    <div class="prose">
+      <p>ROS 2 の公式の手順は、Ubuntu 24.04 では apt の設定に基本の取り寄せ先（<code>noble</code>）しか入っていないことがあり、そのままでは開発の道具を入れるときに依存関係がぶつかりうる、と注意している。先に、設定を確かめる。</p>
+    </div>
+<pre class="cmd"><code># T1
+grep Suites /etc/apt/sources.list.d/ubuntu.sources</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>## Mirror your choices (except for URIs and Suites) in the security section below to
+## Suites: The following additional suites can be configured
+Suites: noble noble-updates noble-backports
+## Ubuntu security updates. Aside from URIs and Suites,
+Suites: noble-security</code></pre>
+      <div class="prose">
+        <p><code>##</code> で始まる行は説明のコメントで、見るのは <code>Suites:</code> で始まる行である。そこに <code>noble-updates</code> と <code>noble-backports</code> が入っていればよい。入っていなければ、そのファイルの <code>Suites: noble</code> の行を <code>Suites: noble noble-updates noble-backports</code> に書き換えてから、<code>sudo apt update</code> と <code>sudo apt upgrade</code> をやり直す（ファイルの書き換えには <code>sudo</code> が要る）。</p>
+      </div>
+    </div>
+    <div class="prose">
+      <p>ROS 2 Jazzy と、開発の道具を入れる。</p>
+    </div>
+<pre class="cmd"><code># T1
+sudo apt update
+
+sudo apt upgrade
+
+sudo apt install ros-jazzy-desktop
+
+sudo apt install ros-dev-tools</code></pre>
+    <div class="prose">
+      <p><code>ros-jazzy-desktop</code> は、ROS 2 の本体に、RViz などの画面の道具とサンプルを加えたまとまりで、公式の手順が勧めているものである。量が多いので、この章でいちばん待ち時間が長い。</p>
+      <p><code>ros-dev-tools</code> は、ROS 2 のプログラムをソースから組み立てるための道具のまとまりである。この章では使わないが、待ち時間を先に済ませるため、ここで入れておく。主な中身と、使う場面は次のとおり。</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th scope="col">道具</th><th scope="col">何をするか</th><th scope="col">使う章</th></tr></thead>
+        <tbody>
+          <tr><td><span class="term">colcon</span></td><td>複数の ROS 2 のパッケージを、依存の順にまとめてビルドする</td><td>Local Installation の章（Nav2 をソースからビルドする）。以後、自分のパッケージを作る章でも使う</td></tr>
+          <tr><td><span class="term">rosdep</span></td><td>ソースのパッケージが必要とするほかのパッケージを調べ、apt でまとめて入れる</td><td>Local Installation の章</td></tr>
+          <tr><td><span class="term">vcstool</span>（コマンドは <code>vcs</code>）</td><td>複数の Git のリポジトリを、一覧のファイルからまとめて取得する</td><td>Local Installation の章</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">
+      <p>入ったかどうかは、次のコマンドで確かめる。</p>
+    </div>
+<pre class="cmd"><code># T1
+dpkg-query -W ros-jazzy-desktop ros-dev-tools</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>ros-dev-tools	1.0.3
+ros-jazzy-desktop	0.11.0-1noble.20261105.164848</code></pre>
+      <div class="prose">
+        <p>2 つのパッケージの名前と版が表示されれば、入っている。版の番号は、入れた時期によって変わる。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s6">
+    <h2 id="s6">6. 環境を読み込む</h2>
+    <div class="prose">
+      <p>ROS 2 のコマンド（<code>ros2</code> など）は、入れただけではターミナルから見つからない。ROS 2 の場所を、今のターミナルに教える必要がある。</p>
+    </div>
+<pre class="cmd"><code># T1
+source /opt/ros/jazzy/setup.bash
+
+echo $ROS_DISTRO</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>jazzy</code></pre>
+      <div class="prose">
+        <p><code>source</code> は、ファイルに書かれた設定（コマンドやパッケージの場所を表す環境変数など）を、今のターミナルに読み込む。その設定の 1 つ <code>ROS_DISTRO</code> が <code>jazzy</code> と表示されれば、読み込めている。この設定はそのターミナルの中だけで有効なので、ターミナルを新しく開くたびに <code>source</code> が要る。この教材のコマンドの箱でも、新しいターミナルでは毎回 <code>source</code> から書いている。</p>
+      </div>
+    </div>
+    <h3>毎回の <code>source</code> を省く方法と、この教材で使わない理由</h3>
+    <div class="prose">
+      <p>ターミナルを開くたびに自動で読み込まれる設定のファイル <code>~/.bashrc</code> に、<code>source</code> の行を 1 回だけ書き足しておく方法がある。</p>
+    </div>
+<pre class="cmd"><code>echo "source /opt/ros/jazzy/setup.bash" &gt;&gt; ~/.bashrc</code></pre>
+    <div class="prose">
+      <p>こうすると、以後に開くターミナルでは最初から ROS 2 が使え、<code>source</code> を打ち忘れて「コマンドが見つからない」と困ることもなくなる。ROS 2 だけを使う PC なら、手間が大きく減る。</p>
+      <p>一方で、この設定は、その PC で開くすべてのターミナルに効く。同じ PC で、ROS 2 を使わないほかのプロジェクトや、別の版の ROS 2 を扱うと、意図しない環境が読み込まれて、原因の分かりにくい食い違いが起きうる。後の Local Installation の章で、ソースからビルドした Nav2 を読み込むときにも、どの環境を読み込んでいるかが見えにくくなる。そのため、この教材では書き足さず、ターミナルごとに <code>source</code> する形にしている。書き足した後で外したいときは、<code>~/.bashrc</code> の最後の行を消す。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s7">
+    <h2 id="s7">7. 動作を確かめる</h2>
+    <div class="prose">
+      <p>ROS 2 のサンプルの node を 2 つ動かし、やり取りできるかを確かめる。talker は「Hello World」という文を 1 秒ごとに topic へ送り、listener はそれを受け取って表示する。T1 で talker を動かしたまま、新しい Ubuntu のターミナル（T2）を開いて listener を動かす。</p>
+    </div>
+<pre class="cmd"><code># T1
+source /opt/ros/jazzy/setup.bash
+
+ros2 run demo_nodes_cpp talker</code></pre>
+<pre class="cmd"><code># T2
+source /opt/ros/jazzy/setup.bash
+
+ros2 run demo_nodes_py listener</code></pre>
+    <div class="prose">
+      <p><code>ros2 run</code> は、パッケージ（ここでは <code>demo_nodes_cpp</code> と <code>demo_nodes_py</code>）の中の node を 1 つ起動するコマンドである。talker は C++、listener は Python で書かれているので、両方の言語で ROS 2 が動くことを一度に確かめられる。</p>
+    </div>
+    <div class="expect">
+      <h4>期待する結果</h4>
+      <div class="prose">
+        <p>T1（talker）:</p>
+      </div>
+<pre class="out"><code>[INFO] [1795261361.550521195] [talker]: Publishing: 'Hello World: 1'
+[INFO] [1795261362.550394776] [talker]: Publishing: 'Hello World: 2'
+[INFO] [1795261363.550229313] [talker]: Publishing: 'Hello World: 3'
+[INFO] [1795261364.550583601] [talker]: Publishing: 'Hello World: 4'</code></pre>
+      <div class="prose">
+        <p>T2（listener）:</p>
+      </div>
+<pre class="out"><code>[INFO] [1795261364.568141991] [listener]: I heard: [Hello World: 4]
+[INFO] [1795261365.552197188] [listener]: I heard: [Hello World: 5]
+[INFO] [1795261366.552076670] [listener]: I heard: [Hello World: 6]
+[INFO] [1795261367.551799647] [listener]: I heard: [Hello World: 7]</code></pre>
+      <div class="prose">
+        <p>talker の <code>Publishing</code> の番号と、listener の <code>I heard</code> の番号が対応していれば、やり取りできている。listener は、起動した時点より後に送られたものから受け取るので、最初の番号は 1 とは限らない（作成時は 4 から）。<code>ros2 run</code> は起動に数秒かかることがあり、表示が出るまで少し待つ。確かめたら、T1 と T2 の両方で <kbd>Ctrl</kbd>+<kbd>C</kbd> を押して止める。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s8">
+    <h2 id="s8">8. Gazebo を入れて確かめる</h2>
+    <div class="prose">
+      <p>ROS 2 Jazzy からは、Gazebo も ROS 2 のリポジトリから入れられる。次のコマンドは、ROS 2 と Gazebo をつなぐパッケージ群 <code>ros_gz</code> と、それに合った版の Gazebo（Jazzy では Harmonic）をまとめて入れる。Gazebo の公式の文書も、特に理由が無ければこの方法を勧めている。</p>
+    </div>
+<pre class="cmd"><code># T1
+sudo apt install ros-jazzy-ros-gz</code></pre>
+    <div class="prose">
+      <p>Gazebo の <code>gz</code> コマンドも、ROS 2 の環境を読み込んだターミナルで使えるようになる。版を確かめる。</p>
+    </div>
+<pre class="cmd"><code># T1
+source /opt/ros/jazzy/setup.bash
+
+gz sim --version</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>Gazebo Sim, version 8.15.0
+Copyright (C) 2018 Open Source Robotics Foundation.</code></pre>
+      <div class="prose">
+        <p>実際にはこの後にもライセンスの文が続く。<code>version 8</code> で始まる版が、Gazebo Harmonic である。細かい番号は、更新されると変わる。</p>
+      </div>
+    </div>
+    <div class="prose">
+      <p>最後に、何も無い世界を Gazebo で開く。</p>
+    </div>
+<pre class="cmd"><code># T1
+gz sim empty.sdf</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+      <div class="prose">
+        <p>Gazebo のウィンドウが開き、地面だけの世界が表示される（想定）。画面のアプリを初めて開くときは、ウィンドウが出るまで時間がかかることがある。確かめたら、T1 で <kbd>Ctrl</kbd>+<kbd>C</kbd> を押すか、ウィンドウを閉じる。</p>
+        <p>画面を出さずに、Gazebo の計算の部分（サーバー）だけが動くかを確かめることもできる。<code>-s</code> はサーバーだけを動かす指定、<code>-r</code> は読み込んだらすぐに時間を進める指定である。</p>
+      </div>
+    </div>
+<pre class="cmd"><code># T1
+gz sim -s -r -v 3 empty.sdf</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>[Msg] Gazebo Sim Server v8.15.0
+[Msg] Loading SDF world file[/opt/ros/jazzy/opt/gz_sim_vendor/share/gz/gz-sim8/worlds/empty.sdf].
+[Msg] Serving entity system service on [/entity/system/add]</code></pre>
+      <div class="prose">
+        <p>実際には、この後にも <code>[Msg]</code> で始まる行が続く（作成時の表示は色つきで、その色の制御文字は除いた）。2 行めで、Gazebo が ROS 2 の場所（<code>/opt/ros/jazzy</code>）の中に入った世界のファイルを読み込んでいることが分かる。止めるときは <kbd>Ctrl</kbd>+<kbd>C</kbd> を押す。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s9">
+    <h2 id="s9">9. 製品に組み込むなら</h2>
+    <div class="prose">
+      <p>この章で作ったのは、開発と学習のための環境である。製品のロボットに載せるコンピューターでは、考えることが変わる。</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th scope="col">この章で用意したもの</th><th scope="col">製品では</th></tr></thead>
+        <tbody>
+          <tr><td>Windows 11 の WSL2 の上の Ubuntu 24.04</td><td>ロボットに載せるコンピューターには、Ubuntu 24.04 を直接入れるのが基本になる。WSL2 は、開発用の PC で使う。ROS 2 Jazzy の公式の deb パッケージは、amd64（一般の PC）と arm64（多くの小型のボードのコンピューター）の両方に用意されている。</td></tr>
+          <tr><td><code>ros-jazzy-desktop</code>（RViz などの画面の道具を含む）</td><td>画面を持たないロボットには、公式の手順にある画面の道具を含まないまとまり <code>ros-jazzy-ros-base</code> を入れ、必要なパッケージだけを足す。</td></tr>
+          <tr><td><code>sudo apt upgrade</code> で、いつでも最新の版にする</td><td>更新でパッケージの版が変わると、動きが変わりうる。製品では、使う版を決めて試験してから更新する。ROS 2 の公式の文書は、古い版の状態を入れ直すためのリポジトリ（snapshot repository）も案内している。</td></tr>
+          <tr><td>ROS 2 Jazzy</td><td>ROS 2 の版には、サポートの期限がある。Jazzy の期限は 2029 年 5 月（ROS の版の計画を定めた文書 REP 2000 による）。製品を出す時期と保守する期間を考え、どの版の上に作るかを決める。</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="s10">
+    <h2 id="s10">次に読むもの・出典</h2>
+    <div class="prose">
+      <p>次は <a href="01_quickstart.html">Quickstart</a> の章で、Nav2 を入れ、シミュレーションのロボットを動かす。このページに出てきた用語は、<a href="glossary.html">用語集</a>にまとめてある。</p>
+      <p>出典（どれも <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> のもとで公開されている）:</p>
+      <ul>
+        <li>ROS 2 の公式の文書「<a href="https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html">Ubuntu (deb packages)</a>」（<a href="https://github.com/ros2/ros2_documentation/blob/bb5ba42/source/Installation/Ubuntu-Install-Debs.rst">原稿</a>、<code>ros2/ros2_documentation</code> の <code>jazzy</code> ブランチ、コミット <code>bb5ba42</code>、2026-11-19）。3 節〜7 節のコマンドは、この文書のものと同等である。</li>
+        <li>Gazebo の公式の文書「<a href="https://gazebosim.org/docs/latest/ros_installation/">Installing Gazebo with ROS</a>」（<a href="https://github.com/gazebosim/docs/blob/93e26c0/common/ros_installation.md">原稿</a>、<code>gazebosim/docs</code>、コミット <code>93e26c0</code>、2026-11-19）。8 節の導入のコマンドは、この文書のものと同等である。</li>
+        <li>Microsoft の WSL の文書「<a href="https://learn.microsoft.com/windows/wsl/install">How to install Linux on Windows with WSL</a>」と「<a href="https://learn.microsoft.com/windows/wsl/tutorials/gui-apps">Run Linux GUI apps on the Windows Subsystem for Linux</a>」（<a href="https://github.com/MicrosoftDocs/WSL/tree/526e577/WSL">原稿</a>、<code>MicrosoftDocs/WSL</code>、コミット <code>526e577</code>、2026-11-06。文書のコードの部分は MIT License）。2 節の手順は、この文書を基にした。</li>
+      </ul>
+      <p>このページは、これらの内容を日本語で再構成し、説明の追加（1 節・6 節の後半・9 節など）と省略（ほかの版の手順、RMW の切り替え、アンインストールの手順など）を加えたもので、逐語の翻訳ではない。公式の画像は使っておらず、図はこの教材で作った。</p>
+    </div>
+  </section>
+
+</div></main>
+
+<footer><div class="wrap">
+  <p>Nav2 日本語ガイドは、Nav2 の公式の文書を基にした非公式の学習教材で、Nav2・ROS 2・Gazebo のプロジェクトや Microsoft とは関係がない。ライセンスは <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>（出典の文書から引き継いだ部分は、それぞれのライセンスに従う）。</p>
+  <p>この教材は、作成者の指示のもとで、Anthropic の AI である Claude（Claude Code）が作成した。</p>
+  <p>Nav2・ROS・Gazebo・Ubuntu・Windows などの名前は、それぞれの持ち主の商標でありうる。</p>
+</div></footer>
+</body>
+</html>

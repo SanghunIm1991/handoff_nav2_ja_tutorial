@@ -18,12 +18,33 @@
 
 | 順 | ページ | ファイル | 元にする公式のページ | 主に当たる到達点 | 状態 |
 | --- | --- | --- | --- | --- | --- |
-| 0 | 環境構築（WSL2 → Ubuntu 24.04 → ROS 2 Jazzy） | `00_setup.html` | なし（ROS 2 の公式の導入手順と WSL の公式の文書を基にする） | 1 | 未着手 |
+| 0 | 環境構築（WSL2 → Ubuntu 24.04 → ROS 2 Jazzy） | `00_setup.html` | なし（ROS 2 の公式の導入手順と WSL の公式の文書を基にする） | 1 | 初稿（低コストの確認済み、レビューの前） |
 | 1 | Quickstart | `01_quickstart.html` | Getting Started / Quickstart | 1 | 画面なしで確認済み（レビューの前） |
 | 2 | Local Installation | `02_local_installation.html` | Getting Started / Build and Install / Local Installation | 1 | 未着手 |
 | 3 | Navigation Concepts | `03_navigation_concepts.html` | Getting Started / Navigation Concepts（下位 6 ページ。分けるかは構成案のときに決める） | 2 | 未着手 |
 
 書く順番は Quickstart を先にし、HTML のページの器をそこで決める。読む順番は表のとおり環境構築が先。ROS 2 の基礎は独立したページを作らず、各ページで初めて使う場面で説明する（`CLAUDE.md` の「内容の方針」）。一区切りの後の範囲は、到達点を基準に、区切りごとに決めてこの表に足す。
+
+## 環境構築の構成案
+
+元にする公式の文書（どれも CC BY 4.0。WSL のコードは MIT）:
+- ROS 2: `ros2/ros2_documentation` の `jazzy`（`bb5ba42`、2026-11-19）の `source/Installation/Ubuntu-Install-Debs.rst` と、差し込まれる `_Ubuntu-Set-Locale.rst`・`_Apt-Repositories.rst`・`_Apt-Upgrade-Admonition.rst`
+- Gazebo: `gazebosim/docs`（`93e26c0`、2026-11-19）の `common/ros_installation.md`
+- WSL: `MicrosoftDocs/WSL`（`526e577`、2026-11-06）の `WSL/install.md`・`WSL/tutorials/gui-apps.md`
+
+| 節 | 中身 |
+| --- | --- |
+| 冒頭 | 注記（公式の手順を基にした想定。出典。Jazzy が前提）。待ち時間が長いので、先に済ませておく章であること |
+| 0. 学習目標と完了条件 | talker と listener がやり取りし、Gazebo が起動できる |
+| 1. 全体像 | Windows 11 → WSL2 → Ubuntu 24.04 → ROS 2 Jazzy → Gazebo Harmonic の重なり。Nav2 は Quickstart の章で入れる |
+| 2. WSL2 と Ubuntu 24.04 を入れる | 管理者の PowerShell で `wsl --install -d <名前>`。画面のアプリ（WSLg）と GPU のドライバ。Ubuntu を直接入れた PC では飛ばす |
+| 3. Ubuntu を最新にし、locale を確かめる | — |
+| 4. ROS 2 のリポジトリを足す | universe、`ros2-apt-source` |
+| 5. ROS 2 Jazzy と開発の道具を入れる | `ros-jazzy-desktop`。`ros-dev-tools`（colcon・rosdep・vcstool。何のための道具で、どの章で使うかを書く） |
+| 6. 環境を読み込む | `source` の意味。`~/.bashrc` に書き足すと楽になることと、書き足さない理由（ほかのプロジェクトや版との混ざり） |
+| 7. 動作を確かめる | T1 で talker、T2 で listener |
+| 8. Gazebo を入れて確かめる | `ros-jazzy-ros-gz` |
+| 9. 製品に組み込むなら | 開発の PC（WSL）とロボットの PC（Ubuntu を直接、arm64 のことも）の違い。Jazzy のサポート期限（2029 年 5 月）を製品の計画に入れる |
 
 ## Quickstart の構成案
 
@@ -72,6 +93,7 @@ RViz の操作（4 節・5 節）は、ユーザーが撮影した写真を後�
 確かめたら、`[ ]` を `[x]` にする。気づいたことがあれば、項目の下に一言書く。Claude は次の作業のときに `[x]` の項目を見つけ、書かれたことをページに反映してから、項目を消す。
 
 - [ ] 環境: Quickstart の起動（`ros2 launch nav2_bringup tb3_simulation_launch.py headless:=False`）で Gazebo と RViz2 の画面が出て、RViz2 で初期位置と目標を指定するとロボットが目標へ動く（画面を出した形での確認。画面なしの形は確かめ済み）
+- [ ] 環境構築の 2 節〜5 節・8 節: 新しい WSL のディストリビューション（または新しい PC）で、導入の手順を頭から通せるか。とくに `wsl --list --online` に `Ubuntu-24.04` があるか、初回のユーザーの作成、`ros2-apt-source` の取得、`gz sim empty.sdf` で Gazebo の画面が開くか（読者の環境を変える手順で、Claude は頭から試せないため）
 - [ ] Quickstart の 2 節: `sudo apt update`・`sudo apt upgrade`・`sudo apt install …` の手順と、版の確かめ方の表示が本文と合っているか（読者の環境を変える手順のため）
 - [ ] Quickstart の 3〜5 節と 7 節: 画面の表示と操作が本文と合っているか。とくに、RViz のツールバーのボタン名（「2D Pose Estimate」「Nav2 Goal」）、左下の Nav2 の欄（Startup と取り消しのボタン）、起動直後の地図の見え方、初期位置を与えた後の particle cloud と costmap、Ctrl+C で Gazebo と RViz のウィンドウが閉じること。あわせて、4 節・5 節に差し込む画面の写真を撮る（写り込みに注意）
 
