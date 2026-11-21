@@ -25,7 +25,3 @@ Nav2 日本語ガイド（非公式・作成中）の本文に出てきた用語
 | use_sim_time | use simulation time〈シミュレーションの時刻を使う〉 | node が、シミュレーターの時計（`/clock`）を使うかどうかの設定 | [Quickstart の 8 節](01_quickstart.html#s8) |
 | vcstool | version control system〈版の管理の仕組み〉＋ tool〈道具〉 | 複数の Git のリポジトリを、一覧のファイルからまとめて取得する道具。コマンドは `vcs` | [環境構築の 5 節](00_setup.html#s5) |
 | WSL2 | Windows Subsystem for Linux 2 の略 | Windows の中で Linux を動かす、Microsoft の仕組み。Windows 11 では、Linux の画面のアプリも開ける（WSLg） | [環境構築の 1 節](00_setup.html#s1) |
-
----
-
-この教材は、Nav2 の公式の文書を基にした非公式の学習教材である。作成者の指示のもとで、Anthropic の AI である Claude（Claude Code）が作成した。
