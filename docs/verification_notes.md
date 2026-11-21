@@ -53,5 +53,7 @@ for c in $(perl -0777 -pe 's{/\*.*?\*/}{}gs; s/\{[^}]*\}/ /g' assets/site.css | 
 
 ## 図と作業の環境
 
+- **`sudo` の手順**: Claude Code のプロンプトの `!` で実行するコマンドはパスワードを打ち込めないので、`sudo` は止まる（`a terminal is required to read the password`）。`sudo` の手順は、ユーザーに別の Ubuntu のターミナルで実行してもらい、表示を貼ってもらう。`sudo` の要らない `rosdep update` などは、Claude が説明してから実行してよい。
+
 - **SVG の図**: WSL にはレンダラが無いので、生成スクリプトと機械の点検で作る（`learning-text-authoring` スキル）。目視はユーザーに頼む。
 - **Bash の作業フォルダ**: `/add-dir` で足したフォルダへ `cd` すると、今いるフォルダがそこに残る。`git -C` や絶対パスで操作する。

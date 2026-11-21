@@ -77,6 +77,28 @@ RViz の操作（4 節・5 節）は、ユーザーが撮影した写真を後�
 - Nav2 の本体の node: 位置の推定（`localization_launch.py`）が `map_server`・`amcl`・`lifecycle_manager_localization`。移動（`navigation_launch.py`）が `controller_server`・`smoother_server`・`planner_server`・`route_server`・`behavior_server`・`velocity_smoother`・`collision_monitor`・`bt_navigator`・`waypoint_follower`・`docking_server`・`lifecycle_manager_navigation`。
 - 橋渡しの topic（Gazebo → ROS 2）: `/clock`（`rosgraph_msgs/msg/Clock`）・`joint_states`・`odom`（`nav_msgs/msg/Odometry`）・`tf`・`imu`・`scan`（`sensor_msgs/msg/LaserScan`）。（ROS 2 → Gazebo）: `cmd_vel`（`geometry_msgs/msg/Twist`）。
 
+## Local Installation の構成案
+
+元にする公式のページ: Getting Started / Build and Install / Local Installation（`jazzy`、コミット `b22554c`。写しは `notes/sources/index/local_installation.md`）。到達点 1（あわせて 4 のプラグインの章で使う workspace と `colcon` の下地）。前提: 環境構築・Quickstart のページ。
+
+方針（2026-11-22 のユーザーの決定）: ソースからのビルドを主にしつつ、環境構築と Quickstart で入れ済みの部分も、導入の手順の意味となぜ要るのかを解説する。環境構築のページはコマンドを入れて道具を導入する場、このページはその意味を知る場。公式の原稿から飛躍した説明はしない。
+
+| 節 | 中身 | 公式との違い |
+| --- | --- | --- |
+| 冒頭 | 注記（出典・期待する結果の出どころ・Jazzy が前提）。これまでの章で入れたものの意味を知り、Nav2 をソースからも入れる、という導入 | 足す |
+| 0. 学習目標と完了条件 | 2 つの入れ方（バイナリとソース）の違いを説明できる。ソースからビルドした Nav2 を `source` して使える | 足す |
+| 1. 全体像 | 公式の 2 つの節（Dependencies・Nav2 Project）と、それぞれの 2 つの入れ方の対応表。このサイトでどこまで済んでいるか | 足す |
+| 2. 依存するもの | ROS 2 本体と `colcon`・`rosdep`・`vcstool` が何のために要るか（環境構築の 5 節で入れたもの）。`vcstool` は公式が依存に挙げるが、この手順では使わない（`git clone` で取る）。ROS 2 をソースから入れる方法は、公式へのリンクだけ | 意味の説明を足す |
+| 3. バイナリで入れる | Quickstart の 2 節の `apt install` の意味（`navigation2`・`nav2-bringup`・`nav2-minimal-tb*` が何か。`$ROS_DISTRO`）。入っているものを確かめる | 意味の説明を足す |
+| 4. ソースからビルドする | 公式のコマンドを 1 行ずつ: `NAV_DISTRO` の置き換え、workspace と `src`、`git clone --branch`、`rosdep install` の各オプション、`colcon build --symlink-install`。`slam_toolbox` の rosdep のエラーは無視してよいこと。`rosdep` を初めて使う前の `sudo rosdep init`・`rosdep update`（公式がリンクする ROS 2 の文書の手順） | 意味の説明と、rosdep の初期化を足す |
+| 5. ビルドした Nav2 を使う | `source ~/nav2_ws/install/setup.bash` の意味。どちらの Nav2 が使われるかの確かめ方（`ros2 pkg prefix`） | 確かめ方を足す |
+| 6. 製品に組み込むなら | バイナリとソースのどちらを選ぶかの考え方（公式の原稿の範囲で書く） | 足す |
+| 末尾 | 次のページ・出典・このページの用語 | — |
+
+確かめ方の案: 読み取り（入っているパッケージの版、道具の場所、`ros2 pkg prefix`）と `git clone`・`rosdep install --simulate` は Claude が試す。`sudo rosdep init` と、足りない依存を apt で入れる `rosdep install` は環境を変えるので、ユーザーが行う（確認待ちの一覧に足す）。`colcon build` は 30 分を超えうるので、ユーザーに確認してから行う。node やシミュレーションは起動しない予定。
+
+今の環境の事実（2026-11-22）: `colcon`・`rosdep`・`vcs` は `/usr/bin` にある。`rosdep` は初期化されていない（`/etc/ros/rosdep/sources.list.d/` が無い）。同じ日に、ユーザーが `sudo rosdep init` を、Claude が `rosdep update` を実行し、足りない依存 4 つをユーザーが `rosdep install` で入れた（QA 表）。
+
 ## トップのページ（`index.html`）に書くこと
 
 2026-11-21 に作った（レビュー済み）。次の 4 つを載せている。ページを足したら、読む順番の表も直す。到達点は、読者を迎えるまで載せない。
