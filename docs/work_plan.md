@@ -18,11 +18,31 @@
 
 | 順 | ページ | 元にする公式のページ | 主に当たる到達点 | 状態 |
 | --- | --- | --- | --- | --- |
-| 1 | Quickstart | Getting Started / Quickstart | 1 | 未着手 |
+| 0 | 環境構築（WSL2 → Ubuntu 24.04 → ROS 2 Jazzy） | なし（ROS 2 の公式の導入手順と WSL の公式の文書を基にする） | 1 | 未着手 |
+| 1 | Quickstart | Getting Started / Quickstart | 1 | 構成案 |
 | 2 | Local Installation | Getting Started / Build and Install / Local Installation | 1 | 未着手 |
-| 3 | Navigation Concepts | Getting Started / Navigation Concepts | 2 | 未着手 |
+| 3 | Navigation Concepts | Getting Started / Navigation Concepts（下位 6 ページ） | 2 | 未着手 |
 
-前提の知識（ROS 2 の基礎）と環境構築（WSL2・ROS 2・Gazebo）のページの置き場所と順番は、Quickstart の構成案を作るときに決める。一区切りの後の範囲は、到達点を基準に、区切りごとに決めてこの表に足す。
+ROS 2 の基礎は独立したページを作らず、各ページで初めて使う場面で説明する（`CLAUDE.md` の「内容の方針」）。一区切りの後の範囲は、到達点を基準に、区切りごとに決めてこの表に足す。
+
+## Quickstart の構成案
+
+元にする公式のページ: Getting Started / Quickstart（`jazzy`、コミット `b22554c`）。前提: 環境構築のページ。
+
+| 節 | 中身 | 公式との違い |
+| --- | --- | --- |
+| 冒頭 | 製品に Nav2 を組み込もうとする開発者が、まず「何が動くのか」を見る、という物語調の導入。注記（出典・期待する結果の出どころ・Jazzy が前提） | 足す |
+| 0. 学習目標と完了条件 | シミュレーションの TurtleBot 3 を、RViz で指定した目標まで動かせる | 足す |
+| 1. 全体像 | Gazebo・ROS 2・Nav2・RViz の関係（インラインの SVG） | 足す |
+| 2. Nav2 を入れる | apt で入れる。`apt upgrade` で版をそろえることと、版の確かめ方 | 版の注意を足す |
+| 3. 起動する | `source`・`ros2 launch`・`headless` の意味をその場で説明する。起動されるもの（AMCL・Nav2・RViz など） | 用語の説明を足す |
+| 4. 初期位置を与える | 2D Pose Estimate。なぜ初期位置が要るのか（AMCL の推定の出発点） | 理由を足す |
+| 5. 目標を与えて動かす | Nav2 Goal。BT navigator が action で目標を受け取る | ほぼ同じ |
+| 6. 何が動いていたか | `ros2 node list`・`ros2 topic list` で、起動したものを確かめる | 足す |
+| 7. 止め方 | 止め方だけ。困ったときの節は、実際に困ったことが出てから作る | — |
+| 末尾 | 次のページ・出典・このページの用語 | — |
+
+RViz の操作（4 節・5 節）は、ユーザーが撮影した写真を後から差し込む。それまでは文章と SVG の模式図で説明する。
 
 ## 確認待ちの一覧
 
