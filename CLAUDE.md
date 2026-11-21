@@ -43,6 +43,7 @@ Nav2 の公式の文書（https://docs.nav2.org/ ）を、日本語の学習教�
 ## サイトの形
 
 - 教材の本文のページは HTML で作る。間章・Tips・用語集・作業計画は Markdown にすることがある。
+- **閲覧の前提**: 読者は Pages のサイトをブラウザで読めば足りるようにする。clone やダウンロードを前提にしない。
 - **置き場所**: Pages はブランチの直下から公開する。サイトに載せるもの（本文・Tips・用語集 `glossary.md`）は直下の側に、開発の記録（QA 表 `docs/qa_log.md`・作業計画 `docs/work_plan.md`・調べ方と確かめ方の知見 `docs/verification_notes.md`）は `docs/` に置く。`_config.yml` の `exclude` で `CLAUDE.md`・`docs/`・`notes/` をサイトから外す。新しく開発用のファイルやフォルダを足したら、`exclude` にも足す。
 - HTML のページの器は `pages-html-page` スキル、図解のページの中身は `tech-explainer-page` スキル、見た目の方向は `frontend-design` スキルに従う。
 - Markdown のページは Jekyll で変換されるので、GitHub の画面とは表示が違う。mermaid と数式（`$…$`）は既定では描かれず、`.md` へのリンクは `.html` で書く必要がありうる。Markdown のページに mermaid・数式を置く前に、どう描くかを決めて QA 表に残す（`markdown-mermaid` スキルの罠は、採用した描き方で確かめ直す）。

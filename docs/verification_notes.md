@@ -10,7 +10,7 @@
 
 ## パッケージの版
 
-- ROS のパッケージを追加で入れる前に、`sudo apt update` と `sudo apt upgrade` で版をそろえる（ユーザーが行う）。2026-11-21、`ros-jazzy-nav2-bringup` を足したとき、新しく入った 1.3.14 と、前から入っていた Nav2 の本体の 1.3.13 が混ざった。bringup の launch とパラメータを古い本体で読むと、食い違いで起動に失敗しうる。
+- ROS のパッケージを追加で入れる前に、`sudo apt update` と `sudo apt upgrade` で版をそろえる（ユーザーが行う）。前に入れた Nav2 の本体を更新しないまま `ros-jazzy-nav2-bringup` などを後から足すと、新しい版の bringup と古い版の本体が混ざることがある。bringup の launch とパラメータを古い本体で読むと、食い違いで起動に失敗しうる。
 - 入れた後は、Nav2 の版が 1 つにそろっているかを確かめる（`nav2-minimal-tb*` は別のリポジトリなので版の系列が違ってよい）。
 
 ```bash
