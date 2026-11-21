@@ -39,7 +39,7 @@ Nav2 の公式の文書（https://docs.nav2.org/ ）を、日本語の学習教�
 1. 構成案を作る（元にする公式のページ、到達点のどれに当たるか、前提にする前のページ）。公式の原稿の調べ方は `docs/verification_notes.md`
 2. 書く（`docs/writing_rules.md` の決まりに従う）
 3. 確かめる（「役割分担」の承認の単位で起動する）。パッケージの版・起動の形・Gazebo・WSL の時計の注意は `docs/verification_notes.md`
-4. 新しいサブエージェントに、事実と構成をレビューさせる（静的なレビューのみと明示する）
+4. サブエージェント `textbook-reviewer`（`.claude/agents/`。道具は Read・Grep・Glob だけ）に、事実と構成をレビューさせる。照合に使う公式の写しは `notes/sources/` にそろえておく
 5. 確認待ちの一覧を更新して、コミットする
 
 ## サイトの形
@@ -75,6 +75,7 @@ Nav2 の公式の文書（https://docs.nav2.org/ ）を、日本語の学習教�
 - 判断と承認の経緯は `qa-log` スキルに従って `docs/qa_log.md` に記録する。加えて、アカウント名・PC の実測値・ドライブのパスは書かない。Claude の作業メモは「メモリ」と書かず「Claude の作業メモ」と書く。
 - コミットは `git-conventions` スキルに従う。push は、そのたびにユーザーの承認を得る。
 - コミットの前に、`tools/git-hooks/pre-commit` が動く（PC ごとに `git config core.hooksPath tools/git-hooks` で有効にする）。空になったファイル・半分未満に減ったファイル・壊れた HTML・列のそろわない表を止め、点検の結果を知らせる。止められたら、原因を直してからコミットし直す。意図して大きく減らすときだけ `ALLOW_SHRINK=1` を付けてよいが、付ける前にユーザーに確かめる。`--no-verify` でフックを飛ばさない。
+- `/review-session` でこのリポジトリの作業を点検するときは、サブエージェント `project-session-reviewer`（`.claude/agents/`。道具は Read・Grep・Glob だけ）に、作業の経緯・コミット・変更したファイルを渡して頼む。
 - リポジトリは Public なので、最初の push の前と、公開の範囲が広がる前に、`public-release-review` スキルで点検する。
 - `notes/` は Git 管理外。下準備の申し送り（`notes/handoff_nav2_ja_tutorial.md`）、ユーザーの学習中の疑問のメモ、Claude の作業メモ、照合用の公式の写し（`notes/sources/`）を置く。
 
