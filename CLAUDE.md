@@ -34,16 +34,16 @@ Nav2 の公式の文書（https://docs.nav2.org/ ）を、日本語の学習教�
 
 ページを単位に、次の順で進める。
 
-1. 構成案を作る（元にする公式のページ、到達点のどれに当たるか、前提にする前のページ）
+1. 構成案を作る（元にする公式のページ、到達点のどれに当たるか、前提にする前のページ）。公式の原稿の調べ方は `docs/verification_notes.md`
 2. 書く
-3. 確かめる（「役割分担」の承認の単位で起動する）
+3. 確かめる（「役割分担」の承認の単位で起動する）。パッケージの版・起動の形・Gazebo・WSL の時計の注意は `docs/verification_notes.md`
 4. 新しいサブエージェントに、事実と構成をレビューさせる（静的なレビューのみと明示する）
 5. 確認待ちの一覧を更新して、コミットする
 
 ## サイトの形
 
 - 教材の本文のページは HTML で作る。間章・Tips・用語集・作業計画は Markdown にすることがある。
-- **置き場所**: Pages はブランチの直下から公開する。サイトに載せるもの（本文・Tips・用語集 `glossary.md`）は直下の側に、開発の記録（QA 表 `docs/qa_log.md`・作業計画 `docs/work_plan.md`）は `docs/` に置く。`_config.yml` の `exclude` で `CLAUDE.md`・`docs/`・`notes/` をサイトから外す。新しく開発用のファイルやフォルダを足したら、`exclude` にも足す。
+- **置き場所**: Pages はブランチの直下から公開する。サイトに載せるもの（本文・Tips・用語集 `glossary.md`）は直下の側に、開発の記録（QA 表 `docs/qa_log.md`・作業計画 `docs/work_plan.md`・調べ方と確かめ方の知見 `docs/verification_notes.md`）は `docs/` に置く。`_config.yml` の `exclude` で `CLAUDE.md`・`docs/`・`notes/` をサイトから外す。新しく開発用のファイルやフォルダを足したら、`exclude` にも足す。
 - HTML のページの器は `pages-html-page` スキル、図解のページの中身は `tech-explainer-page` スキル、見た目の方向は `frontend-design` スキルに従う。
 - Markdown のページは Jekyll で変換されるので、GitHub の画面とは表示が違う。mermaid と数式（`$…$`）は既定では描かれず、`.md` へのリンクは `.html` で書く必要がありうる。Markdown のページに mermaid・数式を置く前に、どう描くかを決めて QA 表に残す（`markdown-mermaid` スキルの罠は、採用した描き方で確かめ直す）。
 - **症状から引くページ**: 困ったときの入口として、症状から原因の候補と該当する節を引くページを置く。項目は、ユーザーが学習中に実際に困ったことだけから作り、想定では書かない（膨れ上がるのを避けるため）。
@@ -75,19 +75,6 @@ Nav2 の公式の文書（https://docs.nav2.org/ ）を、日本語の学習教�
 - コードを抜粋する前に、元のリポジトリ（`ros-navigation/navigation2` のパッケージごとの `package.xml` と `LICENSE`、`ros-navigation/navigation2_tutorials` など）のライセンスを確かめる。Nav2 本体はパッケージごとにライセンスが混在しうる。
 - ROS 2 の公式ドキュメント（CC BY 4.0）の例と同等のコマンドを載せる場合は、そのページの出典の注記に書く。
 - 第三者の著作物の一覧は、最初に抜粋を入れるときに `LICENSE` の全文の後ろに節を足して置き、抜粋を足したら一覧も更新する。
-
-## 検証の知見
-
-サンプルやツールの挙動を使い捨ての環境で確かめるときの注意。
-
-- **起動の形**: `ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST` を付け、ログは `stdbuf -oL -eL` で行ごとに出す（`timeout` で止めたときの出力の欠けを防ぐ）。止めるときは `pkill -f` ではなく PID で止める。
-- **Gazebo は画面なしで動かす**: `gz sim -s` と、手で起動する `parameter_bridge` で確かめる。`GZ_IP`・`GZ_PARTITION`・`ROS_DOMAIN_ID` で、ほかのプロセスと分ける。Nav2 の `tb3_simulation_launch.py` は `headless` の既定が true（Gazebo の画面が出ない）。
-- **WSL の壁時計**: 約 36 秒ごとに約 3.6 秒進むことがある。経過時間は STEADY_TIME で測り、ログの時刻の飛びをノードの停止と取り違えない。Nav2 は TF の時刻と `use_sim_time` に敏感なので、特に注意する。
-- **Gazebo の導入後**: `gz` が見つからないときは `source` をやり直す。vendor パッケージの中身は `find` ではなく `dpkg -L` で探す。
-- **言語の取り違え**: rclpy のノードは `qos_overrides.*` のパラメータを宣言しない（C++ のノードだけ）。`ros2 param list` の期待する結果で、言語を取り違えない。
-- **公式の文書の読み方**: docs.ros.org と docs.nav2.org は、本文を取得できないことがある。GitHub にある原稿（`ros2/ros2_documentation`・`ros-navigation/docs.nav2.org`）を読む。原稿をまとめて調べるときは、作業用の一時フォルダに `git clone --depth 1 --branch jazzy --filter=blob:limit=100k` で取得すると、画像を除いて全文を検索できる。要件や対応版は、検索の要約ではなく安定版の公式のページで確かめる。
-- **SVG の図**: WSL にはレンダラが無いので、生成スクリプトと機械の点検で作る（`learning-text-authoring` スキル）。目視はユーザーに頼む。
-- **Bash の作業フォルダ**: `/add-dir` で足したフォルダへ `cd` すると、今いるフォルダがそこに残る。`git -C` や絶対パスで操作する。
 
 ## 記録と Git
 
