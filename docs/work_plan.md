@@ -99,6 +99,8 @@ RViz の操作（4 節・5 節）は、ユーザーが撮影した写真を後�
 
 今の環境の事実（2026-11-22）: `colcon`・`rosdep`・`vcs` は `/usr/bin` にある。`rosdep` は初期化されていない（`/etc/ros/rosdep/sources.list.d/` が無い）。同じ日に、ユーザーが `sudo rosdep init` を、Claude が `rosdep update` を実行し、足りない依存 4 つをユーザーが `rosdep install` で入れた（QA 表）。
 
+今の状態（2026-11-22）: ページはまだ書いていない。ユーザーが `~/nav2_ws` で `time MAKEFLAGS=-j1 colcon build --symlink-install --executor sequential` を実行し、最後の数行・`time` の結果・`ros2 pkg prefix nav2_bringup` の表示を貼るのを待っている（経緯は QA 表の 2026-11-22 の行）。結果が届いたら、構成案に「PC が固まる・ビルドが止まるとき」（ROS 2 の文書の `--executor sequential` と `MAKEFLAGS=-j1`）を足して書き始める。ビルドの間は、Claude は重い作業をしない。
+
 ## トップのページ（`index.html`）に書くこと
 
 2026-11-21 に作った（レビュー済み）。次の 4 つを載せている。ページを足したら、読む順番の表も直す。到達点は、読者を迎えるまで載せない。
