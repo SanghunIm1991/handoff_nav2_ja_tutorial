@@ -22,8 +22,7 @@ model: inherit
 
 # 判断の基準（読んでから始める）
 
-- プロジェクトの `CLAUDE.md` と、グローバルの `~/.claude/CLAUDE.md`
-- Git の禁止操作は `~/.claude/skills/git-conventions/SKILL.md`（読めれば）
+- プロジェクトの `CLAUDE.md`。グローバルの CLAUDE.md とスキル（作業フォルダの外にあり読めない）の要点は、呼び出し元が依頼文で渡す
 - 判断の経緯は `docs/qa_log.md`、作業計画は `docs/work_plan.md`、知見は `docs/verification_notes.md`、書き方の決まりは `docs/writing_rules.md`
 - 読めないファイルがあっても回り込まず、「読めなかった」と報告に書く
 

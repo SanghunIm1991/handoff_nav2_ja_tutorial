@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # コミットの直前に、ステージした内容の壊れ方を機械で止め、手で動かしてきた点検の結果を知らせる。
 # 有効にする: git config core.hooksPath tools/git-hooks（PC ごとに 1 回）
-# 止めるもの: 空になったファイル、10 行以上から半分未満に減ったファイル、<!doctype や </html> が 2 つ以上ある HTML、列の数がそろわない Markdown の表。
+# 止めるもの: 空になったファイル、10 行以上から半分未満に減ったファイル、<!doctype や </html> が 2 つ以上ある HTML、列の数がそろわない Markdown の表、追加した行の中のこの PC のユーザー名・PC 名・プロンプトの形。
 # 意図して大きく減らすときだけ ALLOW_SHRINK=1 を付けてコミットする（減り方の検査だけを通す。付ける前にユーザーに確かめる）。
 # 知らせるもの（止めない）: pages-html-page の点検、assets/site.css のクラスの使用、カタカナの用語の残り。
 set -u
@@ -38,6 +38,19 @@ for f in "${files[@]}"; do
       ;;
   esac
 done
+
+# PC とユーザーを特定する文字列（実際のユーザー名・PC 名・その名前入りのホームのパス・「名前@PC名:」の形のプロンプト）を、追加した行から探して止める。
+# 名前はその場で取るので、このファイルには書かない。貼ってもらった表示を載せるときは <ユーザー名> などに置き換える。
+added=$(git diff --cached -U0 --diff-filter=AM | grep -E '^\+[^+]' || true)
+if [ -n "$added" ]; then
+  for w in "$(id -un)" "$(hostname)"; do
+    [ "${#w}" -ge 3 ] || continue
+    n=$(printf '%s\n' "$added" | grep -cF -- "$w" || true)
+    [ "$n" -gt 0 ] && block "追加した行に、この PC のユーザー名か PC 名が $n 行ある（<ユーザー名> などに置き換える）"
+  done
+  n=$(printf '%s\n' "$added" | grep -cE '[a-z_][a-z0-9_-]*@[A-Za-z0-9-]+:[~/]' || true)
+  [ "$n" -gt 0 ] && block "追加した行に、「名前@PC名:」の形のプロンプトが $n 行ある（プロンプトの行は外して載せる）"
+fi
 
 # 止めない点検（作業ツリーの内容で見る）
 sc="$HOME/.claude/skills/pages-html-page/references/static-checks.sh"

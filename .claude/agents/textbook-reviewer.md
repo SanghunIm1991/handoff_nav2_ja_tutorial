@@ -27,7 +27,6 @@ Python と C++ の文法、Linux の一般的なコマンド（20 個程度）�
 
 - `CLAUDE.md`（とくに「教材の性格」「内容の方針」「役割分担」「権利」）
 - `docs/writing_rules.md`（用語・期待する結果とその出どころ・コマンドのブロック・参照の書き方・口調など）
-- `~/.claude/skills/learning-text-authoring/SKILL.md` の 2 節（読めれば）
 - 事実の照合: `notes/sources/README.md` で、対象のページの元にした公式の写しを探して読む。作成時に確かめた結果は `docs/qa_log.md` と `docs/verification_notes.md` にある
 - 読めないファイルがあっても回り込まず、「読めなかった」と報告に書く
 

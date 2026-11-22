@@ -5,9 +5,9 @@
 ## 公式の文書を調べる
 
 - docs.ros.org と docs.nav2.org は、本文を取得できないことがある。GitHub にある原稿（`ros2/ros2_documentation`・`ros-navigation/docs.nav2.org`）を読む。
-- 原稿をまとめて調べるときは、作業用の一時フォルダの空のフォルダに `git clone --depth 1 --branch jazzy --filter=blob:limit=100k <URL>` で取得する。画像を除いて全文を検索でき、基にしたコミットも `git log -1` で分かる。
-- 読むファイルが少ないときや、`jazzy` のブランチが無いリポジトリ（`gazebosim/docs`・`MicrosoftDocs/WSL` など）は、`--branch` を付けずに `git clone --depth 1 --filter=blob:limit=100k --no-checkout <URL>` で取得し、`git ls-tree -r --name-only HEAD` で探して、`git show HEAD:<パス> > <一時フォルダ>/<名前>` で必要なファイルだけを書き出す（2026-11-21 の環境構築では、書き出したファイルに `wsl_install.md` などの短い名前を付けた）。
-- 写しや原稿を手元で探すときは、リポジトリ（`notes/sources/`）と作業用の一時フォルダの中だけを探す。`find /` のようにファイルシステム全体を探さない（ほかのプロジェクトやホームの設定まで調べる範囲が広がるため。2026-11-21 に一度行い、何も表示されないうちに止めた）。
+- 原稿をまとめて調べるときは、`notes/repos/` の下の空のフォルダに `git clone --depth 1 --branch jazzy --filter=blob:limit=100k <URL>` で取得する。画像を除いて全文を検索でき、基にしたコミットも `git log -1` で分かる。
+- 読むファイルが少ないときや、`jazzy` のブランチが無いリポジトリ（`gazebosim/docs`・`MicrosoftDocs/WSL` など）は、`--branch` を付けずに `git clone --depth 1 --filter=blob:limit=100k --no-checkout <URL>` で取得し、`git ls-tree -r --name-only HEAD` で探して、`git show HEAD:<パス> > <一時フォルダ>/<名前>` で必要なファイルだけを書き出す。取得した原稿は `notes/repos/`（Git 管理外）に置き、同じ原稿は取り直さずに使い回す。作業用の一時フォルダ（`/tmp` の下）は PC の再起動で消えるので使わない（2026-11-22、再起動のたびに消え、原稿を 3 回取り直した）（2026-11-21 の環境構築では、書き出したファイルに `wsl_install.md` などの短い名前を付けた）。
+- 写しや原稿を手元で探すときは、リポジトリ（`notes/sources/`・`notes/repos/`）の中だけを探す。`find /` のようにファイルシステム全体を探さない（ほかのプロジェクトやホームの設定まで調べる範囲が広がるため。2026-11-21 に一度行い、何も表示されないうちに止めた）。
 - 要件や対応版は、検索の要約ではなく安定版の公式のページで確かめる。
 - ページの元にした公式の文書とソースは、ページの出典と同じ版の写しを `notes/sources/<ページ>/` に残し、出どころを `notes/sources/README.md` に書く（作業用の一時フォルダはセッションが変わると消え、後のレビューで照合できなくなるため）。レビューを頼むときは、この写しを照合に使わせる。
 
@@ -15,7 +15,7 @@
 
 - Nav2 の全体（48 パッケージ）を `colcon build` でビルドすると、既定の並列では WSL のメモリを使い切って止まり、PC ごと固まることがある（2026-11-22）。`--parallel-workers 2` でも止まった。colcon の CMake のビルドは、`MAKEFLAGS` が無いと `-j<CPU の数>` で make を呼ぶので（`colcon_cmake/task/cmake/build.py`）、`--parallel-workers` はパッケージの中のコンパイルを絞らない。`MAKEFLAGS=-j1 colcon build --symlink-install --executor sequential` で通った（途中からの続きで約 1 時間半）。
 - 30 分を超えるビルドの間は、Claude はほかの作業を同時に進めない。進めるなら、理由を示して承認を得る（2026-11-22、ビルドの間にページの作成と別のコマンドを進め、PC が固まった）。
-- 作業用の一時フォルダ（`/tmp` の下）は、PC の再起動で消える。再起動をまたいで残したいもの（ビルドの workspace、貼ってもらった表示の控え）は、`/tmp` の外か `notes/` に置く。
+- ユーザーに貼ってもらった表示（期待する結果に使うもの）は、受け取ったらすぐに `notes/outputs/<ページ>/`（Git 管理外）に控える。PC 名とユーザー名のあるプロンプトの行は除く。ビルドの workspace のように再起動をまたいで残したいものも、`/tmp` の外に置く（2026-11-22、`/tmp` の rosdep の表示の控えと workspace が再起動で消えた）。
 
 ## パッケージの版
 
