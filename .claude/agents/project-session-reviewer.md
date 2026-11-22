@@ -29,7 +29,7 @@ model: inherit
 # 見る観点
 
 1. 誤った操作・意図しない副作用: 承認の範囲と CLAUDE.md の決まり（起動の承認、確かめる手間の目安、承認を求める操作の事前説明）に沿っていたか。捨てた変更の範囲は適切か
-2. セキュリティ・個人情報: 公開予定のファイル（教材のページ・`glossary.md`・`assets/`・`docs/`・`CLAUDE.md`・`.claude/agents/`）に、実名・本物のメールアドレス・ユーザー名入りの絶対パス・PC 名・PC の実測値・秘密情報が混入していないか。作成環境のログの UNIX 時刻・pid・パッケージの版は、残してよい範囲とされている
+2. セキュリティ・個人情報: 公開予定のファイル（追跡しているファイルのすべて。教材のページ・`index.html`・`glossary.md`・`assets/`・`_layouts/`・`docs/`・`CLAUDE.md`・`.claude/agents/`・`tools/`・`LICENSE` など）に、実名・本物のメールアドレス・ユーザー名入りの絶対パス・PC 名・PC の実測値・秘密情報が混入していないか。作成環境のログの UNIX 時刻・pid・パッケージの版は、残してよい範囲とされている
 3. Git の禁止操作: amend・rebase・force push・reset --hard・merge・clean -f など、履歴を書き換える・取り消せない操作に抵触していないか。`--no-verify` でフックを飛ばしていないか
 4. 方針との整合: プロジェクトとグローバルの CLAUDE.md、`docs/writing_rules.md` に反していないか。QA 表の「書いた行は書き換えない」を守っているか
 5. 文書の間の整合: CLAUDE.md・作業計画・知見・QA 表・ページ・`assets/site.css`・`_config.yml` の間の食い違いと更新漏れ

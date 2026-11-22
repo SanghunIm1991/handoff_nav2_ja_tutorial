@@ -6,10 +6,10 @@
 
 - docs.ros.org と docs.nav2.org は、本文を取得できないことがある。GitHub にある原稿（`ros2/ros2_documentation`・`ros-navigation/docs.nav2.org`）を読む。
 - 原稿をまとめて調べるときは、`notes/repos/` の下の空のフォルダに `git clone --depth 1 --branch jazzy --filter=blob:limit=100k <URL>` で取得する。画像を除いて全文を検索でき、基にしたコミットも `git log -1` で分かる。
-- 読むファイルが少ないときや、`jazzy` のブランチが無いリポジトリ（`gazebosim/docs`・`MicrosoftDocs/WSL` など）は、`--branch` を付けずに `git clone --depth 1 --filter=blob:limit=100k --no-checkout <URL>` で取得し、`git ls-tree -r --name-only HEAD` で探して、`git show HEAD:<パス> > <一時フォルダ>/<名前>` で必要なファイルだけを書き出す。取得した原稿は `notes/repos/`（Git 管理外）に置き、同じ原稿は取り直さずに使い回す。作業用の一時フォルダ（`/tmp` の下）は PC の再起動で消えるので使わない（2026-11-22、再起動のたびに消え、原稿を 3 回取り直した）（2026-11-21 の環境構築では、書き出したファイルに `wsl_install.md` などの短い名前を付けた）。
+- 読むファイルが少ないときや、`jazzy` のブランチが無いリポジトリ（`gazebosim/docs`・`MicrosoftDocs/WSL` など）は、`--branch` を付けずに `git clone --depth 1 --filter=blob:limit=100k --no-checkout <URL>` で取得し、`git ls-tree -r --name-only HEAD` で探して、`git show HEAD:<パス> > notes/sources/<ページ>/<名前>` で必要なファイルだけを書き出す。取得した原稿は `notes/repos/`（Git 管理外）に置き、同じ原稿は取り直さずに使い回す。作業用の一時フォルダ（`/tmp` の下）は PC の再起動で消えるので使わない（2026-11-22、再起動のたびに消え、原稿を 3 回取り直した）（2026-11-21 の環境構築では、書き出したファイルに `wsl_install.md` などの短い名前を付けた）。
 - 写しや原稿を手元で探すときは、リポジトリ（`notes/sources/`・`notes/repos/`）の中だけを探す。`find /` のようにファイルシステム全体を探さない（ほかのプロジェクトやホームの設定まで調べる範囲が広がるため。2026-11-21 に一度行い、何も表示されないうちに止めた）。
 - 要件や対応版は、検索の要約ではなく安定版の公式のページで確かめる。
-- ページの元にした公式の文書とソースは、ページの出典と同じ版の写しを `notes/sources/<ページ>/` に残し、出どころを `notes/sources/README.md` に書く（作業用の一時フォルダはセッションが変わると消え、後のレビューで照合できなくなるため）。レビューを頼むときは、この写しを照合に使わせる。
+- ページの元にした公式の文書とソースは、ページの出典と同じ版の写しを `notes/sources/<ページ>/` に残し、出どころを `notes/sources/README.md` に書く（作業用の一時フォルダ〈`/tmp` の下〉は PC の再起動で消え、後のレビューで照合できなくなるため）。レビューを頼むときは、この写しを照合に使わせる。
 
 ## ソースからのビルド
 
@@ -20,7 +20,7 @@
   3. 1 つずつビルドする今の形（`MAKEFLAGS=-j1 … --executor sequential`）。確実に通ったが、いちばん時間がかかる。
   後の章で自分のパッケージだけを overlay にするビルドは小さいので、全体のビルドが重いのは主に Local Installation の章だけ。
 - 30 分を超えるビルドの間は、Claude はほかの作業を同時に進めない。進めるなら、理由を示して承認を得る（2026-11-22、ビルドの間にページの作成と別のコマンドを進め、PC が固まった）。
-- ユーザーに貼ってもらった表示（期待する結果に使うもの）は、受け取ったらすぐに `notes/outputs/<ページ>/`（Git 管理外）に控える。PC 名とユーザー名のあるプロンプトの行は除く。ビルドの workspace のように再起動をまたいで残したいものも、`/tmp` の外に置く（2026-11-22、`/tmp` の rosdep の表示の控えと workspace が再起動で消えた）。
+- 確かめたときの表示（期待する結果に使うもの。ユーザーに貼ってもらったものと、Claude が実行したもの）と、確かめに使った道具（`run.sh` など）は、`notes/outputs/<ページ>/`（Git 管理外）に置く。ユーザーに貼ってもらった表示は、受け取ったらすぐに控え、PC 名とユーザー名のあるプロンプトの行は除く。ビルドの workspace のように再起動をまたいで残したいものも、`/tmp` の外に置く（2026-11-22、`/tmp` の rosdep の表示の控えと workspace が再起動で消えた）。
 
 ## パッケージの版
 
@@ -38,7 +38,7 @@ dpkg-query -W -f='${Version}\n' 'ros-jazzy-nav2-*' ros-jazzy-navigation2 | cut -
 - **WSL の壁時計**: 約 36 秒ごとに約 3.6 秒進むことがある。経過時間は STEADY_TIME で測り、ログの時刻の飛びを node の停止と取り違えない。Nav2 は TF の時刻と `use_sim_time` に敏感なので、特に注意する。
 - **Gazebo の導入後**: `gz` が見つからないときは `source` をやり直す。vendor パッケージの中身は `find` ではなく `dpkg -L` で探す。
 - **裏で起動したときの待ち方**: `source /opt/ros/jazzy/setup.bash` に十数秒かかることがある。ログを見張る処理を別に動かすときは、ログと PID のファイルができるのを待ってから見張る（先に見張ると、ファイルが無いまま終わる）。
-- **Claude のシェルの環境**: Claude Code は、起動したターミナルの環境変数を引き継ぐ。workspace（`~/nav2_ws` など）を `source` したターミナルから Claude Code を起動すると、その後の `source /opt/ros/jazzy/setup.bash` の上でも workspace の側が使われる（2026-11-22、apt の Nav2 で起動したつもりが、ビルドした Nav2 で起動していた）。apt の版で確かめるときは、`env -i HOME="$HOME" PATH=/usr/bin:/bin bash -c 'source …; …'` のように環境を空にしてから読み込む（`notes/outputs/03_navigation_concepts/run.sh` の形）。確かめる前に `echo $AMENT_PREFIX_PATH` で、何が読み込まれているかを見る。
+- **Claude のシェルの環境**: Claude Code は、起動したターミナルの環境変数を引き継ぐ。workspace（`~/nav2_ws` など）を `source` したターミナルから Claude Code を起動すると、その後の `source /opt/ros/jazzy/setup.bash` の上でも workspace の側が使われる（2026-11-22、apt の Nav2 で起動したつもりが、ビルドした Nav2 で起動していた。この回の原因が workspace を読み込んだターミナルからの起動だったことは推定）。apt の版で確かめるときは、`env -i HOME="$HOME" PATH=/usr/bin:/bin bash -c 'source …; …'` のように環境を空にしてから読み込む（`notes/outputs/03_navigation_concepts/run.sh` の形）。確かめる前に `echo $AMENT_PREFIX_PATH` で、何が読み込まれているかを見る。
 - **Nav2 の起動の完了**: `lifecycle_manager_localization` と `lifecycle_manager_navigation` の 2 つが `Managed nodes are active` を出せば完了。移動の側は、初期位置を与えるまで完了しない。与えないまま約 85 秒たつと `Aborting bringup.` で打ち切られる（1.3.14）。画面なしで確かめるときは、位置の推定の側の完了を待って、すぐに `/initialpose` を送る。
 - **topic の一覧の取りこぼし**: `ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST` のもとで `ros2 topic list` を既定のまま実行すると、Nav2 の container の中の node の topic が抜け、11 個だけだった。`ros2 topic list --no-daemon --spin-time 10` では 76 個出た。daemon を使わないことと待ち時間を延ばすことのどちらが効いたか、既定の discovery の設定でも起きるかは、切り分けていない。
 - **止めたときの異常終了**: SIGINT で止めると、Nav2 の container が `SIGSEGV`・`exit code -6` を出して終わる（1.3.14 で 2 回とも）。プロセスは残らない。止めた後は、`gz sim`・`component_container`・`parameter_bridge`・`robot_state_publisher`・`rviz2` が残っていないかを確かめる。`ros2 node list` などが裏で起動する `_ros2_daemon` は残る作りなので、確かめた後に要らなければ、起動したときと同じ `ROS_DOMAIN_ID` を付けて `ros2 daemon stop` で止める（2026-11-21 の確認では、次のセッションの時点で残っていなかった）。
@@ -61,9 +61,11 @@ for c in $(perl -0777 -pe 's{/\*.*?\*/}{}gs; s/\{[^}]*\}/ /g' assets/site.css | 
 - 差し込む断片のファイルは、差し込む前に中身（行数・先頭・混ざってはいけないものの有無）を確かめる。書き換えた後は、変えるつもりの無い部分に差が無いことを `diff` で確かめてから、次へ進む。
 - コミットの前に `git diff --stat` を見て、意図しない行の削除が無いかを確かめる。確かめる前にコミットまで続けて実行しない（2026-11-21、用語集の並べ替えで行を 1 つ消したまま、続けてコミットした）。
 - HTML の中の `&&` を `&amp;&amp;` に直すときは、前後の空白を消さない。直した後は、コマンドの箱の行を公式の写しの行と空白をそろえて突き合わせる（2026-11-21、`echo ${…}` の空白を消し、環境構築の 4 節のコマンドが動かない形になった。公開前のレビューで見つかった）。
-- `git restore` などで作業中の変更を捨てる前に、捨てる対象を一時フォルダに写しておく（捨てた後では戻せないため）。
+- `git restore` などで作業中の変更を捨てる前に、捨てる対象を `notes/outputs/` などの消えない場所に写しておく（捨てた後では戻せないため）。
 
 ## 図と作業の環境
+
+- **フックを試すとき**: 一時フォルダの写しのリポジトリで試すときは、基準のコミットを先に作り、その後で `git config core.hooksPath tools/git-hooks` を有効にする（`--no-verify` を使わずに済む）。場合ごとに写しを作り直し、`git reset --hard` などで戻さない。
 
 - **`sudo` の手順**: Claude Code のプロンプトの `!` で実行するコマンドはパスワードを打ち込めないので、`sudo` は止まる（`a terminal is required to read the password`）。`sudo` の手順は、ユーザーに別の Ubuntu のターミナルで実行してもらい、表示を貼ってもらう。`sudo` の要らない `rosdep update` も、外部から取得してホームに書き込むので読み取りではない。Claude が実行するときは、その都度、目的・内容・危険度を示して承認を得る。
 

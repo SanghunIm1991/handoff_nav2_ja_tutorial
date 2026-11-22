@@ -99,7 +99,7 @@ RViz の操作（4 節・5 節）は、ユーザーが撮影した写真を後�
 
 今の環境の事実（2026-11-22）: `colcon`・`rosdep`・`vcs` は `/usr/bin` にある。`rosdep` は初期化されていない（`/etc/ros/rosdep/sources.list.d/` が無い）。同じ日に、ユーザーが `sudo rosdep init` を、Claude が `rosdep update` を実行し、足りない依存 4 つをユーザーが `rosdep install` で入れた（QA 表）。
 
-2026-11-22 に書き、`textbook-reviewer` のレビューの指摘を直した（QA 表）。ビルドした Nav2 で Quickstart を起動しての確認はしていない（本文にもそう書いた）。
+2026-11-22 に書き、`textbook-reviewer` のレビューの指摘を直した（QA 表）。ビルドした Nav2 は、画面なしで起動し、初期位置を与えて移動の側まで起動を終えたことを確かめた（Navigation Concepts の確認の 1 回め。QA 表）。画面と RViz の操作、目標を与えて走らせることは確かめていない。
 
 ## Navigation Concepts の構成案
 
@@ -140,7 +140,8 @@ RViz の操作（4 節・5 節）は、ユーザーが撮影した写真を後�
 - [ ] 環境構築の 2 節〜5 節・8 節: 新しい WSL のディストリビューション（または新しい PC）で、導入の手順を頭から通せるか。とくに `wsl --list --online` に `Ubuntu-24.04` があるか、初回のユーザーの作成、`ros2-apt-source` の取得、`gz sim empty.sdf` で Gazebo の画面が開くか（読者の環境を変える手順で、Claude は頭から試せないため）
 - [ ] Quickstart の 2 節: `sudo apt update`・`sudo apt upgrade`・`sudo apt install …` の手順と、版の確かめ方の表示が本文と合っているか（読者の環境を変える手順のため）
 - [ ] Quickstart の 3〜5 節と 7 節: 画面の表示と操作が本文と合っているか。とくに、RViz のツールバーのボタン名（「2D Pose Estimate」「Nav2 Goal」）、左下の Nav2 の欄（Startup と取り消しのボタン）、起動直後の地図の見え方、初期位置を与えた後の particle cloud と costmap、Ctrl+C で Gazebo と RViz のウィンドウが閉じること。あわせて、4 節・5 節に差し込む画面の写真を撮る（写り込みに注意）
-- [ ] Local Installation の 5 節: `source ~/nav2_ws/install/setup.bash` の後に Quickstart の 3 節の `ros2 launch …` を実行し、ビルドした Nav2 で同じように動くこと（ビルドした Nav2 では起動していないため）
+- [ ] Local Installation の 5 節: `source ~/nav2_ws/install/setup.bash` の後に Quickstart の 3 節の `ros2 launch …` を実行し、ビルドした Nav2 で同じように動くこと（作成時は、画面なしで移動の側まで起動を終えたことだけを確かめた。画面と RViz の操作、目標を与えて走らせることは確かめていない）
+- [ ] Navigation Concepts の 2 節・3 節: ビルドした Nav2（`~/nav2_ws` を読み込んだ環境）で起動したときも、`ros2 action list` と `ros2 lifecycle get /amcl` の表示が出ること（作成時に一度、Claude のシェルがその環境を引き継いでいた回で、`action list` が空、`lifecycle get` が `Node not found` だった。原因は確かめていない）
 - [ ] Local Installation の 4-5 節: PC ごと固まったときに、Windows の PowerShell の `wsl --shutdown` で WSL を止めて戻れること（作成時は PC の再起動で戻ったため、こちらは試していない）
 
 ## Pages に載せた後に確かめること

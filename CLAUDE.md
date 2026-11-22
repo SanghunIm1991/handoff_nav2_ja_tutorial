@@ -77,7 +77,7 @@ Nav2 の公式の文書（https://docs.nav2.org/ ）を、日本語の学習教�
 - コミットの前に、`tools/git-hooks/pre-commit` が動く（PC ごとに `git config core.hooksPath tools/git-hooks` で有効にする）。空になったファイル・半分未満に減ったファイル・壊れた HTML・列のそろわない表・追加した行の中のこの PC のユーザー名と PC 名とプロンプトの形を止め、点検の結果を知らせる。止められたら、原因を直してからコミットし直す。意図して大きく減らすときだけ `ALLOW_SHRINK=1` を付けてよいが、付ける前にユーザーに確かめる。`--no-verify` でフックを飛ばさない。
 - `/review-session` でこのリポジトリの作業を点検するときは、サブエージェント `project-session-reviewer`（`.claude/agents/`。道具は Read・Grep・Glob だけ）に、作業の経緯・コミット・変更したファイルを渡して頼む。
 - リポジトリは Public なので、最初の push の前と、公開の範囲が広がる前に、`public-release-review` スキルで点検する。
-- `notes/` は Git 管理外。下準備の申し送り（`notes/handoff_nav2_ja_tutorial.md`）、ユーザーの学習中の疑問のメモ、Claude の作業メモ、照合用の公式の写し（`notes/sources/`）、取得した公式の原稿（`notes/repos/`）、ユーザーに貼ってもらった表示の控え（`notes/outputs/`）を置く。
+- `notes/` は Git 管理外。下準備の申し送り（`notes/handoff_nav2_ja_tutorial.md`）、ユーザーの学習中の疑問のメモ、Claude の作業メモ、照合用の公式の写し（`notes/sources/`）、取得した公式の原稿（`notes/repos/`）、確かめたときの表示の控えと確かめに使った道具（`notes/outputs/`。ユーザーに貼ってもらったものと、Claude が実行したもの）を置く。
 
 ## 未決のこと
 

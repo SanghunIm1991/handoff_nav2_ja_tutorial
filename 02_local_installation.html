@@ -24,7 +24,7 @@
 
   <div class="prose">
     <p>環境構築と Quickstart の章では、言われたとおりにコマンドを打って、ROS 2 と Nav2 を入れた。動くものを先に見るためである。このページでは立ち止まって、そのとき入れた道具とパッケージが何のためのものだったのかを確かめる。</p>
-    <p>そのうえで、Nav2 を<strong>ソースからビルドする</strong>。apt で入れた Nav2 は、出来上がったものを使うだけで、中身を変えられない。Nav2 のコードを読みながら動かしたり、直したり、自分の部品を足したりするには、ソースを手元に置いて自分で組み立てる必要がある。後の章（plugin を作る章。準備中）で作る plugin も、この組み立て方の上に乗る。</p>
+    <p>そのうえで、Nav2 を<strong>ソースからビルドする</strong>。apt で入れた Nav2 は、出来上がったものを使うだけで、中身を変えられない。Nav2 のコードを読みながら動かしたり、直したり、自分の部品を足したりするには、ソースを手元に置いて自分で組み立てる必要がある。後の章（plugin〈実行時に読み込む部品のライブラリ〉を作る章。準備中）で作る plugin も、この組み立て方の上に乗る。</p>
   </div>
 
   <aside class="notes" aria-label="このページについての注記">
@@ -326,7 +326,7 @@ ros2 pkg prefix slam_toolbox</code></pre>
       <figcaption>図 1　overlay と underlay。パッケージは上の overlay から探され、無ければ下の underlay から探される。横に長い図は、狭い画面では横にスクロールして見る。</figcaption>
     </figure>
     <div class="prose">
-      <p>この状態で、Quickstart の章の 3 節のコマンドのうち 2 行めの <code>ros2 launch …</code> だけを実行すると（1 行めの <code>source /opt/ros/jazzy/setup.bash</code> は打たなくてよい）、パッケージが上から探されるので、ビルドした Nav2 の launch file と node が使われる（作成時の環境では、起動しての確認はしていない）。apt で入れた Nav2 に戻すには、新しいターミナルで <code>source /opt/ros/jazzy/setup.bash</code> だけを読み込めばよい。ビルドした Nav2 を使うターミナルでは、毎回 <code>source ~/nav2_ws/install/setup.bash</code> を実行する。環境構築の章の 6 節で見たとおり、<code>~/.bashrc</code> に書き足すと、どちらの Nav2 を使っているかが見えにくくなる。</p>
+      <p>この状態で、Quickstart の章の 3 節のコマンドのうち 2 行めの <code>ros2 launch …</code> だけを実行すると（1 行めの <code>source /opt/ros/jazzy/setup.bash</code> は打たなくてよい）、パッケージが上から探されるので、ビルドした Nav2 の launch file と node が使われる（作成時の環境では、画面を出さずに起動し、初期位置を与えて移動の側まで起動を終えたことだけを確かめた。画面と RViz の操作、目標を与えて走らせることは確かめていない）。apt で入れた Nav2 に戻すには、新しいターミナルで <code>source /opt/ros/jazzy/setup.bash</code> だけを読み込めばよい。ビルドした Nav2 を使うターミナルでは、毎回 <code>source ~/nav2_ws/install/setup.bash</code> を実行する。環境構築の章の 6 節で見たとおり、<code>~/.bashrc</code> に書き足すと、どちらの Nav2 を使っているかが見えにくくなる。</p>
     </div>
   </section>
 

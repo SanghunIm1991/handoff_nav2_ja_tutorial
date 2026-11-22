@@ -41,7 +41,7 @@ done
 
 # PC とユーザーを特定する文字列（実際のユーザー名・PC 名・その名前入りのホームのパス・「名前@PC名:」の形のプロンプト）を、追加した行から探して止める。
 # 名前はその場で取るので、このファイルには書かない。貼ってもらった表示を載せるときは <ユーザー名> などに置き換える。
-added=$(git diff --cached -U0 --diff-filter=AM | grep -E '^\+[^+]' || true)
+added=$(git diff --cached -U0 --diff-filter=AMR | grep -E '^\+' | grep -vE '^\+\+\+ ' || true)
 if [ -n "$added" ]; then
   for w in "$(id -un)" "$(hostname)"; do
     [ "${#w}" -ge 3 ] || continue
