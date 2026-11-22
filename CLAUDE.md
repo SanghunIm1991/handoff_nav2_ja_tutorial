@@ -48,7 +48,7 @@ Nav2 の公式の文書（https://docs.nav2.org/ ）を、日本語の学習教�
 - **閲覧の前提**: 読者は Pages のサイトをブラウザで読めば足りるようにする。clone やダウンロードを前提にしない。
 - **見た目のテーマ**: 「設計図」の見た目（青の帯に白い方眼、差し色は橙）にそろえる。共通の CSS（色の値のトークン〈ライトとダーク〉と、本文・帯・見出し・箱・図の箱・表・末尾の書き方）は `assets/site.css` が正本で、各ページは `<link rel="stylesheet" href="assets/site.css">` で読み込む。ページの `<style>` には、そのページだけの図の CSS と、図の最小の幅（`.diagram svg{min-width:…}`）だけを置く。見た目を見直すときは `assets/site.css` を直す（確かめ方は `docs/verification_notes.md` の「CSS を直したとき」）。Markdown のページ（用語集・Tips・間章など）は、Jekyll の共通の枠 `_layouts/default.html` で同じ帯と `assets/site.css` を当てる（Pages でだけ効く。手元で直接開いたときは見た目が付かない）。差し色は、節の見出しの線・注記の箱・「期待する結果」の見出し・ページの末尾の線だけに使う。ロボット（青緑）・目標（赤紫）の意味の色は、図と凡例だけに使う。
 - **字体**: 外部の字体（Google Fonts など）を読み込まず、OS に入っている日本語の字体の並びだけを使う（読者のブラウザを外部に接続させないため）。見た目に不満が出たら、ユーザーと見直す。
-- **置き場所**: Pages はブランチの直下から公開する。サイトに載せるもの（本文・Tips・用語集 `glossary.md`・共通の CSS `assets/`）は直下の側に、開発の記録（QA 表 `docs/qa_log.md`・作業計画 `docs/work_plan.md`・調べ方と確かめ方の知見 `docs/verification_notes.md`・書き方の決まり `docs/writing_rules.md`）は `docs/` に置く。`_config.yml` の `exclude` で `CLAUDE.md`・`docs/`・`notes/`・`tools/` をサイトから外す。新しく開発用のファイルやフォルダを足したら、`exclude` にも足す。
+- **置き場所**: Pages はブランチの直下から公開する。サイトに載せるもの（本文・Tips・用語集 `glossary.md`・共通の CSS `assets/`）は直下の側に、開発の記録（QA 表 `docs/qa_log.md`・作業計画 `docs/work_plan.md`・調べ方と確かめ方の知見 `docs/verification_notes.md`・書き方の決まり `docs/writing_rules.md`）は `docs/` に置く。`_config.yml` の `exclude` で `CLAUDE.md`・`README.md`（リポジトリの画面向けの案内）・`docs/`・`notes/`・`tools/` をサイトから外す。新しく開発用のファイルやフォルダを足したら、`exclude` にも足す。
 - **ファイル名**: 教材のページは `<2 桁の読む順番>_<元にした公式の原稿のファイル名>.html`（例: `01_quickstart.html`）。公式に対応するページが無いものは、中身を表す短い英語にする（例: `00_setup.html`）。トップは `index.html`。途中にページを足すときは番号を振り直す（作成中にリンクが壊れることは許容し、まとまったところでユーザーがリンクを確かめる）。
 - **見た目の確認**: 試作ページは作らず、Pages で公開したページをユーザーが見る。
 - HTML のページの器は `pages-html-page` スキル、図解のページの中身は `tech-explainer-page` スキル、見た目の方向は `frontend-design` スキルに従う。
@@ -74,7 +74,7 @@ Nav2 の公式の文書（https://docs.nav2.org/ ）を、日本語の学習教�
 
 - 判断と承認の経緯は `qa-log` スキルに従って `docs/qa_log.md` に記録する。加えて、アカウント名・PC の実測値・ドライブのパスは書かない。Claude の作業メモは「メモリ」と書かず「Claude の作業メモ」と書く。
 - コミットは `git-conventions` スキルに従う。push は、そのたびにユーザーの承認を得る。
-- コミットの前に、`tools/git-hooks/pre-commit` が動く（PC ごとに `git config core.hooksPath tools/git-hooks` で有効にする）。空になったファイル・半分未満に減ったファイル・壊れた HTML・列のそろわない表・追加した行の中のこの PC のユーザー名と PC 名とプロンプトの形を止め、点検の結果を知らせる。止められたら、原因を直してからコミットし直す。意図して大きく減らすときだけ `ALLOW_SHRINK=1` を付けてよいが、付ける前にユーザーに確かめる。`--no-verify` でフックを飛ばさない。
+- コミットの前に、`tools/git-hooks/pre-commit` が動く（PC ごとに `git config core.hooksPath tools/git-hooks` で有効にする）。空になったファイル・半分未満に減ったファイル・壊れた HTML・列のそろわない表・追加した行の中のこの PC のユーザー名と PC 名（サイトとリポジトリの URL の中の持ち主の名前は除いてから探す）とプロンプトの形を止め、点検の結果を知らせる。止められたら、原因を直してからコミットし直す。意図して大きく減らすときだけ `ALLOW_SHRINK=1` を付けてよいが、付ける前にユーザーに確かめる。`--no-verify` でフックを飛ばさない。
 - `/review-session` でこのリポジトリの作業を点検するときは、サブエージェント `project-session-reviewer`（`.claude/agents/`。道具は Read・Grep・Glob だけ）に、作業の経緯・コミット・変更したファイルを渡して頼む。
 - リポジトリは Public なので、最初の push の前と、公開の範囲が広がる前に、`public-release-review` スキルで点検する。
 - `notes/` は Git 管理外。下準備の申し送り（`notes/handoff_nav2_ja_tutorial.md`）、ユーザーの学習中の疑問のメモ、Claude の作業メモ、照合用の公式の写し（`notes/sources/`）、取得した公式の原稿（`notes/repos/`）、確かめたときの表示の控えと確かめに使った道具（`notes/outputs/`。ユーザーに貼ってもらったものと、Claude が実行したもの）を置く。

@@ -3,6 +3,7 @@
 # 開発用のファイルやフォルダを足したら、ここにも足す（CLAUDE.md の「置き場所」）。
 exclude:
   - CLAUDE.md
+  - README.md
   - docs/
   - notes/
   - tools/
