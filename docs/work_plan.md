@@ -21,7 +21,7 @@
 | 0 | 環境構築（WSL2 → Ubuntu 24.04 → ROS 2 Jazzy） | `00_setup.html` | なし（ROS 2 の公式の導入手順と WSL の公式の文書を基にする） | 1 | レビュー済み（ユーザーの確認待ち） |
 | 1 | Quickstart | `01_quickstart.html` | Getting Started / Quickstart | 1 | レビュー済み（ユーザーの確認待ち） |
 | 2 | Local Installation | `02_local_installation.html` | Getting Started / Build and Install / Local Installation | 1 | レビュー済み（ユーザーの確認待ち） |
-| 3 | Navigation Concepts | `03_navigation_concepts.html` | Getting Started / Navigation Concepts（下位 6 ページ。分けるかは構成案のときに決める） | 2 | 未着手 |
+| 3 | Navigation Concepts | `03_navigation_concepts.html` | Getting Started / Navigation Concepts（下位 5 ページを 1 枚にまとめた） | 2 | レビュー済み（ユーザーの確認待ち） |
 
 書く順番は Quickstart を先にし、HTML のページの器をそこで決める。読む順番は表のとおり環境構築が先。ROS 2 の基礎は独立したページを作らず、各ページで初めて使う場面で説明する（`CLAUDE.md` の「内容の方針」）。一区切りの後の範囲は、到達点を基準に、区切りごとに決めてこの表に足す。
 
@@ -100,6 +100,26 @@ RViz の操作（4 節・5 節）は、ユーザーが撮影した写真を後�
 今の環境の事実（2026-11-22）: `colcon`・`rosdep`・`vcs` は `/usr/bin` にある。`rosdep` は初期化されていない（`/etc/ros/rosdep/sources.list.d/` が無い）。同じ日に、ユーザーが `sudo rosdep init` を、Claude が `rosdep update` を実行し、足りない依存 4 つをユーザーが `rosdep install` で入れた（QA 表）。
 
 2026-11-22 に書き、`textbook-reviewer` のレビューの指摘を直した（QA 表）。ビルドした Nav2 で Quickstart を起動しての確認はしていない（本文にもそう書いた）。
+
+## Navigation Concepts の構成案
+
+元にする公式のページ: Getting Started / Navigation Concepts（`jazzy`、コミット `b22554c`）の 6 つの原稿（`index.md`・`ros2.md`・`behavior_trees.md`・`navigation_servers.md`・`state_estimation.md`・`environmental_representation.md`、計約 350 行。写しは `notes/sources/03_navigation_concepts/`）。到達点 2（Nav2 の部品が何をしているかを説明できる）。前提: Quickstart（動いたものを、ここで概念として整理する）。公式の原稿には実習のコマンドが無い。
+
+| 節 | 中身 | 元の原稿 |
+| --- | --- | --- |
+| 冒頭 | 注記（出典・期待する結果の出どころ・Jazzy が前提）。Quickstart で動いたものの「中で何が起きていたか」を整理する、という導入 | 足す |
+| 0. 学習目標と完了条件 | 到達点 2 に沿う | 足す |
+| 1. 全体像 | BT navigator が action で各サーバー（planner・controller・smoother・behavior・route）を呼び、各サーバーが costmap を持ち、lifecycle manager が全体を起動する、の 1 枚の図。Quickstart の 6 節の node の一覧と対応させる | 足す（公式の各ページの要点を 1 枚に） |
+| 2. ROS 2 の仕組み: action | 長い仕事を頼む仕組み（要求・途中経過・結果）。`NavigateToPose`。クライアントの受け取り方（コールバックと future）は、C++ の文法を知る読者向けに最小限 | `ros2.md` |
+| 3. ROS 2 の仕組み: lifecycle node と bond | 状態の遷移（unconfigured → inactive → active → finalized）と `on_configure`・`on_activate`。lifecycle manager と bond（落ちたら全体を止める） | `ros2.md` |
+| 4. behavior tree | 有限状態機械との対比、BehaviorTree.CPP V4、XML の木と node のプラグイン、subtree として上位の木に入れられること | `behavior_trees.md` |
+| 5. 各サーバー | planner・controller・smoother・behavior（recovery）・route、プラグインと名前（`FollowPath` など）、costmap を 1 つのサーバーで共有する理由、ロボットの外形（footprint）、waypoint following | `navigation_servers.md` |
+| 6. 位置の推定 | REP 105 の `map` → `odom` → `base_link` → センサーの座標系。`map` → `odom` は AMCL・SLAM、`odom` → `base_link` は odometry（robot_localization で複数のセンサーを合わせる）。LIDAR は必須ではない | `state_estimation.md` |
+| 7. 環境の表し方 | costmap とその層（layer）、costmap filter（立入禁止・速度制限など）、そのほかの表し方 | `environmental_representation.md` |
+| 8. 製品に組み込むなら | waypoint following の 2 つの考え方（ロボットは単純で配車が賢い／ロボットが賢い）、自分のセンサーで REP 105 の座標系をそろえること、lifecycle で起動と停止を決まった順にすること | `navigation_servers.md`・`state_estimation.md`・`ros2.md` から |
+| 末尾 | 次のページ・出典・このページの用語 | — |
+
+公式の動画（Nav2 Academic Overview）と画像は載せず、リンクで案内する。BehaviorTree の本（arXiv）や REP 105 などの外部の資料は、公式と同じくリンクで案内する。
 
 ## トップのページ（`index.html`）に書くこと
 

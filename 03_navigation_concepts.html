@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Navigation Concepts：Nav2 を形作る考え方</title>
+<meta name="description" content="Quickstart で動いた Nav2 の中で何が起きていたかを、action・lifecycle・behavior tree・各サーバー・位置の推定・costmap の考え方で整理する。Nav2 の公式の Navigation Concepts（Jazzy）を日本語で再構成した非公式の教材。">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+/* Navigation Concepts の章だけの CSS。共通の器は assets/site.css。
+   図 1 は、bt_navigator が action で 5 つのサーバーを呼ぶ形を、上から下への 1 方向で表す。色の差は付けない。
+   図 2 は、座標系の木を左から右へ並べ、各つながりを誰が配るかを矢印の下に書く。 */
+.diagram svg{min-width:760px}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <p class="site"><a href="index.html">Nav2 日本語ガイド</a>（非公式・作成中）</p>
+  <div class="hero">
+    <h1>Navigation Concepts：Nav2 を形作る考え方</h1>
+  </div>
+</div></header>
+
+<main><div class="wrap">
+
+  <div class="prose">
+    <p>Quickstart の章では、RViz で目標を与えると、ロボットが自分で経路を考えて走った。そのとき Nav2 の中では、10 を超える node が、決まった仕組みで仕事を分け合っていた。このページでは、その仕組みを順に見ていく。</p>
+    <p>扱うのは、Nav2 の公式の文書が「Nav2 を理解して使うために要る考え方」としてまとめているものである。ROS 2 の 2 つの仕組み（action と lifecycle）、仕事の流れを決める behavior tree、実際の計算をする各サーバー、ロボットの位置の推定、周りの環境の表し方。各節では、Quickstart と同じシミュレーションを動かしたまま、その考え方が実際にどう現れているかを、読み取りだけのコマンドで確かめる。</p>
+  </div>
+
+  <aside class="notes" aria-label="このページについての注記">
+    <p>このページについて</p>
+    <ul>
+      <li>Nav2 の公式の文書の <a href="https://docs.nav2.org/jazzy/getting_started/navigation_concepts/">Navigation Concepts</a> とその下の 5 つのページ（<code>jazzy</code> 版の原稿、コミット <code>b22554c</code>）を基に、日本語で説明し直して 1 つのページにまとめたもの。逐語の翻訳ではない。公式の原稿には実習が無く、各節のコマンドはこのページで足したものである。出典とライセンスはページの末尾にある。</li>
+      <li>ROS 2 Jazzy と Ubuntu 24.04（Windows の WSL2 を含む）を前提にする。<a href="01_quickstart.html">Quickstart</a> の章を終えていることを前提にする。</li>
+      <li>期待する結果の出どころ: 2 節〜7 節の表示は、作成時の環境（<code>navigation2</code> 1.3.14 を apt で入れた環境）で、Gazebo と RViz の画面を出さずにシミュレーションを起動し、初期位置をコマンドで与えてから取ったもの。画面を出した形では確かめていない。</li>
+      <li>ログの角括弧の中の長い数字は時刻（UNIX 時刻）で、実行するたびに変わる。<code>At time</code> の後の数字は、シミュレーターの時計の秒数である。</li>
+    </ul>
+  </aside>
+
+  <section aria-labelledby="s0">
+    <h2 id="s0">0. 学習目標と完了条件</h2>
+    <div class="prose">
+      <p>このページを終えると、次のことができる。</p>
+      <ol>
+        <li>Nav2 が action と lifecycle node をどう使っているかを説明できる。</li>
+        <li>behavior tree と各サーバー（planner・controller・smoother・behavior・route）の役目と、その間のつながりを説明できる。</li>
+        <li><code>map</code> → <code>odom</code> → <code>base_link</code> の座標系と、それぞれを誰が配るかを説明できる。</li>
+        <li>costmap とその層が何をしているかを説明できる。</li>
+      </ol>
+      <p>完了条件は、2 節〜7 節のコマンドを動いている Nav2 に対して実行し、表示を本文の説明と結び付けて読めること。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s1">
+    <h2 id="s1">1. 全体像と準備</h2>
+    <div class="prose">
+      <p>Nav2 の中心には、<span class="term">bt_navigator</span> という node がいる。目標を受け取ると、behavior tree（4 節）に書かれた手順に沿って、実際の計算をするサーバー（図 1 の 5 つ）に仕事を頼む。頼むときに使うのが、ROS 2 の action（2 節）である。</p>
+    </div>
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 960 300" role="img" aria-label="全体像の図。RViz やアプリが navigate_to_pose の action で bt_navigator に目標を送る。bt_navigator は action で 5 つのサーバーに仕事を頼む。planner_server は compute_path_to_pose で経路を計算し global costmap を持つ。controller_server は follow_path で経路を追従し local costmap を持つ。smoother_server は smooth_path、behavior_server は spin など、route_server は compute_route を受け持つ。smoother_server と route_server への矢印は点線で、既定の behavior tree では呼ばれない。">
+          <defs>
+            <marker id="nc-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--sub)"/></marker>
+          </defs>
+          <rect class="d-box" x="20" y="20" width="220" height="64" rx="4"/>
+          <text class="d-name" x="130" y="46" text-anchor="middle">RViz・アプリ</text>
+          <text class="d-sub" x="130" y="70" text-anchor="middle">目標を出す</text>
+
+          <rect class="d-box" x="380" y="20" width="200" height="64" rx="4"/>
+          <text class="d-name" x="480" y="46" text-anchor="middle">bt_navigator</text>
+          <text class="d-sub" x="480" y="70" text-anchor="middle">behavior tree で手順を進める</text>
+
+          <line class="d-line" x1="240" y1="52" x2="378" y2="52" marker-end="url(#nc-ah)"/>
+          <text class="d-lab" x="309" y="44" text-anchor="middle">navigate_to_pose</text>
+
+          <line class="d-line" x1="480" y1="84" x2="480" y2="130"/>
+          <line class="d-line" x1="105" y1="130" x2="855" y2="130"/>
+          <line class="d-line" x1="105" y1="130" x2="105" y2="198" marker-end="url(#nc-ah)"/>
+          <line class="d-line" x1="292" y1="130" x2="292" y2="198" marker-end="url(#nc-ah)"/>
+          <line class="d-line" x1="480" y1="130" x2="480" y2="198" stroke-dasharray="6 5" marker-end="url(#nc-ah)"/>
+          <line class="d-line" x1="667" y1="130" x2="667" y2="198" marker-end="url(#nc-ah)"/>
+          <line class="d-line" x1="855" y1="130" x2="855" y2="198" stroke-dasharray="6 5" marker-end="url(#nc-ah)"/>
+          <text class="d-lab" x="105" y="160" text-anchor="middle">compute_path_to_pose</text>
+          <text class="d-lab" x="292" y="160" text-anchor="middle">follow_path</text>
+          <text class="d-lab" x="480" y="160" text-anchor="middle">smooth_path</text>
+          <text class="d-lab" x="667" y="160" text-anchor="middle">spin など</text>
+          <text class="d-lab" x="855" y="160" text-anchor="middle">compute_route</text>
+
+          <rect class="d-box" x="20" y="200" width="170" height="80" rx="4"/>
+          <text class="d-name" x="105" y="226" text-anchor="middle">planner_server</text>
+          <text class="d-sub" x="105" y="248" text-anchor="middle">経路を計算する</text>
+          <text class="d-sub" x="105" y="268" text-anchor="middle">global costmap</text>
+
+          <rect class="d-box" x="207" y="200" width="170" height="80" rx="4"/>
+          <text class="d-name" x="292" y="226" text-anchor="middle">controller_server</text>
+          <text class="d-sub" x="292" y="248" text-anchor="middle">経路に沿って走る</text>
+          <text class="d-sub" x="292" y="268" text-anchor="middle">local costmap</text>
+
+          <rect class="d-box" x="395" y="200" width="170" height="80" rx="4"/>
+          <text class="d-name" x="480" y="226" text-anchor="middle">smoother_server</text>
+          <text class="d-sub" x="480" y="248" text-anchor="middle">経路をなめらかに</text>
+
+          <rect class="d-box" x="582" y="200" width="170" height="80" rx="4"/>
+          <text class="d-name" x="667" y="226" text-anchor="middle">behavior_server</text>
+          <text class="d-sub" x="667" y="248" text-anchor="middle">困ったときの動き</text>
+
+          <rect class="d-box" x="770" y="200" width="170" height="80" rx="4"/>
+          <text class="d-name" x="855" y="226" text-anchor="middle">route_server</text>
+          <text class="d-sub" x="855" y="248" text-anchor="middle">決まった道で計算</text>
+        </svg>
+      </div>
+      <figcaption>図 1　Nav2 の中心の仕組み。矢印に付けた英語の名前は action の名前。点線の 2 つ（smoother_server・route_server）は、Quickstart の既定の behavior tree では呼ばれず、木にその節を書いたときに呼ばれる。位置の推定（<code>amcl</code>・<code>map_server</code>）と、全体の起動を受け持つ lifecycle manager は、図では省いた（3 節・6 節）。横に長い図は、狭い画面では横にスクロールして見る。</figcaption>
+    </figure>
+    <div class="prose">
+      <p>これらは、Quickstart の章の 6 節で <code>ros2 node list</code> に出てきた node である。このページのコマンドを試すには、Quickstart と同じシミュレーションを動かしておく。T1 で起動し、すぐに RViz で初期位置を与える（Quickstart の章の 3 節・4 節。遅れると移動の側の起動が打ち切られる）。<code># T1</code> は「1 つめのターミナルで実行する」という印で、<code>#</code> から後はコメントなので打たなくてよい（このページのほかのコマンドの箱でも同じ）。</p>
+    </div>
+<pre class="cmd"><code># T1
+source /opt/ros/jazzy/setup.bash
+
+ros2 launch nav2_bringup tb3_simulation_launch.py headless:=False</code></pre>
+    <div class="prose">
+      <p>このページの 2 節〜7 節のコマンドは、どれも 2 つめのターミナル（T2）で実行する。T2 を開いたら、2 節の最初の箱のとおり、最初に 1 回だけ <code>source /opt/ros/jazzy/setup.bash</code> を実行しておく。このページの表示は、apt で入れた Nav2 で取ったものである。Local Installation の章でビルドした Nav2 で起動した場合は、作成時は確かめていない（作成時に一度、ビルドした Nav2 を読み込んだ環境で試したときは、2 節と 3 節のコマンドの表示が空だった。原因は確かめていない）。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s2">
+    <h2 id="s2">2. ROS 2 の仕組み（1）: action</h2>
+    <div class="prose">
+      <p><span class="term">action</span> は、時間のかかる仕事を別の node に頼む ROS 2 の仕組みである。頼む側を action client、受ける側を action server と呼ぶ。頼む内容（要求）を送ると、仕事の途中で経過（feedback）が届き、終わると結果（result）が返る。公式の文書の例では、ブルドーザーのショベルを持ち上げる仕事なら、要求は角度、途中経過は残りの角度、結果は成功か失敗と最後の角度になる。ナビゲーションなら、要求は目標の位置、途中経過は走った時間と目標までの距離、結果は成功したかどうかである。要求・途中経過・結果の型は、<code>.action</code> のファイルで決める。</p>
+      <p>Nav2 は、ROS 1 の頃のナビゲーションより action を多く使い、仕事によっては手軽に頼める topic の口が無いものもある。そのため、Nav2 を使う開発者にとって、action は特に大事な仕組みである。</p>
+      <p>プログラムから頼むときは、頼んだ結果を「後で受け取る約束」（future）として受け取る。C++ の <code>std::future</code> と同じ考え方で、結果が出るまで待ってもよいし、待たずにほかの処理を進め、ときどき終わったかを確かめてもよい。途中経過と結果は、関数を登録しておいて呼んでもらう（コールバック）こともできる。どちらの受け取り方でも、頼む側の node を動かし続けて（spin して）、届いたものを処理させる必要がある。action を頼むプログラムの書き方は、後の章（Python から Nav2 に指示を出す章。準備中）で扱う。</p>
+      <p>Nav2 では、いちばん上の入り口が <code>NavigateToPose</code> という action で、bt_navigator が受ける。bt_navigator は、さらに各サーバーの小さな action を呼んで、経路の計算・経路の追従・困ったときの動きを頼む。それぞれの <code>.action</code> の型は、<code>nav2_msgs</code> というパッケージにある。</p>
+    </div>
+<pre class="cmd"><code># T2
+source /opt/ros/jazzy/setup.bash
+
+ros2 action list</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>/assisted_teleop
+/backup
+/compute_and_track_route
+/compute_path_through_poses
+/compute_path_to_pose
+/compute_route
+/dock_robot
+/drive_on_heading
+/follow_gps_waypoints
+/follow_path
+/follow_waypoints
+/navigate_through_poses
+/navigate_to_pose
+/smooth_path
+/spin
+/undock_robot
+/wait</code></pre>
+      <div class="prose">
+        <p>動いている action の名前が並ぶ。図 1 の <code>navigate_to_pose</code>・<code>compute_path_to_pose</code>・<code>follow_path</code>・<code>smooth_path</code>・<code>spin</code>・<code>compute_route</code> が見つかる。誰が受けているかを確かめる。</p>
+      </div>
+    </div>
+<pre class="cmd"><code># T2
+ros2 action info /navigate_to_pose
+
+ros2 action info /follow_path</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>Action: /navigate_to_pose
+Action clients: 3
+    /bt_navigator
+    /waypoint_follower
+    /docking_server
+Action servers: 1
+    /bt_navigator
+Action: /follow_path
+Action clients: 2
+    /bt_navigator_navigate_to_pose_rclcpp_node
+    /bt_navigator_navigate_through_poses_rclcpp_node
+Action servers: 1
+    /controller_server</code></pre>
+      <div class="prose">
+        <p><code>/navigate_to_pose</code> は <code>bt_navigator</code> が受け（<code>Action servers</code>）、<code>/follow_path</code> は <code>controller_server</code> が受ける。<code>/follow_path</code> を頼んでいる側（<code>Action clients</code>）は、bt_navigator が behavior tree を進めるために使う node である。RViz の「Nav2 Goal」も、この <code>/navigate_to_pose</code> に目標を送っている。表示は RViz を起動しない形で取ったもので、RViz を起動していれば、RViz の node も <code>Action clients</code> に加わる。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s3">
+    <h2 id="s3">3. ROS 2 の仕組み（2）: lifecycle node と bond</h2>
+    <div class="prose">
+      <p><span class="term">lifecycle node</span>（managed node とも呼ぶ）は、起動と終了の手順を、決まった状態の移り変わりとして持つ ROS 2 の node である。起動や終了の順番が毎回同じになるので、動きを予測しやすく、製品として使うときや不具合を調べるときにも、プログラムを整理しやすい。詳しくは ROS 2 の <a href="https://design.ros2.org/articles/node_lifecycle.html">設計の文書</a>にある。</p>
+      <ul>
+        <li><strong>unconfigured</strong>: 起動した直後。コンストラクタだけが動いた状態である。コンストラクタには、通信の準備や parameter の読み込みを書かない決まりになっている。</li>
+        <li><strong>inactive</strong>: 設定の段階（<code>on_configure()</code>）を経た状態。parameter・通信の口を準備し、安全が大事なシステムでは、使うメモリもここで確保しておく。</li>
+        <li><strong>active</strong>: 動き出す段階（<code>on_activate()</code>）を経た状態。通信の口が働き、処理を始める。</li>
+        <li><strong>finalized</strong>: 終わるときは、止める・片づける・終える段階を順に経て、ここに至る。</li>
+      </ul>
+      <p>Nav2 のサーバーは、どれも lifecycle node である。状態を順に進める役は、<span class="term">lifecycle manager</span> が受け持つ。Quickstart で見た <code>lifecycle_manager_localization</code> と <code>lifecycle_manager_navigation</code> がそれで、すべてを active にし終えると <code>Managed nodes are active</code> を出す。</p>
+      <p>Nav2 は、ROS 2 の lifecycle node を包んだ <code>nav2_util</code> の <code>LifecycleNode</code> を使う。これには、lifecycle manager との間の <span class="term">bond</span>（つながりを見張る仕組み）が入っている。active になったサーバーが落ちると、bond を通じて lifecycle manager が気づき、システム全体を止めて、大きな故障を防ぐ。</p>
+    </div>
+<pre class="cmd"><code># T2
+ros2 lifecycle get /amcl</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>active [3]</code></pre>
+      <div class="prose">
+        <p><code>amcl</code> が active の状態にある。角括弧の数は状態の番号で、<a href="https://github.com/ros2/rcl_interfaces/blob/jazzy/lifecycle_msgs/msg/State.msg"><code>lifecycle_msgs/msg/State</code></a> で unconfigured が 1、inactive が 2、active が 3、finalized が 4 と決まっている。Quickstart の章の 3 節で、初期位置を待ちすぎると起動が打ち切られたのは、<code>planner_server</code> が中の <code>global_costmap</code> を active にできず（座標系のつながりがそろわないため。6 節）、移動の側の lifecycle manager が <code>planner_server</code> を active に進められずに、起動を打ち切ったからである。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s4">
+    <h2 id="s4">4. behavior tree</h2>
+    <div class="prose">
+      <p><span class="term">behavior tree</span>（BT）は、やるべき仕事を木の形に並べて、複雑な手順を組み立てる方法である。よく比べられるのが有限状態機械（FSM）で、状態と遷移で手順を書く。公式の文書は、サッカーをするロボットの例を挙げている。FSM では、状態が数十、遷移が数百にもなりうる。サッカーの判断を FSM に埋め込むのは難しく、誤りやすい。「左・右・真ん中のどこからシュートするか」のような選択も書きにくい。BT なら、「蹴る」「歩く」「ボールへ行く」といった基本の動きを部品として作り、いろいろな振る舞いで使い回せる。BT の考え方は、公式の文書が勧める<a href="https://arxiv.org/abs/1709.00084">本</a>の 1〜3 章（30 分ほどで読める）にまとまっている。</p>
+      <p>Nav2 は、BT のライブラリとして <a href="https://www.behaviortree.dev/">BehaviorTree.CPP</a> の V4 を使う。木の 1 つ 1 つの節（BT の node）は plugin（実行時に読み込む部品のライブラリ。5 節で詳しく見る）として作られ、bt_navigator の中で組み合わされる。木の形は XML のファイルに書き、読み込むときに、XML の中の名前と登録された plugin が結び付けられる。あとは木を順にたどれば、ナビゲーションが進む。</p>
+      <p>このライブラリを使う理由の 1 つは、木を別の木の一部（subtree）として読み込めることである。たとえば、サッカーの大きな木の中の「ボールへ行く」の節に、Nav2 の木をそのまま使える。また、手順を BT に集め、各サーバーは BT を通じてデータをやり取りするだけにしておくと、手順が正しいかを道具で検証しやすくなる。</p>
+    </div>
+<pre class="cmd"><code># T2
+ros2 param get /bt_navigator default_nav_to_pose_bt_xml</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>String value is: /opt/ros/jazzy/share/nav2_bt_navigator/behavior_trees/navigate_to_pose_w_replanning_and_recovery.xml</code></pre>
+      <div class="prose">
+        <p><code>navigate_to_pose</code> の目標を受けたときに使う木の XML の場所である。名前のとおり、経路を計算し直しながら進み（replanning）、困ったら回復の動き（recovery）を試す木になっている。<code>less</code> などでこのファイルを開くと、木の形が XML で書かれているのが見える。Local Installation の章でビルドした Nav2 で起動した場合は、<code>~/nav2_ws/install</code> の下の同じ名前のファイルが表示される。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s5">
+    <h2 id="s5">5. 各サーバー</h2>
+    <div class="prose">
+      <p>図 1 の 5 つのサーバー（planner・controller・smoother・behavior・route）は、どれも action server で、実際の計算は中に読み込んだ <span class="term">plugin</span>（実行時に読み込む部品のライブラリ。ROS 2 の pluginlib の仕組み）が行う（route_server だけは少し違う。下の route の項）。</p>
+      <p>planner・controller・smoother のサーバーは、起動するときに、使うアルゴリズムの「名前」と「種類」の組を設定で受け取る。種類は pluginlib に登録された plugin の名前で、名前はその仕事に付ける呼び名である。たとえば、経路に沿って走る controller に <code>FollowPath</code> という名前を付けると、そのアルゴリズムの parameter は <code>FollowPath.&lt;parameter の名前&gt;</code> の形で置く。behavior tree の節がサーバーを呼ぶと、サーバーは名前でアルゴリズムを選んで実行する。こうしておくと、BT の側は「経路に沿って走る」という仕事の種類だけを書けばよく、どのアルゴリズムを使うかは設定で変えられる。1 つのサーバーに複数の plugin を置いて、経路の追従・充電台へのドッキング・道具の操作などを使い分けることもできる。そのとき、二重に持つと計算の費用がかさむ環境の表し方（7 節の costmap）を、1 つのサーバーの中で共有できる。</p>
+    </div>
+<pre class="cmd"><code># T2
+ros2 param get /controller_server FollowPath.plugin
+
+ros2 param get /planner_server GridBased.plugin
+
+ros2 param get /behavior_server behavior_plugins</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>String value is: nav2_mppi_controller::MPPIController
+String value is: nav2_navfn_planner::NavfnPlanner
+String values are: ['spin', 'backup', 'drive_on_heading', 'assisted_teleop', 'wait']</code></pre>
+      <div class="prose">
+        <p>Quickstart の既定の設定では、<code>FollowPath</code> という名前に MPPI という controller が、<code>GridBased</code> という名前に NavFn という planner が当てられている。behavior_server には、5 つの動き（その場で回る・下がる・決まった向きに進む・人の操作を補助する・待つ）が読み込まれている。設定のファイルでこの種類を書き換えれば、BT を変えずにアルゴリズムを替えられる。</p>
+      </div>
+    </div>
+    <div class="prose">
+      <ul>
+        <li><span class="term">planner</span>: 目標までの経路を計算する。代表的なのは、今の位置から目標までの経路と、空いている場所をくまなく回る経路（カバレッジ）である。全体の地図を表す global costmap と、そこに取り込んだセンサーの値を使う。</li>
+        <li><span class="term">controller</span>: planner が計算した経路に沿って走るための速度の指令を、周期ごとに計算する（ROS 1 では local planner と呼ばれていた）。ロボットの周りを表す local costmap を使い、ロボットを少し先まで動かしたと仮定して、実際に走れる動きを選ぶものが多い。経路の追従のほか、充電台へのドッキング、エレベーターへの乗り込みなどの plugin も作れる。</li>
+        <li><span class="term">smoother</span>: planner の経路を受け取り、ぎざぎざや急な向きの変化をならしたり、障害物から離したりして、よくした経路を返す。planner と別にしておくと、planner と smoother の組み合わせを変えたり、経路の一部だけをならしたりできる。</li>
+        <li><span class="term">behavior</span>: 主な用途は、困った状況から抜け出すための動き（recovery）。センサーの誤りで costmap が偽の障害物だらけになったら costmap を消す、動く障害物や下手な制御で動けなくなったら下がる・その場で回る、どうにもならなければ人に助けを求める、などである。behavior_server は、動きごとに別の action を出す（動きによって頼む内容が違うため）。また、controller_server の local costmap を受け取って使い、costmap を二重に持たないようにしている。recovery に限らず、costmap や tf のような重い資源を共有したい動きなら、何でも behavior_server に置ける。</li>
+        <li><span class="term">route</span>: 空いている場所を自由に探すのではなく、あらかじめ用意した道のグラフ（点とその間の向きのある辺）の上で、最もよい道順を計算する。車線、走ってよい場所、教えた道を繰り返す経路、街の道路などを表せる。route_server はほかのサーバーと違い、道順の計算は自分で行い、plugin は辺の採点やグラフのファイルの読み込みなどを受け持つ。</li>
+      </ul>
+      <p>新しいアルゴリズムが要るときは、まず plugin として足すことを考える。今のサーバーの口で足りなければ、新しいサーバーとそれを呼ぶ BT の node を作ってもよく、どちらの場合も Nav2 のリポジトリそのものを書き換える必要は無い。</p>
+    </div>
+    <h3 id="s5-1">ロボットの外形（footprint）</h3>
+    <div class="prose">
+      <p>costmap は、ロボットの外形（<span class="term">footprint</span>）を、半径 <code>robot_radius</code> の円か、点の並び <code>footprint</code> で表す多角形として持つ。円でないロボットは多角形にする。外形は <code>~/footprint</code> の topic で途中から変えることもでき、腕を伸ばした・荷物を載せたなど、形が変わったときに planner と controller が新しい形を使う。</p>
+    </div>
+<pre class="cmd"><code># T2
+ros2 param get /local_costmap/local_costmap robot_radius</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>Double value is: 0.22</code></pre>
+      <div class="prose">
+        <p>Quickstart の TurtleBot 3 は、半径 0.22 m の円として扱われている。</p>
+      </div>
+    </div>
+    <h3 id="s5-2">waypoint following</h3>
+    <div class="prose">
+      <p><span class="term">waypoint following</span> は、複数の目的地を順に回る機能である。<code>nav2_waypoint_follower</code> は、各地点で写真を撮る・箱を拾う・人の入力を待つ、といった仕事を plugin で差し込める。GPS による全体の位置の推定（robot_localization の navsat_transform など）があれば、GPS の座標で与えた目的地を回る <code>/follow_gps_waypoints</code> の action もある（2 節の一覧に出ていた）。これを製品でどう使うかは、8 節で見る。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s6">
+    <h2 id="s6">6. 位置の推定</h2>
+    <div class="prose">
+      <p>Nav2 が求めるのは、座標系（frame）の間の 2 つのつながりである。ROS の決まり <a href="https://www.ros.org/reps/rep-0105.html">REP 105</a> は、少なくとも <code>map</code> → <code>odom</code> → <code>base_link</code> → センサーの座標系、とつながった木を作ることを求めている。座標系どうしの時刻つきの位置関係は、ROS 2 の tf2 というライブラリで扱う（Quickstart の章の <code>tf</code> の topic）。</p>
+    </div>
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 960 170" role="img" aria-label="座標系の木の図。map から odom へのつながりは AMCL や SLAM などの位置の推定が配り、odom から base_link へのつながりは odometry が配り、base_link からセンサーの座標系へのつながりは URDF で決まった固定のものである。">
+          <defs>
+            <marker id="tf-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--sub)"/></marker>
+          </defs>
+          <rect class="d-box" x="20" y="30" width="160" height="56" rx="4"/>
+          <text class="d-name" x="100" y="64" text-anchor="middle">map</text>
+          <rect class="d-box" x="280" y="30" width="160" height="56" rx="4"/>
+          <text class="d-name" x="360" y="64" text-anchor="middle">odom</text>
+          <rect class="d-box" x="540" y="30" width="160" height="56" rx="4"/>
+          <text class="d-name" x="620" y="64" text-anchor="middle">base_link</text>
+          <rect class="d-box" x="780" y="30" width="160" height="56" rx="4"/>
+          <text class="d-name" x="860" y="64" text-anchor="middle">センサー</text>
+          <line class="d-line" x1="180" y1="58" x2="278" y2="58" marker-end="url(#tf-ah)"/>
+          <line class="d-line" x1="440" y1="58" x2="538" y2="58" marker-end="url(#tf-ah)"/>
+          <line class="d-line" x1="700" y1="58" x2="778" y2="58" marker-end="url(#tf-ah)"/>
+          <text class="d-labj" x="230" y="120" text-anchor="middle">位置の推定</text>
+          <text class="d-sub" x="230" y="142" text-anchor="middle">AMCL・SLAM など</text>
+          <text class="d-labj" x="490" y="120" text-anchor="middle">odometry</text>
+          <text class="d-sub" x="490" y="142" text-anchor="middle">車輪・IMU など</text>
+          <text class="d-labj" x="740" y="120" text-anchor="middle">固定</text>
+          <text class="d-sub" x="740" y="142" text-anchor="middle">URDF で決める</text>
+        </svg>
+      </div>
+      <figcaption>図 2　REP 105 の座標系の木。矢印の下は、そのつながりを配るもの。横に長い図は、狭い画面では横にスクロールして見る。</figcaption>
+    </figure>
+    <div class="prose">
+      <ul>
+        <li><strong><code>map</code> → <code>odom</code></strong>: 地図の上のどこにいるかを求める位置の推定（GPS・SLAM・モーションキャプチャなど）が配る。Nav2 には、決まった地図の上で位置を推定する AMCL（particle filter による方法）と、位置を推定しながら地図を作る <span class="term">SLAM</span> の既定として SLAM Toolbox が用意されている。</li>
+        <li><strong><code>odom</code> → <code>base_link</code></strong>: odometry（Quickstart の章の 1 節）が配る。元になるのは、車輪の回転、IMU、LIDAR、レーダー、カメラによる推定（VIO）などである。odometry の役目は、途切れずなめらかに変わる座標系を与えることで、少しずつずれていく。そのずれを、位置の推定が <code>map</code> → <code>odom</code> を直して埋める。複数のセンサーを合わせて 1 つの odometry にするには、<a href="https://github.com/cra-ros-pkg/robot_localization">robot_localization</a> がよく使われる。</li>
+        <li><strong><code>base_link</code> → センサー</strong>: ロボットの体に固定された関係なので、URDF（Quickstart の章の 8 節）で決める。</li>
+      </ul>
+      <p>公式の文書は、LIDAR は必須ではないと強調している。カメラや深度センサーによる位置の推定でも、上の決まりの座標系をそろえさえすれば、Nav2 は使える。</p>
+    </div>
+<pre class="cmd"><code># T2
+ros2 run tf2_ros tf2_echo map odom</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>[INFO] [1795325572.321871740] [tf2_echo]: Waiting for transform map ->  odom: Invalid frame ID "map" passed to canTransform argument target_frame - frame does not exist
+（中略）
+At time 124.402000000
+- Translation: [-1.957, -0.511, 0.000]
+- Rotation: in Quaternion (xyzw) [0.000, 0.000, -0.004, 1.000]
+- Rotation: in RPY (radian) [0.000, 0.000, -0.009]
+- Rotation: in RPY (degree) [0.000, 0.000, -0.506]
+（中略）</code></pre>
+      <div class="prose">
+        <p><code>tf2_echo</code> は、2 つの座標系の間の位置関係を 1 秒ごとに表示し続ける。<kbd>Ctrl</kbd>+<kbd>C</kbd> で止める。最初の <code>Waiting for transform</code> は、起動した直後でまだ tf を受け取れていないという意味で、すぐに表示が始まれば問題ない。<code>Translation</code> は位置のずれ（m）、<code>RPY</code> は向きのずれである。作成時は、初期位置として与えた (-2.0, -0.5) に近い値だった。<code>odom</code> の原点はロボットが出発した場所にあるので、<code>map</code> → <code>odom</code> は地図の上の出発した場所を表す。まだ動いていないので、これはロボットの今の位置ともほぼ同じになる。数値は、初期位置の与え方と AMCL の推定によって変わる。</p>
+      </div>
+    </div>
+<pre class="cmd"><code># T2
+ros2 run tf2_ros tf2_echo odom base_link</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>[INFO] [1795325580.444217902] [tf2_echo]: Waiting for transform odom ->  base_link: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+（中略）
+At time 132.516000000
+- Translation: [0.000, 0.000, 0.010]
+- Rotation: in Quaternion (xyzw) [0.000, 0.000, 0.000, 1.000]
+（中略）</code></pre>
+      <div class="prose">
+        <p>動いていないロボットでは、<code>odom</code> → <code>base_link</code> は出発したときのままで、位置のずれはほぼ 0（高さの 0.010 m だけ）である。RViz で目標を与えてロボットを動かしてからもう一度実行すると、こちらの値が走った分だけ変わるはずである（想定。作成時は、ロボットを動かしてからは確かめていない）。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s7">
+    <h2 id="s7">7. 環境の表し方</h2>
+    <div class="prose">
+      <p>ロボットが周りをどう捉えるかを表すのが、環境の表し方である。いろいろなアルゴリズムとセンサーの情報を 1 つの空間に集め、controller・planner・behavior が安全に計算するために使う。Nav2 の今の表し方は、costmap である。costmap は、2 次元の格子のマスごとに、わからない・空いている・ふさがっている・ふさがった場所の近く（ふくらませた値）を表す値を持つ。planner は costmap を探して経路を計算し、controller は costmap を見て走れる動きを選ぶ。</p>
+      <p>costmap は、いくつもの <span class="term">layer</span>（層）を重ねて作る。各 layer は pluginlib の plugin で、LIDAR・レーダー・ソナー・深度画像などの情報を costmap に取り込む。センサーの値を前もって処理してから layer に入れるかは、開発者が決める。カメラで障害物を見つけて追う layer や、決まりに沿って costmap を変える layer も作れる。</p>
+    </div>
+<pre class="cmd"><code># T2
+ros2 param get /global_costmap/global_costmap plugins
+
+ros2 param get /local_costmap/local_costmap plugins</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>String values are: ['static_layer', 'obstacle_layer', 'inflation_layer']
+String values are: ['voxel_layer', 'inflation_layer']</code></pre>
+      <div class="prose">
+        <p>global costmap（planner が使う、地図の全体）は、地図を取り込む <code>static_layer</code>、センサーで見た障害物を取り込む <code>obstacle_layer</code>、障害物の周りに値を広げる <code>inflation_layer</code> の 3 つの layer でできている。local costmap（controller が使う、ロボットの周り）は、障害物を 3 次元のマスで扱う <code>voxel_layer</code> と <code>inflation_layer</code> の 2 つの layer である。layer の名前の付け方と中身は設定で決まり、Quickstart の既定の設定ではこうなっている。</p>
+      </div>
+    </div>
+    <h3 id="s7-1">costmap filter</h3>
+    <div class="prose">
+      <p>地図の画像に印を付けて、場所に応じて振る舞いを変えたいことがある。たとえば、立ち入り禁止の場所や、速度を落とす場所である。この印を付けた地図を filter mask と呼ぶ。<span class="term">costmap filter</span> は、filter mask を読んで、ロボットのいる場所に応じて costmap やロボットの振る舞いを変える layer の plugin である。立ち入り禁止・安全のための区域、速度の制限、倉庫で優先して通る道などに使える。</p>
+      <p>costmap のほかにも、地面の傾きを表す地図、3 次元の costmap（3 次元の経路の計算と衝突の判定が要る）、面の集まりで表す地図、機械学習で物を見つけて追う表し方などがある。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s8">
+    <h2 id="s8">8. 製品に組み込むなら</h2>
+    <div class="prose">
+      <ul>
+        <li><strong>手で与えた目標を、製品の仕事の流れに置き換える</strong>。このページでは、目標を RViz から 1 つずつ手で与え、Nav2 の既定の設定（MPPI・NavFn・既定の behavior tree・AMCL）で動かした。製品では、目標を出す側と設定を、次のように考える。</li>
+        <li><strong>waypoint following と配車の役割分担を決める</strong>。公式の文書は、複数のロボットを動かすときの 2 つの考え方を挙げている。1 つは「ロボットは単純、全体の配車が賢い」形で、配車の側がロボットの位置・電池・今の仕事を見て仕事を割り当てる。この場合は <code>nav2_waypoint_follower</code> をそのまま製品に使え、1 回の依頼を 1 つの仕事（倉庫での 1 回のピッキング、1 周の巡回など）として扱う。もう 1 つは「ロボットが賢い、配車は単純」形で、ロボットの上の仕事の流れ（途中で電池を確かめて充電台へ戻る、など）を、<code>nav2_behavior_tree</code> で自分の behavior tree として作る。どちらがよいかは、ロボットの仕事・環境・使えるクラウドの資源で決まる。</li>
+        <li><strong>自分のロボットでも、REP 105 の座標系をそろえる</strong>。位置の推定に LIDAR を使うかどうかにかかわらず、<code>map</code> → <code>odom</code> → <code>base_link</code> → センサーの木を、決まりどおりに配る。そうすれば、コミュニティの位置の推定・odometry・SLAM をそのまま使える。</li>
+        <li><strong>自分で作る node も lifecycle node にすることを考える</strong>。公式の文書は、使えるなら lifecycle node にするのがよいとしている。起動と終了の順番が決まる。Nav2 の <code>nav2_util</code> の <code>LifecycleNode</code> を使えば、bond も付く。</li>
+        <li><strong>アルゴリズムは設定と plugin で替える</strong>。5 節のとおり、planner・controller などは設定で替えられ、足りなければ plugin やサーバーを足せる。Nav2 のリポジトリを分岐させて書き換える必要は無い。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section aria-labelledby="s9">
+    <h2 id="s9">次に読むもの・出典</h2>
+    <div class="prose">
+      <p>シミュレーションは、T1 で <kbd>Ctrl</kbd>+<kbd>C</kbd> を押して止める（止め方と、止めるときに出るエラーの表示は、Quickstart の章の 7 節）。ここまでで、最初の一区切り（Quickstart → Local Installation → Navigation Concepts）が終わる。このページに出てきた用語は、<a href="glossary.html">用語集</a>にまとめてある。公式の文書には、このページの内容をまとめた動画（<a href="https://www.youtube.com/watch?v=QB7lOKp3ZDQ">Nav2 Academic Overview</a>、英語）もある。</p>
+      <p>出典: Nav2 の公式の文書「<a href="https://docs.nav2.org/jazzy/getting_started/navigation_concepts/">Navigation Concepts</a>」と、その下の「<a href="https://docs.nav2.org/jazzy/getting_started/navigation_concepts/ros2/">ROS 2</a>」「<a href="https://docs.nav2.org/jazzy/getting_started/navigation_concepts/behavior_trees/">Behavior Trees</a>」「<a href="https://docs.nav2.org/jazzy/getting_started/navigation_concepts/navigation_servers/">Navigation Servers</a>」「<a href="https://docs.nav2.org/jazzy/getting_started/navigation_concepts/state_estimation/">State Estimation</a>」「<a href="https://docs.nav2.org/jazzy/getting_started/navigation_concepts/environmental_representation/">Environmental Representation</a>」（<a href="https://github.com/ros-navigation/docs.nav2.org/tree/b22554c/docs/getting_started/navigation_concepts">原稿</a>、<code>ros-navigation/docs.nav2.org</code> の <code>jazzy</code> ブランチ、コミット <code>b22554c</code>、2026-08-31。著作者: Open Navigation LLC と Nav2 の文書の寄稿者）。ライセンスは <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>。このページは、その内容を日本語で再構成して 1 つのページにまとめ、説明の追加（1 節の図と全体像、各節のコマンドとその読み方、lifecycle の状態の番号、8 節の組み立てなど）と省略（ROS 2 の古い版〈Eloquent から Foxy〉への移行の案内、HFSM による将来のナビゲーターの案など）を加えたもので、逐語の翻訳ではない。公式の画像と動画は使っておらず、図はこの教材で作った。</p>
+    </div>
+  </section>
+
+</div></main>
+
+<footer><div class="wrap">
+  <p>Nav2 日本語ガイドは、Nav2 の公式の文書を基にした非公式の学習教材で、Nav2・ROS 2・Gazebo のプロジェクトや Microsoft とは関係がない。ライセンスは <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>。</p>
+  <p>この教材は、作成者の指示のもとで、Anthropic の AI である Claude（Claude Code）が作成した。</p>
+  <p>Nav2・TurtleBot・ROS・Gazebo・Ubuntu・Windows などの名前は、それぞれの持ち主の商標でありうる。</p>
+</div></footer>
+</body>
+</html>
