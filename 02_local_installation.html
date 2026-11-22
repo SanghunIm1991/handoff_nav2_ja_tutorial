@@ -143,7 +143,6 @@ git clone https://github.com/ros-navigation/nav2_minimal_turtlebot_simulation.gi
 <pre class="out"><code>Cloning into './src/navigation2'...
 remote: Enumerating objects: 63664, done.
 （中略）
-Receiving objects: 100% (63664/63664), 117.70 MiB | 7.64 MiB/s, done.
 Resolving deltas: 100% (43997/43997), done.
 Cloning into './src/nav2_minimal_turtlebot_simulation'...
 （中略）
@@ -255,7 +254,7 @@ Summary: 48 packages finished [1h 34min 29s]</code></pre>
     <h3 id="s4-5">4-5. PC が固まる・ビルドが止まるとき</h3>
     <div class="prose">
       <p>ROS 2 の公式の colcon のチュートリアルは、CPU・メモリ・ディスクの読み書きの限られた PC では <code>colcon build</code> で画面とマウスが固まることがあるとして、パッケージを 1 つずつビルドする <code>--executor sequential</code> を挙げている。また、導入の困りごとの手引きは、メモリの限られた PC でコンパイラが異常終了するとき（internal compiler error）の対処として、コンパイルを 1 つずつにする <code>MAKEFLAGS=-j1</code> を挙げている。</p>
-      <p>作成時の環境では、既定の形のビルドで画面が固まったり、表示の経過時間だけが増えてパーセントが進まなくなったりした。ビルドのログでは、1 つのパッケージの中で C++ のファイルを 5 つ以上同時にコンパイルし始めたところで止まっていたので、メモリを使い切ったと推定している（確かめてはいない）。上の 2 つを両方付けると、同時に動くコンパイラは 1 つになる。</p>
+      <p>作成時の環境では、既定の形のビルドで画面が固まったり、表示の経過時間だけが増えてパーセントが進まなくなったりした。ビルドのログでは、1 つのパッケージの中で C++ のファイルを 5 つ以上同時にコンパイルし始めたところで止まっていたので、メモリを使い切ったと推定している（メモリが原因であることは確かめていない）。上の 2 つを両方付けると、同時に動くコンパイラは 1 つになる。</p>
     </div>
 <pre class="cmd"><code># T1
 source /opt/ros/jazzy/setup.bash
@@ -264,7 +263,7 @@ cd ~/nav2_ws
 
 MAKEFLAGS=-j1 colcon build --symlink-install --executor sequential</code></pre>
     <div class="prose">
-      <p>時間はかかるが、止まりにくくなる。作成時の環境では、既定の形で 1 回（裏でほかの作業も同時に動かしていた）PC ごと固まり、同時にビルドするパッケージの数だけを絞る <code>--parallel-workers 2</code> でも止まった（パッケージの中のコンパイルは絞られなかったと推定している）。この形にして、最後まで通った。</p>
+      <p>時間はかかるが、止まりにくくなる。作成時の環境では、既定の形で 1 回（裏でほかの作業も同時に動かしていた）PC ごと固まり、同時にビルドするパッケージの数だけを絞る <code>--parallel-workers 2</code> でも止まった（colcon は、<code>MAKEFLAGS</code> が無いと、パッケージの中のコンパイルを CPU の数だけ並べるため。手元の colcon のコードで確かめた）。この形にして、最後まで通った。</p>
       <p>ビルドが止まったら、<kbd>Ctrl</kbd>+<kbd>C</kbd> で止める。PC ごと固まって操作できないときは、PC を再起動するか、Windows の PowerShell で <code>wsl --shutdown</code>（環境構築の章の 2 節）を実行して WSL を止める。そのあと新しいターミナルで上のブロックを実行すれば、終わっていたパッケージはすぐに済み、続きから進む。</p>
     </div>
   </section>

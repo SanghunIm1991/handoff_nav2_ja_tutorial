@@ -11,6 +11,12 @@
 - 要件や対応版は、検索の要約ではなく安定版の公式のページで確かめる。
 - ページの元にした公式の文書とソースは、ページの出典と同じ版の写しを `notes/sources/<ページ>/` に残し、出どころを `notes/sources/README.md` に書く（作業用の一時フォルダはセッションが変わると消え、後のレビューで照合できなくなるため）。レビューを頼むときは、この写しを照合に使わせる。
 
+## ソースからのビルド
+
+- Nav2 の全体（48 パッケージ）を `colcon build` でビルドすると、既定の並列では WSL のメモリを使い切って止まり、PC ごと固まることがある（2026-11-22）。`--parallel-workers 2` でも止まった。colcon の CMake のビルドは、`MAKEFLAGS` が無いと `-j<CPU の数>` で make を呼ぶので（`colcon_cmake/task/cmake/build.py`）、`--parallel-workers` はパッケージの中のコンパイルを絞らない。`MAKEFLAGS=-j1 colcon build --symlink-install --executor sequential` で通った（途中からの続きで約 1 時間半）。
+- 30 分を超えるビルドの間は、Claude はほかの作業を同時に進めない。進めるなら、理由を示して承認を得る（2026-11-22、ビルドの間にページの作成と別のコマンドを進め、PC が固まった）。
+- 作業用の一時フォルダ（`/tmp` の下）は、PC の再起動で消える。再起動をまたいで残したいもの（ビルドの workspace、貼ってもらった表示の控え）は、`/tmp` の外か `notes/` に置く。
+
 ## パッケージの版
 
 - ROS のパッケージを追加で入れる前に、`sudo apt update` と `sudo apt upgrade` で版をそろえる（ユーザーが行う）。前に入れた Nav2 の本体を更新しないまま `ros-jazzy-nav2-bringup` などを後から足すと、新しい版の bringup と古い版の本体が混ざることがある。bringup の launch とパラメータを古い本体で読むと、食い違いで起動に失敗しうる。
@@ -53,7 +59,7 @@ for c in $(perl -0777 -pe 's{/\*.*?\*/}{}gs; s/\{[^}]*\}/ /g' assets/site.css | 
 
 ## 図と作業の環境
 
-- **`sudo` の手順**: Claude Code のプロンプトの `!` で実行するコマンドはパスワードを打ち込めないので、`sudo` は止まる（`a terminal is required to read the password`）。`sudo` の手順は、ユーザーに別の Ubuntu のターミナルで実行してもらい、表示を貼ってもらう。`sudo` の要らない `rosdep update` などは、Claude が説明してから実行してよい。
+- **`sudo` の手順**: Claude Code のプロンプトの `!` で実行するコマンドはパスワードを打ち込めないので、`sudo` は止まる（`a terminal is required to read the password`）。`sudo` の手順は、ユーザーに別の Ubuntu のターミナルで実行してもらい、表示を貼ってもらう。`sudo` の要らない `rosdep update` も、外部から取得してホームに書き込むので読み取りではない。Claude が実行するときは、その都度、目的・内容・危険度を示して承認を得る。
 
 - **SVG の図**: WSL にはレンダラが無いので、生成スクリプトと機械の点検で作る（`learning-text-authoring` スキル）。目視はユーザーに頼む。
 - **Bash の作業フォルダ**: `/add-dir` で足したフォルダへ `cd` すると、今いるフォルダがそこに残る。`git -C` や絶対パスで操作する。
