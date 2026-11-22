@@ -14,6 +14,11 @@
 ## ソースからのビルド
 
 - Nav2 の全体（48 パッケージ）を `colcon build` でビルドすると、既定の並列では WSL のメモリを使い切って止まり、PC ごと固まることがある（2026-11-22）。`--parallel-workers 2` でも止まった。colcon の CMake のビルドは、`MAKEFLAGS` が無いと `-j<CPU の数>` で make を呼ぶので（`colcon_cmake/task/cmake/build.py`）、`--parallel-workers` はパッケージの中のコンパイルを絞らない。`MAKEFLAGS=-j1 colcon build --symlink-install --executor sequential` で通った（途中からの続きで約 1 時間半）。
+- 全体のビルドが重いときの選択肢（2026-11-22 にユーザーと話し、ページの 4-5 節には 1 つめだけを書いた。2 つめと 3 つめは、次にビルドするときに選ぶ）:
+  1. ビルドする量を減らす: `--packages-up-to <パッケージ名>`（ROS 2 の文書の workspace のチュートリアル）と `--cmake-args -DBUILD_TESTING=0`（colcon のチュートリアル）。時間は大きく減るが、重いパッケージが範囲に入れば `MAKEFLAGS` の絞りは要る。ビルドしなかったパッケージは apt の版が使われる。
+  2. WSL のスワップを増やす: Windows の `%UserProfile%\.wslconfig` に `[wsl2]` と `swap=8GB` などを書き、`wsl --shutdown` で反映する（ユーザーが行う Windows の側の設定）。Microsoft の WSL の文書（`MicrosoftDocs/WSL` の `526e577`、`WSL/wsl-config.md`）では、既定は WSL のメモリが Windows のメモリの 50%、スワップが 25%。固まる代わりに遅くなる側に寄ると考えているが、スワップの出し入れが激しいとほとんど進まないので、確実ではない。ディスクを使う。`memory=` で WSL のメモリを増やすのは、Windows の側が重くなりうるので勧めない。
+  3. 1 つずつビルドする今の形（`MAKEFLAGS=-j1 … --executor sequential`）。確実に通ったが、いちばん時間がかかる。
+  後の章で自分のパッケージだけを overlay にするビルドは小さいので、全体のビルドが重いのは主に Local Installation の章だけ。
 - 30 分を超えるビルドの間は、Claude はほかの作業を同時に進めない。進めるなら、理由を示して承認を得る（2026-11-22、ビルドの間にページの作成と別のコマンドを進め、PC が固まった）。
 - ユーザーに貼ってもらった表示（期待する結果に使うもの）は、受け取ったらすぐに `notes/outputs/<ページ>/`（Git 管理外）に控える。PC 名とユーザー名のあるプロンプトの行は除く。ビルドの workspace のように再起動をまたいで残したいものも、`/tmp` の外に置く（2026-11-22、`/tmp` の rosdep の表示の控えと workspace が再起動で消えた）。
 

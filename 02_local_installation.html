@@ -265,6 +265,16 @@ MAKEFLAGS=-j1 colcon build --symlink-install --executor sequential</code></pre>
     <div class="prose">
       <p>時間はかかるが、止まりにくくなる。作成時の環境では、既定の形で 1 回（裏でほかの作業も同時に動かしていた）PC ごと固まり、同時にビルドするパッケージの数だけを絞る <code>--parallel-workers 2</code> でも止まった（colcon は、<code>MAKEFLAGS</code> が無いと、パッケージの中のコンパイルを CPU の数だけ並べるため。手元の colcon のコードで確かめた）。この形にして、最後まで通った。</p>
       <p>ビルドが止まったら、<kbd>Ctrl</kbd>+<kbd>C</kbd> で止める。PC ごと固まって操作できないときは、PC を再起動するか、Windows の PowerShell で <code>wsl --shutdown</code>（環境構築の章の 2 節）を実行して WSL を止める。そのあと新しいターミナルで上のブロックを実行すれば、終わっていたパッケージはすぐに済み、続きから進む。</p>
+      <p>1 つずつの形は時間がかかる。ビルドする量そのものを減らすと、かかる時間を縮められる。ROS 2 の公式の文書は、次の 2 つを挙げている。</p>
+      <ul>
+        <li><code>--packages-up-to &lt;パッケージ名&gt;</code>: 指定したパッケージと、それが依存するパッケージだけをビルドし、workspace の全体はビルドしない（workspace のチュートリアル）。</li>
+        <li><code>--cmake-args -DBUILD_TESTING=0</code>: CMake のパッケージのテストを組み立てない（colcon のチュートリアル）。4-4 節の全体のビルドには、<code>nav2_system_tests</code> などのテストも含まれていた。</li>
+      </ul>
+    </div>
+<pre class="cmd"><code># T1
+MAKEFLAGS=-j1 colcon build --symlink-install --executor sequential --packages-up-to &lt;パッケージ名&gt; --cmake-args -DBUILD_TESTING=0</code></pre>
+    <div class="prose">
+      <p><code>&lt;パッケージ名&gt;</code> には、使いたいパッケージの名前（<code>nav2_bringup</code> など）を書く。ビルドしなかったパッケージは、5 節で見るとおり、apt で入れた <code>/opt/ros/jazzy</code> のものが使われる。自分でビルドした版と apt の版が混ざるので、どれをビルドしたかを意識しておく。重いパッケージ（<code>nav2_behavior_tree</code> など）が範囲に入れば、1 つのファイルのコンパイルに使うメモリは変わらないので、<code>MAKEFLAGS</code> の絞りは引き続き付けておく。作成時の環境では、この形は試していない。</p>
     </div>
   </section>
 
@@ -341,8 +351,8 @@ ros2 pkg prefix slam_toolbox</code></pre>
       <ul>
         <li>「<a href="https://docs.ros.org/en/jazzy/Installation/Alternatives/Ubuntu-Development-Setup.html">Ubuntu (source)</a>」（<a href="https://github.com/ros2/ros2_documentation/blob/bb5ba42/source/Installation/Alternatives/Ubuntu-Development-Setup.rst">原稿</a>）: 開発の道具、vcstool の使われ方</li>
         <li>「<a href="https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Rosdep.html">Managing Dependencies with rosdep</a>」（<a href="https://github.com/ros2/ros2_documentation/blob/bb5ba42/source/Tutorials/Intermediate/Rosdep.rst">原稿</a>）: rosdep の役目、<code>rosdep init</code>・<code>rosdep update</code>、<code>rosdep install</code> の <code>--from-paths</code>・<code>--ignore-src</code>・<code>-y</code>（<code>-r</code> は <code>rosdep install --help</code> の説明による）</li>
-        <li>「<a href="https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Colcon-Tutorial.html">Using colcon to build packages</a>」（<a href="https://github.com/ros2/ros2_documentation/blob/bb5ba42/source/Tutorials/Beginner-Client-Libraries/Colcon-Tutorial.rst">原稿</a>）: workspace の形、<code>build</code>・<code>install</code>・<code>log</code>、<code>--symlink-install</code>、<code>--executor sequential</code></li>
-        <li>「<a href="https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Creating-A-Workspace/Creating-A-Workspace.html">Creating a workspace</a>」（<a href="https://github.com/ros2/ros2_documentation/blob/bb5ba42/source/Tutorials/Beginner-Client-Libraries/Creating-A-Workspace/Creating-A-Workspace.rst">原稿</a>）: underlay と overlay、新しいターミナルで読み込むこと、<code>setup.bash</code> が underlay も読み込むこと</li>
+        <li>「<a href="https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Colcon-Tutorial.html">Using colcon to build packages</a>」（<a href="https://github.com/ros2/ros2_documentation/blob/bb5ba42/source/Tutorials/Beginner-Client-Libraries/Colcon-Tutorial.rst">原稿</a>）: workspace の形、<code>build</code>・<code>install</code>・<code>log</code>、<code>--symlink-install</code>、<code>--executor sequential</code>、<code>-DBUILD_TESTING=0</code></li>
+        <li>「<a href="https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Creating-A-Workspace/Creating-A-Workspace.html">Creating a workspace</a>」（<a href="https://github.com/ros2/ros2_documentation/blob/bb5ba42/source/Tutorials/Beginner-Client-Libraries/Creating-A-Workspace/Creating-A-Workspace.rst">原稿</a>）: underlay と overlay、新しいターミナルで読み込むこと、<code>setup.bash</code> が underlay も読み込むこと、<code>--packages-up-to</code></li>
         <li>「<a href="https://docs.ros.org/en/jazzy/How-To-Guides/Installation-Troubleshooting.html">Installation troubleshooting</a>」（<a href="https://github.com/ros2/ros2_documentation/blob/bb5ba42/source/How-To-Guides/Installation-Troubleshooting.rst">原稿</a>）: <code>MAKEFLAGS=-j1</code></li>
       </ul>
       <p>公式の画像は使っておらず、図はこの教材で作った。</p>
