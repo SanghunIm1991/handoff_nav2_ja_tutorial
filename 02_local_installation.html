@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Local Installation：Nav2 の入れ方を知り、ソースからビルドする</title>
+<meta name="description" content="これまでの章で入れた道具とパッケージが何のためのものかを確かめ、Nav2 をソースからビルドして使う。Nav2 の公式の Local Installation（Jazzy）を日本語で再構成した非公式の教材。">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+/* Local Installation の章だけの CSS。共通の器は assets/site.css。
+   図 1 は、2 つの置き場所（underlay と overlay）を上下に重ねて、上が優先されることを表す。色の差は付けない。 */
+.diagram svg{min-width:600px}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <p class="site"><a href="index.html">Nav2 日本語ガイド</a>（非公式・作成中）</p>
+  <div class="hero">
+    <h1>Local Installation：Nav2 の入れ方を知り、ソースからビルドする</h1>
+  </div>
+</div></header>
+
+<main><div class="wrap">
+
+  <div class="prose">
+    <p>環境構築と Quickstart の章では、言われたとおりにコマンドを打って、ROS 2 と Nav2 を入れた。動くものを先に見るためである。このページでは立ち止まって、そのとき入れた道具とパッケージが何のためのものだったのかを確かめる。</p>
+    <p>そのうえで、Nav2 を<strong>ソースからビルドする</strong>。apt で入れた Nav2 は、出来上がったものを使うだけで、中身を変えられない。Nav2 のコードを読みながら動かしたり、直したり、自分の部品を足したりするには、ソースを手元に置いて自分で組み立てる必要がある。後の章（プラグインを作る章。準備中）で作るプラグインも、この組み立て方の上に乗る。</p>
+  </div>
+
+  <aside class="notes" aria-label="このページについての注記">
+    <p>このページについて</p>
+    <ul>
+      <li>Nav2 の公式の文書の <a href="https://docs.nav2.org/jazzy/getting_started/build_and_install/local_installation/">Local Installation</a>（<code>jazzy</code> 版の原稿、コミット <code>b22554c</code>）を基に、日本語で説明し直したもの。逐語の翻訳ではない。手順の意味の説明には、ROS 2 の公式の文書（出典に列挙）も使った。出典とライセンスはページの末尾にある。</li>
+      <li>ROS 2 Jazzy と Ubuntu 24.04（Windows の WSL2 を含む）を前提にする。<a href="00_setup.html">環境構築</a>と <a href="01_quickstart.html">Quickstart</a> の章を終えていることを前提にする。</li>
+      <li>期待する結果の出どころ: 3 節〜5 節の表示は、どれも作成時の環境（<code>navigation2</code> 1.3.14 を apt で入れた環境）で実際に確かめたもの。ソースは、2026-11-22 に取得した <code>jazzy</code> ブランチの先頭である。</li>
+      <li>4 節のビルドは、作成時の環境では、4-5 節の 1 つずつビルドする形で、途中で止まった回の続きから 1 時間半ほどかかった。かかる時間は PC によって大きく変わる。</li>
+    </ul>
+  </aside>
+
+  <section aria-labelledby="s0">
+    <h2 id="s0">0. 学習目標と完了条件</h2>
+    <div class="prose">
+      <p>このページを終えると、次のことができる。</p>
+      <ol>
+        <li>これまでに入れた開発の道具（<code>colcon</code>・<code>rosdep</code>・<code>vcstool</code>）と Nav2 のパッケージが、それぞれ何のためにあるのかを説明できる。</li>
+        <li>Nav2 の 2 つの入れ方（バイナリとソース）の違いを説明できる。</li>
+        <li>Nav2 をソースからビルドし、ビルドした Nav2 を使うように環境を読み込める。</li>
+      </ol>
+      <p>完了条件は、5 節の <code>ros2 pkg prefix nav2_bringup</code> が、apt で入れた場所ではなく、自分でビルドした場所を指すこと。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s1">
+    <h2 id="s1">1. 全体像</h2>
+    <div class="prose">
+      <p>公式の Local Installation は、2 つのものを入れる手順を並べている。Nav2 が依存するもの（ROS 2 と開発の道具）と、Nav2 そのものである。どちらにも、出来上がったものを apt で入れる<span class="term">バイナリ</span>の方法と、ソースのコードを手元で組み立てる<span class="term">ソース</span>の方法がある。このサイトでどこまで済んでいるかを、表にまとめる。</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th scope="col">入れるもの</th><th scope="col">バイナリ（apt）</th><th scope="col">ソース</th></tr></thead>
+        <tbody>
+          <tr><td>ROS 2 と開発の道具</td><td>環境構築の章の 4 節・5 節で済み。意味はこのページの 2 節</td><td>このサイトでは扱わない（2 節のリンク）</td></tr>
+          <tr><td>Nav2</td><td>Quickstart の章の 2 節で済み。意味はこのページの 3 節</td><td>このページの 4 節・5 節</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">
+      <p>ソースからビルドした Nav2 は、apt で入れた Nav2 を消さずに、その上に重ねて使う。どちらが使われるかは、ターミナルでどの環境を読み込んだかで決まる（5 節）。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s2">
+    <h2 id="s2">2. 依存するもの：ROS 2 と開発の道具</h2>
+    <div class="prose">
+      <p>公式の原稿は、Nav2 を使う前に、ROS 2 と開発の道具 <code>colcon</code>・<code>rosdep</code>・<code>vcstool</code> を入れておくことを求めている。このサイトでは、環境構築の章の 5 節で、ROS 2 を <code>ros-jazzy-desktop</code> として、開発の道具を <code>ros-dev-tools</code> というまとまりとして apt で入れた。<code>ros-dev-tools</code> は、ROS 2 の公式の文書がソースから組み立てるときの道具として入れさせるものである。</p>
+      <ul>
+        <li><span class="term">colcon</span>: <span class="term">workspace</span>（ソースを置いてビルドするための決まった形のフォルダ。4 節で作る）の中の複数のパッケージを、依存の順に並べてまとめてビルドする。ROS 2 のパッケージは数が多く、互いに依存しているので、1 つずつ手でビルドする代わりにこれを使う。</li>
+        <li><span class="term">rosdep</span>: ソースのパッケージが必要とするほかのパッケージを調べて、apt でまとめて入れる。どこまでを rosdep に任せるかは 4-3 節で見る。</li>
+        <li><span class="term">vcstool</span>（コマンドは <code>vcs</code>）: 一覧のファイルに書かれた複数の Git のリポジトリを、まとめて取得する。ROS 2 そのものをソースから組み立てるときは、100 を超えるリポジトリを一覧のファイルから取得するのに使う。この章の手順で取得するのは 2 つのリポジトリで、公式の Nav2 の手順は <code>git clone</code> を使い、<code>vcs</code> は使わない。</li>
+      </ul>
+      <p>公式の原稿は、ROS 2 そのものをソースから入れる方法も挙げているが、このサイトでは扱わない。必要なら、ROS 2 の公式の文書の <a href="https://docs.ros.org/en/jazzy/Installation/Alternatives/Ubuntu-Development-Setup.html">Ubuntu (source)</a> を参照する。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s3">
+    <h2 id="s3">3. Nav2 をバイナリで入れる</h2>
+    <div class="prose">
+      <p>Quickstart の章の 2 節で実行した <code>apt install</code> を、公式の原稿の形で書くと次のようになる。</p>
+    </div>
+<pre class="cmd"><code># T1
+sudo apt update
+sudo apt install ros-$ROS_DISTRO-navigation2 ros-$ROS_DISTRO-nav2-bringup ros-$ROS_DISTRO-nav2-minimal-tb\*</code></pre>
+    <div class="prose">
+      <p>このコマンドは、Quickstart で入れ済みなので、打たなくてよい。<code># T1</code> は「1 つめのターミナルで実行する」という印で、<code>#</code> から後はコメントなので打たなくてよい（この印は、この後のコマンドの箱でも同じ）。</p>
+      <p><code>$ROS_DISTRO</code> は、ROS 2 の環境を読み込んだターミナルで、版の名前（ここでは <code>jazzy</code>）に置き換わる変数である。公式の原稿は、版を書き換えずに使えるよう、この形で書いている。Quickstart では <code>jazzy</code> と直接書いたので、中身は同じである。最後の <code>\*</code> は、Quickstart で <code>'…'</code> で囲んだのと同じく、<code>*</code> を bash に解釈させずにそのまま apt に渡す書き方である。この書き方なら <code>$ROS_DISTRO</code> は置き換わり、<code>*</code> はそのまま渡る（単引用符で全体を囲むと、<code>$ROS_DISTRO</code> も置き換わらない）。</p>
+      <p>入る 3 つのものは、次の役目を持つ。</p>
+      <ul>
+        <li><code>ros-jazzy-navigation2</code>: Nav2 の本体の部品（位置の推定・経路の計画・経路の追従など）をまとめて入れるためのパッケージ。</li>
+        <li><code>ros-jazzy-nav2-bringup</code>: Nav2 をまとめて起動するための launch file と、既定の設定のファイル。Quickstart の <code>tb3_simulation_launch.py</code> もここにある。</li>
+        <li><code>ros-jazzy-nav2-minimal-tb*</code>: シミュレーションで使う TurtleBot 3 と TurtleBot 4 の部品。</li>
+      </ul>
+      <p>公式の原稿によると、Nav2 は、開発中の版（Rolling）を除く ROS 2 の各版に向けて、バイナリとして公開されている。apt で入れると、その版の最新の安定版が入る。入った場所を確かめる。</p>
+    </div>
+<pre class="cmd"><code># T1
+source /opt/ros/jazzy/setup.bash
+
+ros2 pkg prefix nav2_bringup</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>/opt/ros/jazzy</code></pre>
+      <div class="prose">
+        <p><code>ros2 pkg prefix</code> は、指定したパッケージが入っている場所（の根元）を表示する。apt で入れた ROS 2 のパッケージは、どれも <code>/opt/ros/jazzy</code> の下にまとめて置かれている。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s4">
+    <h2 id="s4">4. Nav2 をソースからビルドする</h2>
+    <div class="prose">
+      <p>ここからが、まだ行っていない手順である。公式の原稿のコマンドを、意味の区切りごとに分けて実行する。すべて同じターミナル（T1）で、順に実行する。</p>
+    </div>
+
+    <h3 id="s4-1">4-1. workspace を作り、ソースを取得する</h3>
+<pre class="cmd"><code># T1
+source /opt/ros/jazzy/setup.bash
+
+NAV_DISTRO=${ROS_DISTRO/rolling/main}
+
+mkdir -p ~/nav2_ws/src &amp;&amp; cd ~/nav2_ws
+
+git clone https://github.com/ros-navigation/navigation2.git --branch $NAV_DISTRO ./src/navigation2
+
+git clone https://github.com/ros-navigation/nav2_minimal_turtlebot_simulation.git --branch $NAV_DISTRO ./src/nav2_minimal_turtlebot_simulation</code></pre>
+    <div class="prose">
+      <ul>
+        <li><code>NAV_DISTRO=${ROS_DISTRO/rolling/main}</code>: <code>$ROS_DISTRO</code> の中の <code>rolling</code> を <code>main</code> に置き換えたものを、<code>NAV_DISTRO</code> に入れる bash の書き方。Nav2 のリポジトリは、ROS 2 の版と同じ名前のブランチ（<code>jazzy</code> など）を持ち、開発中の版 Rolling の分だけは <code>main</code> ブランチにある。Jazzy では置き換えが起きず、<code>NAV_DISTRO</code> は <code>jazzy</code> になる。</li>
+        <li><code>mkdir -p ~/nav2_ws/src</code>: workspace のフォルダ <code>~/nav2_ws</code> と、その中にソースを置く <code>src</code> を作る。ROS 2 の workspace は、<code>src</code> にソースを置き、workspace の直下で colcon を動かす決まった形をしている。</li>
+        <li><code>git clone … --branch $NAV_DISTRO</code>: Nav2 の本体（<code>navigation2</code>）と、シミュレーションの TurtleBot（<code>nav2_minimal_turtlebot_simulation</code>）の <code>jazzy</code> ブランチを、<code>src</code> の下に取得する。ブランチは ROS 2 の版と必ず合わせる。公式の困りごとの手引きは、ある版のブランチを別の版では使えないと書いている。</li>
+      </ul>
+    </div>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>Cloning into './src/navigation2'...
+remote: Enumerating objects: 63664, done.
+（中略）
+Receiving objects: 100% (63664/63664), 117.70 MiB | 7.64 MiB/s, done.
+Resolving deltas: 100% (43997/43997), done.
+Cloning into './src/nav2_minimal_turtlebot_simulation'...
+（中略）
+Resolving deltas: 100% (206/206), done.</code></pre>
+      <div class="prose">
+        <p>2 つのリポジトリの取得が、どちらも <code>done.</code> で終わればよい。数は、リポジトリが更新されると変わる。取得した <code>jazzy</code> ブランチの先頭は、apt で入る版と同じとは限らない。作成時は、<code>navigation2</code> が 1.3.14 より 5 コミット新しく、<code>nav2_minimal_turtlebot_simulation</code> は 1.0.3 より 1 コミット新しかった（apt では 1.0.1）。</p>
+      </div>
+    </div>
+
+    <h3 id="s4-2">4-2. rosdep を初めて使う前の準備</h3>
+    <div class="prose">
+      <p>公式の Nav2 の原稿には無いが、rosdep を初めて使う PC では、先に次の 2 つが要る。ROS 2 の公式の文書の rosdep の説明が、初めて使うときの手順として書いているものである。環境構築の章で入れたのは <code>rosdep</code> のコマンドだけで、この準備はまだ済んでいない。</p>
+    </div>
+<pre class="cmd"><code># T1
+sudo rosdep init
+
+rosdep update</code></pre>
+    <div class="prose">
+      <p>rosdep は、パッケージが求めるものの名前（<span class="term">rosdep key</span>。4-3 節で見る <code>package.xml</code> に書かれている）を、apt のパッケージの名前に当てはめる対応表を使う。<code>sudo rosdep init</code> は、その対応表をどこから取得するかを書いたファイルを作る（PC に 1 回だけ。管理者の権限が要る）。<code>rosdep update</code> は、対応表を取得して、ホームのフォルダに保存する（<code>sudo</code> は付けない）。</p>
+    </div>
+    <div class="expect">
+      <h4>期待する結果</h4>
+      <div class="prose">
+        <p><code>sudo rosdep init</code>:</p>
+      </div>
+<pre class="out"><code>Wrote /etc/ros/rosdep/sources.list.d/20-default.list
+Recommended: please run
+
+        rosdep update</code></pre>
+      <div class="prose">
+        <p><code>rosdep update</code>（抜粋）:</p>
+      </div>
+<pre class="out"><code>reading in sources list data from /etc/ros/rosdep/sources.list.d
+（中略）
+Hit https://raw.githubusercontent.com/ros/rosdistro/master/rosdep/base.yaml
+（中略）
+Add distro "jazzy"
+（中略）
+updated cache in /home/&lt;ユーザー名&gt;/.ros/rosdep/sources.cache</code></pre>
+      <div class="prose">
+        <p><code>&lt;ユーザー名&gt;</code> の部分は、Ubuntu のユーザー名になる。すでに準備を済ませた PC で <code>sudo rosdep init</code> を実行すると、<code>ERROR: default sources list file already exists</code> と出る。これは準備が済んでいるという意味なので、気にせず <code>rosdep update</code> に進む。</p>
+      </div>
+    </div>
+
+    <h3 id="s4-3">4-3. 足りない依存を入れる</h3>
+<pre class="cmd"><code># T1
+rosdep install -r -y --from-paths ./src --ignore-src</code></pre>
+    <div class="prose">
+      <p>各パッケージは、自分が必要とするものを <span class="term">package.xml</span>（パッケージの名前・版・依存するものを書いたファイル）に書いている。<code>rosdep install</code> は、それを読んで、まだ入っていないものを apt で入れる。人が依存を覚えて入れるのではなく、各パッケージの <code>package.xml</code> に書かれたものを rosdep が apt の名前に置き換えて入れる、という分担である。</p>
+      <ul>
+        <li><code>--from-paths ./src</code>: <code>src</code> の下の <code>package.xml</code> をすべて読む。</li>
+        <li><code>--ignore-src</code>: <code>src</code> の中にあるパッケージ（これから自分でビルドするもの）は、apt で入れない。</li>
+        <li><code>-y</code>: apt の「続けますか」に、自動で「はい」と答える。</li>
+        <li><code>-r</code>: 途中でエラーがあっても、残りを入れ続ける。</li>
+      </ul>
+      <p>apt で入れた Nav2 があっても、ここで入るものがある。<code>src</code> には、apt の <code>ros-jazzy-navigation2</code> に含まれないパッケージもあり、その依存は入っていないからである。また、<code>package.xml</code> には、テストにだけ使う依存（<code>test_depend</code>）も書かれている。作成時の環境では、そのテストの依存も、このコマンドで入った（期待する結果）。</p>
+    </div>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>executing command [sudo -H apt-get install -y python3-zmq]
+（apt の表示。中略）
+executing command [sudo -H apt-get install -y python3-transforms3d]
+（中略）
+executing command [sudo -H apt-get install -y ros-jazzy-tf-transformations]
+（中略）
+executing command [sudo -H apt-get install -y ros-jazzy-test-msgs]
+（中略）
+#All required rosdeps installed successfully</code></pre>
+      <div class="prose">
+        <p>最後に <code>#All required rosdeps installed successfully</code> が出ればよい。途中で <code>sudo</code> のパスワードを聞かれる。作成時の環境（Quickstart まで済んだ状態）では、上の 4 つが入った。各パッケージの <code>package.xml</code> を見ると、<code>python3-transforms3d</code> と <code>ros-jazzy-tf-transformations</code> は <code>nav2_loopback_sim</code>（<code>ros-jazzy-navigation2</code> に含まれないパッケージ）が実行に使うもの、<code>ros-jazzy-test-msgs</code> と <code>python3-zmq</code> は <code>test_depend</code> に書かれたものだった。入るものは、PC にすでに入っているものによって変わり、すべてそろっていれば最後の 1 行だけが出る。</p>
+        <p>公式の原稿は、<code>slam_toolbox</code> が見つからないという rosdep のエラーは無視してよい、と書いている。作成時の環境では、Quickstart で <code>slam_toolbox</code> が入っていたためか、このエラーは出なかった。</p>
+      </div>
+    </div>
+
+    <h3 id="s4-4">4-4. ビルドする</h3>
+    <div class="prose">
+      <p>メモリに余裕の無い PC（WSL に割り当てたメモリが少ない場合を含む）では、次のコマンドで PC が固まることがある。実行する前に 4-5 節を読み、心配なら最初から 4-5 節の形で実行する。</p>
+    </div>
+<pre class="cmd"><code># T1
+colcon build --symlink-install</code></pre>
+    <div class="prose">
+      <p><code>colcon build</code> は、workspace の直下で実行する。<code>src</code> の中のパッケージを依存の順に並べてビルドし、<code>src</code> の隣に 3 つのフォルダを作る。</p>
+      <ul>
+        <li><code>build</code>: ビルドの途中のファイル。</li>
+        <li><code>install</code>: ビルドしたものの置き場所。5 節で使う。</li>
+        <li><code>log</code>: ビルドのログ。失敗したときは、ここのパッケージごとのログを見る。</li>
+      </ul>
+      <p><code>--symlink-install</code> を付けると、<code>install</code> の中の Python のファイルや launch file などを、<code>src</code> のファイルへのリンク（symbolic link）にする。<code>src</code> のそれらのファイルを直せば、ビルドし直さずに直した内容が使われるので、試しながら直すときに速い。C++ のプログラムは、直したらビルドし直す必要がある。</p>
+    </div>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>Starting >>> nav2_common
+Finished <<< nav2_common [1.57s]
+（中略）
+Starting >>> nav2_behavior_tree
+Finished <<< nav2_behavior_tree [23min 11s]
+（中略）
+Starting >>> nav2_bringup
+Finished <<< nav2_bringup [8.68s]
+Starting >>> nav2_system_tests
+Finished <<< nav2_system_tests [4min 17s]
+
+Summary: 48 packages finished [1h 34min 29s]</code></pre>
+      <div class="prose">
+        <p>最後に <code>Summary: 48 packages finished</code> が出れば、すべてのパッケージのビルドが終わっている。パッケージの数は、ソースが更新されると変わる。<code>Starting</code> と <code>Finished</code> の間の時間は、パッケージによって大きく違う。作成時は <code>nav2_behavior_tree</code>（23 分）、<code>nav2_costmap_2d</code>（10 分）、<code>nav2_route</code>・<code>nav2_mppi_controller</code>（7 分）が長かった。この表示は、次の 4-5 節の 1 つずつビルドする形で取ったものなので、パッケージが 1 行ずつ順に並んでいる。既定の形では、複数のパッケージが同時に進み、<code>[Processing: …]</code> の行が挟まる。</p>
+      </div>
+    </div>
+
+    <h3 id="s4-5">4-5. PC が固まる・ビルドが止まるとき</h3>
+    <div class="prose">
+      <p>ROS 2 の公式の colcon のチュートリアルは、CPU・メモリ・ディスクの読み書きの限られた PC では <code>colcon build</code> で画面とマウスが固まることがあるとして、パッケージを 1 つずつビルドする <code>--executor sequential</code> を挙げている。また、導入の困りごとの手引きは、メモリの限られた PC でコンパイラが異常終了するとき（internal compiler error）の対処として、コンパイルを 1 つずつにする <code>MAKEFLAGS=-j1</code> を挙げている。</p>
+      <p>作成時の環境では、既定の形のビルドで画面が固まったり、表示の経過時間だけが増えてパーセントが進まなくなったりした。ビルドのログでは、1 つのパッケージの中で C++ のファイルを 5 つ以上同時にコンパイルし始めたところで止まっていたので、メモリを使い切ったと推定している（確かめてはいない）。上の 2 つを両方付けると、同時に動くコンパイラは 1 つになる。</p>
+    </div>
+<pre class="cmd"><code># T1
+source /opt/ros/jazzy/setup.bash
+
+cd ~/nav2_ws
+
+MAKEFLAGS=-j1 colcon build --symlink-install --executor sequential</code></pre>
+    <div class="prose">
+      <p>時間はかかるが、止まりにくくなる。作成時の環境では、既定の形で 1 回（裏でほかの作業も同時に動かしていた）PC ごと固まり、同時にビルドするパッケージの数だけを絞る <code>--parallel-workers 2</code> でも止まった（パッケージの中のコンパイルは絞られなかったと推定している）。この形にして、最後まで通った。</p>
+      <p>ビルドが止まったら、<kbd>Ctrl</kbd>+<kbd>C</kbd> で止める。PC ごと固まって操作できないときは、PC を再起動するか、Windows の PowerShell で <code>wsl --shutdown</code>（環境構築の章の 2 節）を実行して WSL を止める。そのあと新しいターミナルで上のブロックを実行すれば、終わっていたパッケージはすぐに済み、続きから進む。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s5">
+    <h2 id="s5">5. ビルドした Nav2 を使う</h2>
+    <div class="prose">
+      <p>ビルドが終わったら、<strong>新しいターミナル</strong>（T2）を開いて、workspace の環境を読み込む。ROS 2 の公式の文書は、ビルドしたのと同じターミナルで読み込むと込み入った問題が起きうるので、別のターミナルで読み込むよう勧めている。</p>
+    </div>
+<pre class="cmd"><code># T2
+source ~/nav2_ws/install/setup.bash
+
+ros2 pkg prefix nav2_bringup
+
+ros2 pkg prefix slam_toolbox</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>/home/&lt;ユーザー名&gt;/nav2_ws/install/nav2_bringup
+/opt/ros/jazzy</code></pre>
+      <div class="prose">
+        <p>1 行めの <code>nav2_bringup</code> が workspace の <code>install</code> を指していれば、ビルドした Nav2 が使われている。<code>&lt;ユーザー名&gt;</code> の部分は、Ubuntu のユーザー名になる。2 行めの <code>slam_toolbox</code> は workspace でビルドしていないので、apt で入れた <code>/opt/ros/jazzy</code> のものが使われる。</p>
+      </div>
+    </div>
+    <div class="prose">
+      <p>ROS 2 の公式の文書は、元からある環境（ここでは <code>/opt/ros/jazzy</code>）を <span class="term">underlay</span>、その上に重ねる workspace を <span class="term">overlay</span> と呼ぶ。overlay にあるパッケージは、underlay の同じ名前のパッケージより優先され、overlay に無いものは underlay のものが使われる（underlay の中身は変わらない）。workspace の <code>install/setup.bash</code> は、ビルドしたときの underlay もあわせて読み込むので、新しいターミナルではこの 1 行だけでよい。</p>
+    </div>
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 600 250" role="img" aria-label="2 つの置き場所を重ねた図。上に workspace の install（overlay、ソースからビルドした Nav2）、下に /opt/ros/jazzy（underlay、apt で入れた ROS 2 と Nav2）がある。パッケージは上から探され、nav2_bringup は上で見つかり、slam_toolbox は上に無いので下で見つかる。">
+          <defs>
+            <marker id="ov-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--sub)"/></marker>
+          </defs>
+          <rect class="d-box" x="20" y="30" width="340" height="80" rx="4"/>
+          <text class="d-name" x="40" y="60">~/nav2_ws/install（overlay）</text>
+          <text class="d-sub" x="40" y="88">ソースからビルドした Nav2</text>
+
+          <rect class="d-box" x="20" y="140" width="340" height="80" rx="4"/>
+          <text class="d-name" x="40" y="170">/opt/ros/jazzy（underlay）</text>
+          <text class="d-sub" x="40" y="198">apt で入れた ROS 2 と Nav2 など</text>
+
+          <line class="d-line" x1="540" y1="20" x2="540" y2="226" marker-end="url(#ov-ah)"/>
+          <text class="d-labj" x="530" y="20" text-anchor="end">探す順</text>
+
+          <line class="d-line" x1="510" y1="70" x2="362" y2="70" marker-end="url(#ov-ah)"/>
+          <text class="d-lab" x="436" y="62" text-anchor="middle">nav2_bringup</text>
+          <line class="d-line" x1="510" y1="180" x2="362" y2="180" marker-end="url(#ov-ah)"/>
+          <text class="d-lab" x="436" y="172" text-anchor="middle">slam_toolbox</text>
+        </svg>
+      </div>
+      <figcaption>図 1　overlay と underlay。パッケージは上の overlay から探され、無ければ下の underlay から探される。横に長い図は、狭い画面では横にスクロールして見る。</figcaption>
+    </figure>
+    <div class="prose">
+      <p>この状態で、Quickstart の章の 3 節のコマンドのうち 2 行めの <code>ros2 launch …</code> だけを実行すると（1 行めの <code>source /opt/ros/jazzy/setup.bash</code> は打たなくてよい）、パッケージが上から探されるので、ビルドした Nav2 の launch file と node が使われる（作成時の環境では、起動しての確認はしていない）。apt で入れた Nav2 に戻すには、新しいターミナルで <code>source /opt/ros/jazzy/setup.bash</code> だけを読み込めばよい。ビルドした Nav2 を使うターミナルでは、毎回 <code>source ~/nav2_ws/install/setup.bash</code> を実行する。環境構築の章の 6 節で見たとおり、<code>~/.bashrc</code> に書き足すと、どちらの Nav2 を使っているかが見えにくくなる。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s6">
+    <h2 id="s6">6. 製品に組み込むなら</h2>
+    <div class="prose">
+      <ul>
+        <li><strong>Nav2 を変えずに使うなら、バイナリを使う</strong>。公式の原稿のとおり、バイナリはその版の最新の安定版で、ビルドの時間もかからない。ただし、Quickstart の章の 2 節で見たとおり、<code>apt upgrade</code> で版が変わる。製品では、どの版で試験したかを記録し、版を上げるときは試験し直す。</li>
+        <li><strong>Nav2 を直す・部品を足すなら、ソースの workspace を overlay にする</strong>。直したいパッケージだけを workspace に置き、残りは underlay のバイナリを使う形もできる（ROS 2 の公式の文書は、少数のパッケージを直しながら試すときに overlay を使うことを勧めている）。</li>
+        <li><strong>どのコミットをビルドしたかを記録する</strong>。同じ <code>jazzy</code> ブランチでも、取得した日によって中身が違う（4-1 節では、apt の版より新しいコミットだった）。製品に入れるものは、取得したコミットを決めて記録する。</li>
+        <li><strong>ビルドする PC の資源を見積もる</strong>。4-5 節のとおり、Nav2 の全体のビルドは時間とメモリを使う。ロボットに載せる小さな PC でビルドするか、別の PC でビルドするかも、考えておく。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section aria-labelledby="s7">
+    <h2 id="s7">次に読むもの・出典</h2>
+    <div class="prose">
+      <p>次は Navigation Concepts の章で、Nav2 を形作る考え方を見る（準備中）。このページに出てきた用語は、<a href="glossary.html">用語集</a>にまとめてある。workspace はそのままにしておけば、後の章でも使える。要らなくなったら、<code>~/nav2_ws</code> のフォルダごと消せば、apt で入れた Nav2 には影響しない。</p>
+      <p>出典: Nav2 の公式の文書「<a href="https://docs.nav2.org/jazzy/getting_started/build_and_install/local_installation/">Local Installation</a>」（<a href="https://github.com/ros-navigation/docs.nav2.org/blob/b22554c/docs/getting_started/build_and_install/local_installation.md">原稿</a>、<code>ros-navigation/docs.nav2.org</code> の <code>jazzy</code> ブランチ、コミット <code>b22554c</code>、2026-08-31。著作者: Open Navigation LLC と Nav2 の文書の寄稿者）。ライセンスは <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>。このページは、その内容を日本語で再構成し、説明の追加（入れ済みの部分の意味、rosdep の準備、PC が固まるときの対処、5 節の確かめ方、6 節など）と省略（Rolling と Iron 以前の手順、Docker のファイルへの案内）を加えたもので、逐語の翻訳ではない。公式の困りごとの手引き（<a href="https://github.com/ros-navigation/docs.nav2.org/blob/b22554c/docs/getting_started/build_and_install/build_troubleshooting_guide.md">原稿</a>、同じコミット）の、ブランチと版を合わせる注意も使った。</p>
+      <p>手順の意味の説明には、ROS 2 の公式の文書の次のページを使った（どれも <code>ros2/ros2_documentation</code> の <code>jazzy</code> ブランチ、コミット <code>bb5ba42</code>、2026-11-19。著作者: Open Robotics と ROS 2 の文書の寄稿者。ライセンス: <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>）。内容を日本語で要約して使い、4-2 節と 4-5 節のコマンドはそれぞれのページのものと同等である（行頭の <code>$</code> を除いた）。</p>
+      <ul>
+        <li>「<a href="https://docs.ros.org/en/jazzy/Installation/Alternatives/Ubuntu-Development-Setup.html">Ubuntu (source)</a>」（<a href="https://github.com/ros2/ros2_documentation/blob/bb5ba42/source/Installation/Alternatives/Ubuntu-Development-Setup.rst">原稿</a>）: 開発の道具、vcstool の使われ方</li>
+        <li>「<a href="https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Rosdep.html">Managing Dependencies with rosdep</a>」（<a href="https://github.com/ros2/ros2_documentation/blob/bb5ba42/source/Tutorials/Intermediate/Rosdep.rst">原稿</a>）: rosdep の役目、<code>rosdep init</code>・<code>rosdep update</code>、<code>rosdep install</code> の <code>--from-paths</code>・<code>--ignore-src</code>・<code>-y</code>（<code>-r</code> は <code>rosdep install --help</code> の説明による）</li>
+        <li>「<a href="https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Colcon-Tutorial.html">Using colcon to build packages</a>」（<a href="https://github.com/ros2/ros2_documentation/blob/bb5ba42/source/Tutorials/Beginner-Client-Libraries/Colcon-Tutorial.rst">原稿</a>）: workspace の形、<code>build</code>・<code>install</code>・<code>log</code>、<code>--symlink-install</code>、<code>--executor sequential</code></li>
+        <li>「<a href="https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Creating-A-Workspace/Creating-A-Workspace.html">Creating a workspace</a>」（<a href="https://github.com/ros2/ros2_documentation/blob/bb5ba42/source/Tutorials/Beginner-Client-Libraries/Creating-A-Workspace/Creating-A-Workspace.rst">原稿</a>）: underlay と overlay、新しいターミナルで読み込むこと、<code>setup.bash</code> が underlay も読み込むこと</li>
+        <li>「<a href="https://docs.ros.org/en/jazzy/How-To-Guides/Installation-Troubleshooting.html">Installation troubleshooting</a>」（<a href="https://github.com/ros2/ros2_documentation/blob/bb5ba42/source/How-To-Guides/Installation-Troubleshooting.rst">原稿</a>）: <code>MAKEFLAGS=-j1</code></li>
+      </ul>
+      <p>公式の画像は使っておらず、図はこの教材で作った。</p>
+    </div>
+  </section>
+
+</div></main>
+
+<footer><div class="wrap">
+  <p>Nav2 日本語ガイドは、Nav2 の公式の文書を基にした非公式の学習教材で、Nav2・ROS 2・Gazebo のプロジェクトや Microsoft とは関係がない。ライセンスは <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>（出典の文書から引き継いだ部分は、それぞれのライセンスに従う）。</p>
+  <p>この教材は、作成者の指示のもとで、Anthropic の AI である Claude（Claude Code）が作成した。</p>
+  <p>Nav2・TurtleBot・ROS・Gazebo・Ubuntu・Windows などの名前は、それぞれの持ち主の商標でありうる。</p>
+</div></footer>
+</body>
+</html>

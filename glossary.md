@@ -16,12 +16,17 @@ Nav2 日本語ガイド（非公式・作成中）の本文に出てきた用語
 | locale | locale〈場所、地域〉 | 言語や文字の符号化など、地域ごとの設定。ROS 2 は UTF-8 の locale を前提にする | [環境構築の 3 節](00_setup.html#s3) |
 | node | node〈結び目、節点〉 | ROS 2 で、1 つの役目を持つプログラムの単位 | [環境構築の 1 節](00_setup.html#s1) |
 | odometry | odometry〈走った道のりを測ること〉 | 車輪の回転などから求めた、ロボットの移動量。ROS 2 では `odom` という名前の topic で流れることが多い | [Quickstart の 1 節](01_quickstart.html#s1) |
+| overlay | overlay〈上に重ねるもの〉 | 元からある環境（underlay）の上に重ねて読み込む workspace。同じ名前のパッケージは overlay のものが優先される | [Local Installation の 5 節](02_local_installation.html#s5) |
+| package.xml | package〈パッケージ〉＋ XML〈ファイルの書式〉 | ROS 2 のパッケージの名前・版・依存するものを書いたファイル。rosdep はこれを読んで、足りない依存を入れる | [Local Installation の 4-3 節](02_local_installation.html#s4-3) |
 | particle cloud | particle〈粒子〉＋ cloud〈雲〉 | AMCL が考えている「ロボットがいるかもしれない位置」の候補の集まり。RViz では小さな矢印の群れとして描かれる | [Quickstart の 4 節](01_quickstart.html#s4) |
 | rosdep | ROS ＋ dependency〈依存〉 | ソースのパッケージが必要とするほかのパッケージを調べ、apt でまとめて入れる道具 | [環境構築の 5 節](00_setup.html#s5) |
+| rosdep key | rosdep ＋ key〈鍵、見出しの名前〉 | パッケージが求めるものの名前（`package.xml` に書かれている）。rosdep が対応表で apt のパッケージの名前に置き換える | [Local Installation の 4-2 節](02_local_installation.html#s4-2) |
 | RViz | ROS visualization〈ROS の可視化〉の略 | ROS 2 のデータ（地図・ロボットの位置・経路など）を画面に描く道具 | [環境構築の 2 節](00_setup.html#s2) |
 | tf | transform〈変換〉の略 | 座標系どうしの位置関係。また、それを配る ROS 2 の仕組みと topic の名前 | [Quickstart の 1 節](01_quickstart.html#s1) |
 | topic | topic〈話題〉 | ROS 2 で、node どうしが決まった型のデータを流す、名前つきの通り道 | [環境構築の 7 節](00_setup.html#s7) |
+| underlay | underlay〈下に敷くもの〉 | overlay の下にある元からの環境。apt で入れた ROS 2（`/opt/ros/jazzy`）など | [Local Installation の 5 節](02_local_installation.html#s5) |
 | URDF | Unified Robot Description Format の略 | ロボットの形（部品の大きさとつながり方）を記述するファイルの書式 | [Quickstart の 8 節](01_quickstart.html#s8) |
 | use_sim_time | use simulation time〈シミュレーションの時刻を使う〉 | node が、シミュレーターの時計（`/clock`）を使うかどうかの設定 | [Quickstart の 8 節](01_quickstart.html#s8) |
 | vcstool | version control system〈版の管理の仕組み〉＋ tool〈道具〉 | 複数の Git のリポジトリを、一覧のファイルからまとめて取得する道具。コマンドは `vcs` | [環境構築の 5 節](00_setup.html#s5) |
+| workspace | workspace〈作業場〉 | ROS 2 のソースを置いてビルドするための決まった形のフォルダ。`src` にソースを置き、colcon が `build`・`install`・`log` を作る | [Local Installation の 2 節](02_local_installation.html#s2) |
 | WSL2 | Windows Subsystem for Linux 2 の略 | Windows の中で Linux を動かす、Microsoft の仕組み。Windows 11 では、Linux の画面のアプリも開ける（WSLg） | [環境構築の 1 節](00_setup.html#s1) |

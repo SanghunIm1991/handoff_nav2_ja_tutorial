@@ -20,7 +20,7 @@
 | --- | --- | --- | --- | --- | --- |
 | 0 | 環境構築（WSL2 → Ubuntu 24.04 → ROS 2 Jazzy） | `00_setup.html` | なし（ROS 2 の公式の導入手順と WSL の公式の文書を基にする） | 1 | レビュー済み（ユーザーの確認待ち） |
 | 1 | Quickstart | `01_quickstart.html` | Getting Started / Quickstart | 1 | レビュー済み（ユーザーの確認待ち） |
-| 2 | Local Installation | `02_local_installation.html` | Getting Started / Build and Install / Local Installation | 1 | 未着手 |
+| 2 | Local Installation | `02_local_installation.html` | Getting Started / Build and Install / Local Installation | 1 | レビュー済み（ユーザーの確認待ち） |
 | 3 | Navigation Concepts | `03_navigation_concepts.html` | Getting Started / Navigation Concepts（下位 6 ページ。分けるかは構成案のときに決める） | 2 | 未着手 |
 
 書く順番は Quickstart を先にし、HTML のページの器をそこで決める。読む順番は表のとおり環境構築が先。ROS 2 の基礎は独立したページを作らず、各ページで初めて使う場面で説明する（`CLAUDE.md` の「内容の方針」）。一区切りの後の範囲は、到達点を基準に、区切りごとに決めてこの表に足す。
@@ -90,7 +90,7 @@ RViz の操作（4 節・5 節）は、ユーザーが撮影した写真を後�
 | 1. 全体像 | 公式の 2 つの節（Dependencies・Nav2 Project）と、それぞれの 2 つの入れ方の対応表。このサイトでどこまで済んでいるか | 足す |
 | 2. 依存するもの | ROS 2 本体と `colcon`・`rosdep`・`vcstool` が何のために要るか（環境構築の 5 節で入れたもの）。`vcstool` は公式が依存に挙げるが、この手順では使わない（`git clone` で取る）。ROS 2 をソースから入れる方法は、公式へのリンクだけ | 意味の説明を足す |
 | 3. バイナリで入れる | Quickstart の 2 節の `apt install` の意味（`navigation2`・`nav2-bringup`・`nav2-minimal-tb*` が何か。`$ROS_DISTRO`）。入っているものを確かめる | 意味の説明を足す |
-| 4. ソースからビルドする | 公式のコマンドを 1 行ずつ: `NAV_DISTRO` の置き換え、workspace と `src`、`git clone --branch`、`rosdep install` の各オプション、`colcon build --symlink-install`。`slam_toolbox` の rosdep のエラーは無視してよいこと。`rosdep` を初めて使う前の `sudo rosdep init`・`rosdep update`（公式がリンクする ROS 2 の文書の手順） | 意味の説明と、rosdep の初期化を足す |
+| 4. ソースからビルドする | 公式のコマンドを 1 行ずつ: `NAV_DISTRO` の置き換え、workspace と `src`、`git clone --branch`、`rosdep install` の各オプション、`colcon build --symlink-install`。`slam_toolbox` の rosdep のエラーは無視してよいこと。`rosdep` を初めて使う前の `sudo rosdep init`・`rosdep update`（ROS 2 の文書の手順）。PC が固まる・ビルドが止まるときの `--executor sequential` と `MAKEFLAGS=-j1`（ROS 2 の文書の対処と、作成時の経験） | 意味の説明と、rosdep の初期化と、止まるときの対処を足す |
 | 5. ビルドした Nav2 を使う | `source ~/nav2_ws/install/setup.bash` の意味。どちらの Nav2 が使われるかの確かめ方（`ros2 pkg prefix`） | 確かめ方を足す |
 | 6. 製品に組み込むなら | バイナリとソースのどちらを選ぶかの考え方（公式の原稿の範囲で書く） | 足す |
 | 末尾 | 次のページ・出典・このページの用語 | — |
@@ -99,7 +99,7 @@ RViz の操作（4 節・5 節）は、ユーザーが撮影した写真を後�
 
 今の環境の事実（2026-11-22）: `colcon`・`rosdep`・`vcs` は `/usr/bin` にある。`rosdep` は初期化されていない（`/etc/ros/rosdep/sources.list.d/` が無い）。同じ日に、ユーザーが `sudo rosdep init` を、Claude が `rosdep update` を実行し、足りない依存 4 つをユーザーが `rosdep install` で入れた（QA 表）。
 
-今の状態（2026-11-22）: ページはまだ書いていない。ユーザーが `~/nav2_ws` で `time MAKEFLAGS=-j1 colcon build --symlink-install --executor sequential` を実行し、最後の数行・`time` の結果・`ros2 pkg prefix nav2_bringup` の表示を貼るのを待っている（経緯は QA 表の 2026-11-22 の行）。結果が届いたら、構成案に「PC が固まる・ビルドが止まるとき」（ROS 2 の文書の `--executor sequential` と `MAKEFLAGS=-j1`）を足して書き始める。ビルドの間は、Claude は重い作業をしない。
+2026-11-22 に書き、`textbook-reviewer` のレビューの指摘を直した（QA 表）。ビルドした Nav2 で Quickstart を起動しての確認はしていない（本文にもそう書いた）。
 
 ## トップのページ（`index.html`）に書くこと
 
