@@ -23,9 +23,16 @@
 | 2 | Local Installation | `02_local_installation.html` | Getting Started / Build and Install / Local Installation | 1 | レビュー済み（ユーザーの確認待ち） |
 | 3 | Navigation Concepts | `03_navigation_concepts.html` | Getting Started / Navigation Concepts（下位 5 ページを 1 枚にまとめた） | 2 | レビュー済み（ユーザーの確認待ち） |
 
+2 つめの区切り（2026-11-28 に決めた。公式の `docs/.nav.yml` の Getting Started の残り）。
+
+| 順 | ページ | ファイル | 元にする公式のページ | 主に当たる到達点 | 状態 |
+| --- | --- | --- | --- | --- | --- |
+| 3 | Dev Container | `03_devcontainer_guide.html`（このページを書くときに、Navigation Concepts を `04_navigation_concepts.html` に改める） | Getting Started / Dev Container | 1 | 構成案を決めた。書く |
+| 5 | Nav2 Behavior Trees | （構成案で決める） | Getting Started / Nav2 Behavior Trees | 2 | 未着手 |
+
 書く順番は Quickstart を先にし、HTML のページの器をそこで決める。読む順番は表のとおり環境構築が先。ROS 2 の基礎は独立したページを作らず、各ページで初めて使う場面で説明する（`CLAUDE.md` の「内容の方針」）。一区切りの後の範囲は、到達点を基準に、区切りごとに決めてこの表に足す。
 
-今の状態（2026-11-22）: 最初の一区切りの 4 ページを書き、Pages に載せた。その後、仮の README を足し（サイトへのリンク）、リポジトリの About の Website 欄にサイトの URL を入れた。ここまでを push 済み（2026-11-22）。次は、次の区切りの範囲を決める（到達点 3〜5 のどこから進めるか。進め方の 1 の構成案から始める）。その前に、確認待ちの一覧と「Pages に載せた後に確かめること」にユーザーの印や指摘が付いていないかを見る。保留の項目は無い。
+今の状態（2026-11-28）: 最初の一区切りの 4 ページを Pages に載せ、push 済み（2026-11-22）。2 つめの区切りを Dev Container と Nav2 Behavior Trees に決めた（その後は Configuration & Development を公式の順に進める。QA 表の 2026-11-28 の行）。Dev Container の構成案を決めた（Docker は WSL に Docker Engine、ページは Local Installation の直後、画面は説明だけ）。次は Dev Container のページを書く。確認待ちの一覧と「Pages に載せた後に確かめること」には、ユーザーの印や指摘はまだ無い。
 
 ## 環境構築の構成案
 
@@ -47,6 +54,35 @@
 | 7. 動作を確かめる | T1 で talker、T2 で listener |
 | 8. Gazebo を入れて確かめる | `ros-jazzy-ros-gz` |
 | 9. 製品に組み込むなら | 開発の PC（WSL）とロボットの PC（Ubuntu を直接、arm64 のことも）の違い。Jazzy のサポート期限（2029 年 5 月）を製品の計画に入れる |
+
+## Dev Container の構成案
+
+元にする公式のページ: Getting Started / Dev Container（`index.md` と `devcontainer_guide.md`。`jazzy`、`b22554c`）。Docker の導入は Build and Install / Docker Installation（同じコミット）の要点だけを使う。照合に使う設定: `ros-navigation/navigation2` の `jazzy`（`c7046550`）の `.devcontainer/` と `Dockerfile`。前提: Local Installation のページ（`~/nav2_ws/src/navigation2` を clone 済み）。
+
+調べて分かったこと（構成に効くもの）:
+- 既定の `devcontainer.json` は `Dockerfile` の `dever` の段を使い、`ghcr.io/ros-navigation/navigation2:jazzy` を `cacheFrom` にする。`dever` には RViz2 と Gazebo が無い。画面を出す `visualizer` の段は Gazebo Classic（gzweb・`gzserver`）を前提にしている。
+- `onCreateCommand` で、コンテナの中の overlay（`/opt/overlay_ws`）の全体をビルドする。初回は 30 分を超えうる。overlay と ccache は名前付きのボリュームに置かれ、コンテナを作り直しても残る。
+- `runArgs` の `--network=host`・`--ipc=host`・`--privileged` などは、既定ではコメントにしてある（コンテナの外と混線しないように）。
+- 自動で入る拡張機能に `GitHub.copilot`（外部と通信する AI の機能）がある。
+- `Dockerfile` の `builder` の段で `RTI_NC_LICENSE_ACCEPTED=yes` として、RTI Connext のライセンスへの同意を自動で済ませている。
+- 今の環境には Docker が無い（VS Code は Windows の側にある）。
+
+決めたこと（2026-11-28）: Docker は WSL の Ubuntu に Docker Engine を入れる手順にする（導入はユーザー）。ページは Local Installation の直後に置く。コンテナの中で画面を出すことは説明だけにする。
+
+| 節 | 中身 | 公式との違い |
+| --- | --- | --- |
+| 冒頭 | 製品の開発でチームの環境がばらつく、という物語調の導入。注記（出典・Jazzy が前提・確かめた範囲） | 足す |
+| 0. 学習目標と完了条件 | VS Code で `navigation2` の `jazzy` を dev container で開き、中のターミナルで `colcon build` と `ros2` のコマンドが通る | 足す |
+| 1. 全体像 | Windows の VS Code → WSL → Docker → コンテナ（`ros:jazzy` → `builder` → `dever`）、ソースの bind mount と 2 つのボリューム（インラインの SVG） | 足す |
+| 2. dev container とは | 何か・なぜ使うか・どう動くか。Local Installation（WSL に直接入れる）との違い | 再構成 |
+| 3. 準備 | WSL の Ubuntu に Docker Engine を入れる（Docker の公式の手順の要点。systemd の確かめ方）、`docker` グループの意味、VS Code の WSL と Dev Containers の拡張機能 | 足す（公式は前提として列挙するだけ） |
+| 4. コンテナで開く | `code .` → Reopen in Container。初回に起きること（像のビルド、`onCreateCommand` での全体のビルド）と待ち時間、ログの見方 | 再構成 |
+| 5. 中で使う | ターミナル、`/opt/overlay_ws`、一部のパッケージだけのビルド、`docker exec` と `devcontainer exec` の違い | 再構成 |
+| 6. 寿命と作り直し | コンテナは使い捨てで、ボリュームとソースは残る。Rebuild と Without Cache。変更は `Dockerfile` と `devcontainer.json` に書く | 再構成 |
+| 7. 画面と通信 | 既定では RViz・Gazebo が無いこと。`visualizer` の段は Gazebo Classic が前提なので扱わない。`runArgs` の各項目の意味と、コメントにしてある理由 | 足す（Classic の部分は説明だけ） |
+| 8. 安全のために | 信頼できるワークスペースだけ開く。自動で入る拡張機能（Copilot など）と、自動で同意しているライセンス（RTI Connext）を、開く前に確かめる | 公式の注意に、具体の確かめ所を足す |
+| 9. 製品に組み込むなら | チームと CI で環境をそろえる。`docker build` と `nav2_docker` の像（Docker Installation の要点）を自社の配布に使う場合の考え方。ライセンスの確認 | 足す |
+| 末尾 | 次のページ・出典・このページの用語 | — |
 
 ## Quickstart の構成案
 
