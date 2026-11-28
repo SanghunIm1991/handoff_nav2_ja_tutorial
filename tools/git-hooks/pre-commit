@@ -82,7 +82,7 @@ if [ -f assets/site.css ]; then
   done
   [ -n "$unused" ] && note "assets/site.css のクラスで、どのページにも出てこないもの:$unused"
 fi
-kata=$(for f in "${files[@]}"; do case "$f" in docs/qa_log.md) ;; *.html|*.md) grep -nHE 'ノード|トピック|オドメトリ|コンテナ|launch ファイル' "$f" 2>/dev/null;; esac; done)
+kata=$(for f in "${files[@]}"; do case "$f" in docs/qa_log.md) ;; *.html|*.md) grep -nHE 'ノード|トピック|オドメトリ|コンテナ|ボリューム|イメージ|launch ファイル' "$f" 2>/dev/null;; esac; done)
 [ -n "$kata" ] && note "カタカナの用語が残っている（英語にする決まり）:"$'\n'"$kata"
 
 [ "$fail" -eq 1 ] && { echo "[pre-commit] コミットを止めた。直してから、もう一度コミットする" >&2; exit 1; }

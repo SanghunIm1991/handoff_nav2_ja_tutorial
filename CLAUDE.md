@@ -39,7 +39,7 @@ Nav2 の公式の文書（https://docs.nav2.org/ ）を、日本語の学習教�
 1. 構成案を作る（元にする公式のページ、到達点のどれに当たるか、前提にする前のページ）。公式の原稿の調べ方は `docs/verification_notes.md`
 2. 書く（`docs/writing_rules.md` の決まりに従う）
 3. 確かめる（「役割分担」の承認の単位で起動する）。パッケージの版・起動の形・Gazebo・WSL の時計の注意は `docs/verification_notes.md`
-4. サブエージェント `textbook-reviewer`（`.claude/agents/`。道具は Read・Grep・Glob だけ）に、事実と構成をレビューさせる。照合に使う公式の写しは `notes/sources/` にそろえておく
+4. サブエージェント `textbook-reviewer`（`.claude/agents/`。道具は Read・Grep・Glob だけ）に、事実と構成をレビューさせる。頼む前に、本文が根拠にする原稿・設定・仕様・ライセンスの写しを `notes/sources/<ページ>/` にそろえ、出どころを `notes/sources/README.md` に書く
 5. 確認待ちの一覧を更新して、コミットする
 
 ## サイトの形
