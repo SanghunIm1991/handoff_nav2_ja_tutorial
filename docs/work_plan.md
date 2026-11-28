@@ -21,18 +21,18 @@
 | 0 | 環境構築（WSL2 → Ubuntu 24.04 → ROS 2 Jazzy） | `00_setup.html` | なし（ROS 2 の公式の導入手順と WSL の公式の文書を基にする） | 1 | レビュー済み（ユーザーの確認待ち） |
 | 1 | Quickstart | `01_quickstart.html` | Getting Started / Quickstart | 1 | レビュー済み（ユーザーの確認待ち） |
 | 2 | Local Installation | `02_local_installation.html` | Getting Started / Build and Install / Local Installation | 1 | レビュー済み（ユーザーの確認待ち） |
-| 3 | Navigation Concepts | `03_navigation_concepts.html` | Getting Started / Navigation Concepts（下位 5 ページを 1 枚にまとめた） | 2 | レビュー済み（ユーザーの確認待ち） |
+| 4 | Navigation Concepts | `04_navigation_concepts.html`（2026-11-28 に `03_` から改めた） | Getting Started / Navigation Concepts（下位 5 ページを 1 枚にまとめた） | 2 | レビュー済み（ユーザーの確認待ち） |
 
 2 つめの区切り（2026-11-28 に決めた。公式の `docs/.nav.yml` の Getting Started の残り）。
 
 | 順 | ページ | ファイル | 元にする公式のページ | 主に当たる到達点 | 状態 |
 | --- | --- | --- | --- | --- | --- |
-| 3 | Dev Container | `03_devcontainer_guide.html`（このページを書くときに、Navigation Concepts を `04_navigation_concepts.html` に改める） | Getting Started / Dev Container | 1 | 構成案を決めた。書く |
+| 3 | Dev Container | `03_devcontainer_guide.html`（このページを書くときに、Navigation Concepts を `04_navigation_concepts.html` に改める） | Getting Started / Dev Container | 1 | レビュー済み（ユーザーの確認待ち。Docker が未導入のため、3-1 節のほかは想定） |
 | 5 | Nav2 Behavior Trees | （構成案で決める） | Getting Started / Nav2 Behavior Trees | 2 | 未着手 |
 
 書く順番は Quickstart を先にし、HTML のページの器をそこで決める。読む順番は表のとおり環境構築が先。ROS 2 の基礎は独立したページを作らず、各ページで初めて使う場面で説明する（`CLAUDE.md` の「内容の方針」）。一区切りの後の範囲は、到達点を基準に、区切りごとに決めてこの表に足す。
 
-今の状態（2026-11-28）: 最初の一区切りの 4 ページを Pages に載せ、push 済み（2026-11-22）。2 つめの区切りを Dev Container と Nav2 Behavior Trees に決めた（その後は Configuration & Development を公式の順に進める。QA 表の 2026-11-28 の行）。Dev Container の構成案を決めた（Docker は WSL に Docker Engine、ページは Local Installation の直後、画面は説明だけ）。次は Dev Container のページを書く。確認待ちの一覧と「Pages に載せた後に確かめること」には、ユーザーの印や指摘はまだ無い。
+今の状態（2026-11-28）: 最初の一区切りの 4 ページを Pages に載せ、push 済み（2026-11-22）。2 つめの区切りを Dev Container と Nav2 Behavior Trees に決めた（その後は Configuration & Development を公式の順に進める。QA 表の 2026-11-28 の行）。Dev Container のページ（`03_devcontainer_guide.html`）を書き、2 回のレビューに対応した。Navigation Concepts は `04_navigation_concepts.html` に改めた。Dev Container の確かめは、ユーザーが Docker を入れた後に、確認待ちの一覧の 3 項目で行う。次は Nav2 Behavior Trees の構成案を作る。push はまだ（push のたびにユーザーの承認を得る）。確認待ちの一覧と「Pages に載せた後に確かめること」には、ユーザーの印や指摘はまだ無い。
 
 ## 環境構築の構成案
 
@@ -60,7 +60,7 @@
 元にする公式のページ: Getting Started / Dev Container（`index.md` と `devcontainer_guide.md`。`jazzy`、`b22554c`）。Docker の導入は Build and Install / Docker Installation（同じコミット）の要点だけを使う。照合に使う設定: `ros-navigation/navigation2` の `jazzy`（`c7046550`）の `.devcontainer/` と `Dockerfile`。前提: Local Installation のページ（`~/nav2_ws/src/navigation2` を clone 済み）。
 
 調べて分かったこと（構成に効くもの）:
-- 既定の `devcontainer.json` は `Dockerfile` の `dever` の段を使い、`ghcr.io/ros-navigation/navigation2:jazzy` を `cacheFrom` にする。`dever` には RViz2 と Gazebo が無い。画面を出す `visualizer` の段は Gazebo Classic（gzweb・`gzserver`）を前提にしている。
+- 既定の `devcontainer.json` は `Dockerfile` の `dever` の段を使い、`ghcr.io/ros-navigation/navigation2:jazzy` を `cacheFrom` にする。`dever` の元の `builder` の段は、underlay（`nav2_minimal_turtlebot_simulation`）と overlay の依存を rosdep で入れるので、Gazebo（`ros_gz_sim` の依存）は像に入りうる（未確認）。ただし既定の `devcontainer.json` には画面を出すための設定が無く、画面を見る `visualizer` の段は Gazebo Classic（gzweb・`gzserver`）を前提にしている。
 - `onCreateCommand` で、コンテナの中の overlay（`/opt/overlay_ws`）の全体をビルドする。初回は 30 分を超えうる。overlay と ccache は名前付きのボリュームに置かれ、コンテナを作り直しても残る。
 - `runArgs` の `--network=host`・`--ipc=host`・`--privileged` などは、既定ではコメントにしてある（コンテナの外と混線しないように）。
 - 自動で入る拡張機能に `GitHub.copilot`（外部と通信する AI の機能）がある。
@@ -79,7 +79,7 @@
 | 4. コンテナで開く | `code .` → Reopen in Container。初回に起きること（像のビルド、`onCreateCommand` での全体のビルド）と待ち時間、ログの見方 | 再構成 |
 | 5. 中で使う | ターミナル、`/opt/overlay_ws`、一部のパッケージだけのビルド、`docker exec` と `devcontainer exec` の違い | 再構成 |
 | 6. 寿命と作り直し | コンテナは使い捨てで、ボリュームとソースは残る。Rebuild と Without Cache。変更は `Dockerfile` と `devcontainer.json` に書く | 再構成 |
-| 7. 画面と通信 | 既定では RViz・Gazebo が無いこと。`visualizer` の段は Gazebo Classic が前提なので扱わない。`runArgs` の各項目の意味と、コメントにしてある理由 | 足す（Classic の部分は説明だけ） |
+| 7. 画面と通信 | 既定の設定では画面を扱わないこと（確かめていない）。`visualizer` の段は Gazebo Classic が前提なので扱わない。`runArgs` の各項目の意味と、コメントにしてある理由 | 足す（Classic の部分は説明だけ） |
 | 8. 安全のために | 信頼できるワークスペースだけ開く。自動で入る拡張機能（Copilot など）と、自動で同意しているライセンス（RTI Connext）を、開く前に確かめる | 公式の注意に、具体の確かめ所を足す |
 | 9. 製品に組み込むなら | チームと CI で環境をそろえる。`docker build` と `nav2_docker` の像（Docker Installation の要点）を自社の配布に使う場合の考え方。ライセンスの確認 | 足す |
 | 末尾 | 次のページ・出典・このページの用語 | — |
@@ -141,7 +141,7 @@ RViz の操作（4 節・5 節）は、ユーザーが撮影した写真を後�
 
 ## Navigation Concepts の構成案
 
-元にする公式のページ: Getting Started / Navigation Concepts（`jazzy`、コミット `b22554c`）の 6 つの原稿（`index.md`・`ros2.md`・`behavior_trees.md`・`navigation_servers.md`・`state_estimation.md`・`environmental_representation.md`、計約 350 行。写しは `notes/sources/03_navigation_concepts/`）。到達点 2（Nav2 の部品が何をしているかを説明できる）。前提: Quickstart（動いたものを、ここで概念として整理する）。公式の原稿には実習のコマンドが無い。
+元にする公式のページ: Getting Started / Navigation Concepts（`jazzy`、コミット `b22554c`）の 6 つの原稿（`index.md`・`ros2.md`・`behavior_trees.md`・`navigation_servers.md`・`state_estimation.md`・`environmental_representation.md`、計約 350 行。写しは `notes/sources/04_navigation_concepts/`）。到達点 2（Nav2 の部品が何をしているかを説明できる）。前提: Quickstart（動いたものを、ここで概念として整理する）。公式の原稿には実習のコマンドが無い。
 
 | 節 | 中身 | 元の原稿 |
 | --- | --- | --- |
@@ -181,6 +181,9 @@ RViz の操作（4 節・5 節）は、ユーザーが撮影した写真を後�
 - [ ] Local Installation の 5 節: `source ~/nav2_ws/install/setup.bash` の後に Quickstart の 3 節の `ros2 launch …` を実行し、ビルドした Nav2 で同じように動くこと（作成時は、画面なしで移動の側まで起動を終えたことだけを確かめた。画面と RViz の操作、目標を与えて走らせることは確かめていない）
 - [ ] Navigation Concepts の 2 節・3 節: ビルドした Nav2（`~/nav2_ws` を読み込んだ環境）で起動したときも、`ros2 action list` と `ros2 lifecycle get /amcl` の表示が出ること（作成時に一度、Claude のシェルがその環境を引き継いでいた回で、`action list` が空、`lifecycle get` が `Node not found` だった。原因は確かめていない）
 - [ ] Local Installation の 4-5 節: PC ごと固まったときに、Windows の PowerShell の `wsl --shutdown` で WSL を止めて戻れること（作成時は PC の再起動で戻ったため、こちらは試していない）
+- [ ] Dev Container の 3-2 節〜3-3 節: Docker Engine の導入（apt の取得元を足す・`docker` グループに入れる・`wsl --shutdown` で開き直す）を通し、`systemctl status docker` と `docker run hello-world` の表示が本文と合っているか（読者の環境を変える手順で、作成時は Docker が入っていなかったため、すべて想定で書いた）
+- [ ] Dev Container の 3-4 節〜6 節: VS Code の拡張機能を入れ、`code .` → Reopen in Container で、container の作成と Nav2 のビルドが終わるか。左下の表示・ログのコマンド名・5 節の `ros2 pkg prefix nav2_bringup` の表示・プロンプトが `root@…` になること・`docker exec -it nav2 bash`・6 節の `docker volume ls` の volume の名前と image の名前が本文と合っているか。ビルドで PC が固まったときに、開き直して続きから進むか（どれも想定で書いた。ビルドは 1 時間を超えうる）
+- [ ] Dev Container の末尾の片付け: `docker rm -f`・`docker volume rm`・`docker image rm` で、container・volume・image が消え、ソースのフォルダが残るか（読者の環境を壊しうる手順のため）
 
 ## Pages に載せた後に確かめること
 
@@ -189,6 +192,7 @@ RViz の操作（4 節・5 節）は、ユーザーが撮影した写真を後�
 - ページの間のリンクの全体（`CLAUDE.md` の「ファイル名」のとおり、まとまったところで確かめる）
 - docs.ros.org のリンク（`index.html` と `00_setup.html` の出典）がブラウザで開くこと（公開前の点検では、ボット対策のため GitHub の原稿の同じパスで代わりに確かめた）
 - 共通の枠に足した AI の注記と商標の注記が、用語集の末尾に出ること
+- 2026-11-28 に Navigation Concepts を `04_navigation_concepts.html` に改め、Dev Container（`03_devcontainer_guide.html`）を足した。トップの表・Local Installation の末尾・用語集のリンクが、新しい名前で開くこと
 
 Markdown のページや共通の枠を新しく足したら、ここに書いて、載せた後に確かめてもらう。
 

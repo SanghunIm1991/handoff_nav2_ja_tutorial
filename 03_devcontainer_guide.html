@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dev Container：Nav2 の開発の環境を container でそろえる</title>
+<meta name="description" content="Docker の container の中に、Nav2 の開発の環境を丸ごと用意する dev container を使って、Nav2 をビルドする。Nav2 の公式の Dev Container（Jazzy）を日本語で再構成した非公式の教材。">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+/* Dev Container の章だけの CSS。共通の器は assets/site.css。
+   図 1 は、Windows・WSL・container の入れ子を左から右、上から下に並べ、container の中の各フォルダがどこに置かれるか（ソースの共有・volume・image）を右の列に書く。色の差は付けない。 */
+.diagram svg{min-width:760px}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <p class="site"><a href="index.html">Nav2 日本語ガイド</a>（非公式・作成中）</p>
+  <div class="hero">
+    <h1>Dev Container：Nav2 の開発の環境を container でそろえる</h1>
+  </div>
+</div></header>
+
+<main><div class="wrap">
+
+  <div class="prose">
+    <p>Local Installation の章では、Nav2 をソースからビルドするために、WSL の Ubuntu に rosdep で依存を入れ、colcon でビルドした。1 人で試すならこれで足りる。けれども、製品をチームで開発するようになると、困ったことが起きる。ある人の PC ではビルドが通るのに、別の人の PC では通らない。調べると、入っている依存の版が少しずつ違う。新しく加わった人は、環境をそろえるだけで 1 日が終わる。</p>
+    <p>このページでは、その解決の 1 つである <span class="term">dev container</span>（開発の環境を丸ごと入れた Docker の container）を使って、Nav2 をビルドする。Nav2 のリポジトリには、dev container の設定が入っている。それを使うと、Nav2 の CI（変更のたびに自動でビルドとテストを行う仕組み）とほぼ同じ環境が、手元に出来上がる。</p>
+  </div>
+
+  <aside class="notes" aria-label="このページについての注記">
+    <p>このページについて</p>
+    <ul>
+      <li>Nav2 の公式の文書の <a href="https://docs.nav2.org/jazzy/getting_started/dev_container/">Dev Containers</a> と <a href="https://docs.nav2.org/jazzy/getting_started/dev_container/devcontainer_guide/">Dev Container Guide</a>（<code>jazzy</code> 版の原稿、コミット <code>b22554c</code>）を基に、日本語で説明し直したもの。逐語の翻訳ではない。Docker の導入は Docker の公式の文書、VS Code の操作は VS Code の公式の文書（出典に列挙）を使った。出典とライセンスはページの末尾にある。</li>
+      <li>ROS 2 Jazzy と Ubuntu 24.04（Windows の WSL2 を含む）を前提にする。<a href="02_local_installation.html">Local Installation</a> の章の 4-1 節で、<code>~/nav2_ws/src/navigation2</code> にソースを取得してあることを前提にする。</li>
+      <li><strong>このページは飛ばしてもよい</strong>。後の章は、Local Installation の章の環境（WSL に直接入れた環境）で進める。チームで環境をそろえる方法を知りたいとき、Nav2 の CI と同じ環境でビルドを確かめたいときに読む。</li>
+      <li>期待する結果の出どころ: 3-1 節の systemd の確かめ方だけは作成時の環境で確かめた。それ以外の表示は、どれも想定（Docker と VS Code の公式の文書、Nav2 のリポジトリの <code>jazzy</code> ブランチの設定のファイルから）。設定のファイルは、2026-11-17 のコミット <code>c7046550</code> のものを読んだ。</li>
+      <li>4 節の container の作成では、Nav2 の全体をビルドする。Local Installation の章の 4-4 節と同じく、1 時間を超えることがある。</li>
+    </ul>
+  </aside>
+
+  <section aria-labelledby="s0">
+    <h2 id="s0">0. 学習目標と完了条件</h2>
+    <div class="prose">
+      <p>このページを終えると、次のことができる。</p>
+      <ol>
+        <li>dev container が何で、なぜ使うのかを、WSL に直接入れる方法と比べて説明できる。</li>
+        <li>Nav2 の dev container を VS Code で開き、その中で Nav2 をビルドして、ROS 2 のコマンドを使える。</li>
+        <li>dev container を作り直すと何が消え、何が残るのかを説明できる。</li>
+      </ol>
+      <p>完了条件は、5 節の <code>ros2 pkg prefix nav2_bringup</code> が、container の中でビルドした場所（<code>/opt/overlay_ws/install/nav2_bringup</code>）を指すこと。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s1">
+    <h2 id="s1">1. 全体像</h2>
+    <div class="prose">
+      <p>このページでは、Docker の言葉を 3 つ使う。</p>
+      <ul>
+        <li><span class="term">image</span>: container の元になる、ファイルとプログラムの一式。OS の一部・ROS 2・Nav2 の依存などが入っている。作り方は <span class="term">Dockerfile</span>（image の作り方を順に書いたファイル）に書く。</li>
+        <li><span class="term">container</span>: image を元に動かす、ほかから切り離された環境。中で動くプログラムからは、自分だけの Ubuntu があるように見える。この章の container は Docker の container で、Quickstart の章の 6 節で見た、Nav2 の node をまとめて入れる container（component container）とは別のものである。</li>
+        <li><span class="term">volume</span>: container の外に置かれ、container を消しても残る保存場所。</li>
+      </ul>
+      <p>WSL を使う PC では、次の図のような形になる。画面は Windows の VS Code に出るが、ファイルを読み書きしてプログラムを動かすのは WSL と container の中である。</p>
+    </div>
+    <figure>
+      <div class="diagram">
+        <svg viewBox="0 0 860 480" role="img" aria-label="Windows の VS Code が、WSL の中の VS Code Server につながる。VS Code Server は Docker Engine に container の作成を頼み、Docker Engine が container「nav2」を起動し、その中でも VS Code Server が動く。WSL のソースのフォルダ ~/nav2_ws/src/navigation2 は、container の中の /opt/overlay_ws/src/navigation2 と同じファイルである。container の中の /opt/overlay_ws と /tmp/.ccache は volume に置かれ、/opt/underlay_ws は image の中にある。">
+          <defs>
+            <marker id="dc-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--sub)"/></marker>
+          </defs>
+          <rect class="d-box" x="20" y="60" width="200" height="60" rx="4"/>
+          <text class="d-name" x="36" y="86">Windows</text>
+          <text class="d-sub" x="36" y="108">VS Code（画面）</text>
+
+          <rect class="d-box" x="300" y="20" width="540" height="450" rx="4"/>
+          <text class="d-name" x="316" y="44">WSL（Ubuntu 24.04）</text>
+
+          <rect class="d-box" x="320" y="60" width="220" height="60" rx="4"/>
+          <text class="d-name" x="336" y="86">VS Code Server</text>
+          <text class="d-sub" x="336" y="108">WSL の拡張機能が入れる</text>
+
+          <rect class="d-box" x="620" y="60" width="200" height="60" rx="4"/>
+          <text class="d-name" x="636" y="86">Docker Engine</text>
+          <text class="d-sub" x="636" y="108">image と volume を持つ</text>
+
+          <rect class="d-box" x="320" y="160" width="220" height="60" rx="4"/>
+          <text class="d-lab" x="336" y="186">~/nav2_ws/src/navigation2</text>
+          <text class="d-sub" x="336" y="208">ソース（Local Installation）</text>
+
+          <rect class="d-box" x="320" y="260" width="500" height="190" rx="4"/>
+          <text class="d-name" x="336" y="286">container「nav2」（中でも VS Code Server が動く）</text>
+          <text class="d-lab" x="336" y="318">/opt/overlay_ws/src/navigation2</text>
+          <text class="d-labj" x="600" y="318">左上のソースと同じファイル</text>
+          <text class="d-lab" x="336" y="348">/opt/overlay_ws</text>
+          <text class="d-labj" x="600" y="348">volume（build・install）</text>
+          <text class="d-lab" x="336" y="378">/tmp/.ccache</text>
+          <text class="d-labj" x="600" y="378">volume（コンパイルの控え）</text>
+          <text class="d-lab" x="336" y="408">/opt/underlay_ws</text>
+          <text class="d-labj" x="600" y="408">image の中</text>
+          <text class="d-sub" x="336" y="436">作り直すと、volume とソースのほかで加えた変更は消える</text>
+
+          <line class="d-line" x1="220" y1="90" x2="318" y2="90" marker-end="url(#dc-ah)"/>
+          <line class="d-line" x1="540" y1="90" x2="618" y2="90" marker-end="url(#dc-ah)"/>
+          <text class="d-labj" x="579" y="82" text-anchor="middle">頼む</text>
+          <line class="d-line" x1="720" y1="120" x2="720" y2="258" marker-end="url(#dc-ah)"/>
+          <text class="d-labj" x="730" y="194">起動する</text>
+          <line class="d-line" x1="430" y1="220" x2="430" y2="258" marker-end="url(#dc-ah)"/>
+          <text class="d-labj" x="440" y="244">bind mount（同じファイルを見せる）</text>
+        </svg>
+      </div>
+      <figcaption>図 1　WSL で dev container を使うときの形。左の矢印は、Windows の VS Code が WSL の拡張機能で WSL の中の VS Code Server につながることを表す。横に長い図は、狭い画面では横にスクロールして見る。</figcaption>
+    </figure>
+    <div class="prose">
+      <p>ソースのフォルダは、WSL と container の両方から同じものが見える（<span class="term">bind mount</span>。WSL のフォルダを、container の中の別の場所に見せる仕組み）。どちらで直しても、同じファイルが変わる。一方、ビルドの結果（<code>build</code>・<code>install</code>）は container の側の volume に置かれ、Local Installation の章の <code>~/nav2_ws/install</code> とは別になる。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s2">
+    <h2 id="s2">2. dev container とは</h2>
+    <div class="prose">
+      <p>公式の原稿は、dev container を「プロジェクトの開発に要る道具と依存をすべて入れた Docker の container」と説明している。Local Installation の章の方法と比べると、違いは次のとおりである。</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th scope="col">比べる点</th><th scope="col">WSL に直接入れる（Local Installation）</th><th scope="col">dev container</th></tr></thead>
+        <tbody>
+          <tr><td>依存を入れる場所</td><td>WSL の Ubuntu（<code>/opt/ros/jazzy</code> など）</td><td>container の中。WSL には Docker だけを入れる</td></tr>
+          <tr><td>環境の決め方</td><td>人が手順を実行した結果で決まる</td><td>Dockerfile と <code>devcontainer.json</code> に書かれた内容で決まる</td></tr>
+          <tr><td>ほかの人との違い</td><td>入れた時期や順番で、版が少しずつずれうる</td><td>同じ設定から作るので、そろいやすい</td></tr>
+          <tr><td>ROS 2 の版を混ぜない</td><td>読み込む環境（<code>source</code>）で使い分ける</td><td>プロジェクトごとに別の container にする</td></tr>
+          <tr><td>最初の準備の重さ</td><td>軽い</td><td>Docker の導入と、image の作成が要る</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">
+      <p>dev container の設定は、プロジェクトの直下の <code>.devcontainer</code> フォルダの <code>devcontainer.json</code> に書く。この形は <a href="https://containers.dev/">Development Containers</a> という公開の仕様で決まっていて、VS Code のほか、ほかの道具やクラウドの開発環境（GitHub Codespaces など）でも使える。このページでは、公式の原稿と同じく VS Code を使う。</p>
+      <p>VS Code でプロジェクトのフォルダを開くと、VS Code が <code>.devcontainer</code> を見つけ、container で開き直すかを尋ねる。開き直すと、VS Code は container を作って起動し、プロジェクトのフォルダを container の中に見せ、自分自身の一部（VS Code Server）を container の中で動かす。画面は手元の VS Code のままで、ファイルの編集・ターミナル・ビルドは container の中で行われる。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s3">
+    <h2 id="s3">3. 準備：Docker と VS Code</h2>
+    <div class="prose">
+      <p>公式の原稿は、前提として Docker Engine（container を動かす本体）・VS Code・VS Code の Dev Containers の拡張機能を挙げている。WSL を使う PC では、Docker Engine を WSL の Ubuntu に入れ、Windows の VS Code から WSL の拡張機能を通して使う。VS Code の公式の文書は、この形を Docker の別の使い方の 1 つとして挙げている（Windows に Docker Desktop を入れる形もあるが、このサイトでは扱わない）。Ubuntu を直接入れた PC では、3-1 節の systemd の確かめと、3-4 節の WSL の拡張機能を飛ばす（3-3 節のグループの変更は、WSL を止める代わりにログインし直して効かせる）。</p>
+    </div>
+
+    <h3 id="s3-1">3-1. systemd が動いているかを確かめる</h3>
+    <div class="prose">
+      <p>Docker Engine は、裏で動き続けるプログラム（<code>dockerd</code>）として動く。Ubuntu では、これを <span class="term">systemd</span>（Ubuntu で、裏で動くプログラムを起動・管理する仕組み）が起動する。VS Code の公式の文書は、WSL で systemd が動いていないと <code>dockerd</code> が自動で起動しないと注意している。</p>
+    </div>
+<pre class="cmd"><code># T1
+ps -p 1 -o comm=</code></pre>
+    <div class="prose">
+      <p><code># T1</code> は「1 つめのターミナル（WSL の Ubuntu）で実行する」という印で、<code>#</code> から後はコメントなので打たなくてよい（この印は、この後のコマンドの箱でも同じ）。</p>
+    </div>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>systemd</code></pre>
+      <div class="prose">
+        <p>最初に起動したプログラム（番号 1）の名前を表示している。<code>systemd</code> と出れば、systemd が動いている。作成時の環境（環境構築の章の手順で入れた Ubuntu 24.04）では、こう出た。<code>init</code> など別の名前が出たら、VS Code の公式の文書が案内する Microsoft の記事（出典に列挙）に従って、WSL の systemd を有効にする。</p>
+      </div>
+    </div>
+
+    <h3 id="s3-2">3-2. Docker Engine を入れる</h3>
+    <div class="prose">
+      <p>Docker の公式の文書の、Docker の apt のリポジトリから入れる手順に従う。環境構築の章の 4 節で ROS 2 のリポジトリを足したのと同じく、apt の取得元を足してから入れる。</p>
+      <p>先に、Docker の公式のパッケージとぶつかりうるもの（Ubuntu が用意している非公式の Docker の <code>docker.io</code> など、Docker が自分のパッケージにまとめて入れる <code>containerd</code>・<code>runc</code>）を取り除く。Docker の公式の文書は、次の形で一度に取り除く手順を挙げている。同じ文書によると、どれも入っていないと apt が報告することもある。</p>
+    </div>
+<pre class="cmd"><code># T1
+sudo apt remove $(dpkg --get-selections docker.io docker-compose docker-compose-v2 docker-doc docker-buildx podman-docker containerd runc | cut -f1)</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>dpkg: no packages found matching docker.io
+（中略）
+0 upgraded, 0 newly installed, 0 to remove and … not upgraded.</code></pre>
+      <div class="prose">
+        <p>想定（どれも入っていない場合。<code>dpkg</code> と apt の表示の形から）。<code>no packages found matching</code> は、その名前のパッケージが入っていないという知らせで、失敗ではない。<code>0 to remove</code> なら、何も取り除かれていない。入っていたものがあれば、その名前が取り除くものとして並び、続けるかを聞かれる。</p>
+      </div>
+    </div>
+    <div class="prose">
+      <p>次に、Docker の apt のリポジトリを足す。</p>
+      <ul>
+        <li><code>sudo curl … -o /etc/apt/keyrings/docker.asc</code>: Docker の鍵（apt が、取得したパッケージが Docker の作ったものかを確かめるための公開鍵）を保存する。</li>
+        <li><code>sudo tee … &lt;&lt;EOF</code> から <code>EOF</code> まで: apt の取得元のファイルを書く。<code>tee</code> の後の 6 行がファイルの中身で、<code>$(…)</code> の部分は、Ubuntu の版の名前（Ubuntu 24.04 では <code>noble</code>）と CPU の種類（多くの PC では <code>amd64</code>）に置き換わる。最後の <code>EOF</code> の行までを、まとめて貼り付けて実行する。</li>
+      </ul>
+    </div>
+<pre class="cmd"><code># T1
+sudo apt update
+
+sudo apt install ca-certificates curl
+
+sudo install -m 0755 -d /etc/apt/keyrings
+
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+sudo tee /etc/apt/sources.list.d/docker.sources &lt;&lt;EOF
+Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: $(. /etc/os-release &amp;&amp; echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+Components: stable
+Architectures: $(dpkg --print-architecture)
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
+
+sudo apt update</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>（前略）
+Get:… https://download.docker.com/linux/ubuntu noble InRelease
+（中略）
+Reading package lists... Done</code></pre>
+      <div class="prose">
+        <p>想定（apt の表示の形から）。最後の <code>sudo apt update</code> の表示に、<code>download.docker.com</code> の行があれば、取得元が足されている。<code>Get</code> は <code>Hit</code> のこともある。鍵が無いという意味の <code>NO_PUBKEY</code> などのエラーが出たら、鍵を保存した行から順にやり直す。</p>
+      </div>
+    </div>
+    <div class="prose">
+      <p>取得元を足したら、Docker のパッケージを入れる。</p>
+    </div>
+<pre class="cmd"><code># T1
+sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+sudo systemctl status docker</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>● docker.service - Docker Application Container Engine
+     Loaded: loaded (/usr/lib/systemd/system/docker.service; enabled; preset: enabled)
+     Active: active (running) since …
+（後略）</code></pre>
+      <div class="prose">
+        <p>想定（Docker と systemd の表示の形から）。<code>Active: active (running)</code> と出れば、<code>dockerd</code> が動いている。表示が続いて入力に戻らないときは、<kbd>q</kbd> で抜ける。<code>active</code> でなければ、Docker の公式の文書のとおり <code>sudo systemctl start docker</code> で起動する。</p>
+        <p><code>docker-buildx-plugin</code> は image を作る道具で、4 節で dev container の image を作るときに使われる。</p>
+      </div>
+    </div>
+    <div class="prose">
+      <p>最後に、試しの image を動かして、Docker が使えることを確かめる。</p>
+    </div>
+<pre class="cmd"><code># T1
+sudo docker run hello-world</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>Unable to find image 'hello-world:latest' locally
+（中略）
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+（後略）</code></pre>
+      <div class="prose">
+        <p>想定（Docker の公式の文書の説明から）。手元に無い image <code>hello-world</code> をインターネットの image の置き場所（registry）から取得し、container として動かして、メッセージを表示して終わる。<code>Hello from Docker!</code> が出ればよい。</p>
+      </div>
+    </div>
+
+    <h3 id="s3-3">3-3. sudo を付けずに docker を使えるようにする</h3>
+    <div class="prose">
+      <p>VS Code の公式の文書は、Linux で dev container を使う準備として、ユーザーを <code>docker</code> グループに入れて、<code>sudo</code> を付けずに <code>docker</code> を使えるようにする手順を挙げている。Docker の公式の文書も、ユーザーを <code>docker</code> グループに入れる方法を挙げている。同じ文書によると、apt で Docker を入れると、Linux のディストリビューションによってはこのグループが自動で作られる（作られていなければ、文書のとおり先に <code>sudo groupadd docker</code> で作る）。</p>
+      <p><strong>注意</strong>: Docker の公式の文書は、<code>docker</code> グループは root（管理者）と同等の権限を与える、と警告している。この警告から推すと、<code>docker</code> を使えるユーザーは、container を通して WSL の中のどのファイルでも書き換えられると考えておくのが安全である。自分だけが使う開発用の PC で行う。</p>
+    </div>
+<pre class="cmd"><code># T1
+sudo usermod -aG docker $USER</code></pre>
+    <div class="prose">
+      <p>グループの変更は、ログインし直すまで効かない。WSL では、Ubuntu のターミナルと VS Code をすべて閉じてから、Windows の PowerShell で <code>wsl --shutdown</code>（環境構築の章の 2 節）を実行して WSL を止め、Ubuntu のターミナルを開き直すのが確実である（VS Code の WSL の側も、新しいグループで起動し直させるため）。Ubuntu を直接入れた PC では、Docker の公式の文書のとおり、ログアウトしてログインし直す。開き直したら、<code>sudo</code> を付けずに確かめる。</p>
+    </div>
+<pre class="cmd"><code># T1
+docker run hello-world</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>Hello from Docker!
+This message shows that your installation appears to be working correctly.
+（後略）</code></pre>
+      <div class="prose">
+        <p>想定（Docker の公式の文書から）。image はすでに手元にあるので、取得の行は出ない。<code>permission denied</code> と出たら、グループの変更がまだ効いていない。WSL では WSL を止めて開き直すところから、Ubuntu を直接入れた PC ではログインし直すところから、やり直す。</p>
+      </div>
+    </div>
+
+    <h3 id="s3-4">3-4. VS Code と拡張機能を入れる</h3>
+    <div class="prose">
+      <p>VS Code がまだ無ければ、<a href="https://code.visualstudio.com/">VS Code のサイト</a>から入れる。VS Code の公式の文書は、WSL を使う PC では、WSL の中ではなく <strong>Windows の側</strong>に入れるよう書いている。入れる途中の「追加タスクの選択」（Select Additional Tasks）で、<strong>PATH への追加</strong>（Add to PATH）に印を付ける。これを付けないと、4 節で WSL のターミナルから <code>code</code> のコマンドを使えない。入れた後は、開いていた WSL のターミナルを開き直す。</p>
+      <p>次に、Windows の VS Code に、次の 2 つの拡張機能を入れる（どちらも Microsoft のもの）。拡張機能の画面（<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd>）で名前を検索して入れる。</p>
+      <ul>
+        <li><strong>WSL</strong>（ID: <code>ms-vscode-remote.remote-wsl</code>）: Windows の VS Code から、WSL の中のフォルダを開く。</li>
+        <li><strong>Dev Containers</strong>（ID: <code>ms-vscode-remote.remote-containers</code>）: dev container を作って開く。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section aria-labelledby="s4">
+    <h2 id="s4">4. container で開く</h2>
+    <div class="prose">
+      <p>Local Installation の章で取得したソースのフォルダを、WSL のターミナルから VS Code で開く。</p>
+    </div>
+<pre class="cmd"><code># T1
+cd ~/nav2_ws/src/navigation2
+
+code .</code></pre>
+    <div class="prose">
+      <p><code>code .</code> は、今いるフォルダを VS Code で開く。WSL のターミナルから実行すると、Windows の VS Code が WSL の拡張機能を通して開く（初回は、WSL の中に VS Code Server が入る）。左下の表示に <code>WSL: Ubuntu-24.04</code> のような WSL の名前が出ていればよい。</p>
+      <p><strong>開く前に確かめる</strong>: container で開くと、設定のファイルに書かれたコマンドが自動で実行され、拡張機能が自動で入る。Nav2 の設定では、AI がコードを補う拡張機能（GitHub Copilot）が入ることと、ROS 2 の通信の実装の 1 つ（RTI Connext DDS）のライセンスに自動で同意する設定があることを、先に知っておく。詳しくは 8 節で、入れたくない拡張機能を外す方法と、ライセンスの無償の範囲を説明している。会社の PC で試すなら、8 節を先に読む。</p>
+      <p>フォルダに <code>.devcontainer</code> があるので、右下に、container で開き直すかを尋ねる通知が出ることがある。通知の <strong>Reopen in Container</strong> を押す。通知が出ないときは、コマンドパレット（<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>）で <code>Dev Containers: Reopen in Container</code> を選ぶ（公式の原稿の <code>Remote-Containers: …</code> は、この拡張機能の古い名前である）。このフォルダの作者を信頼するかを尋ねられたら、上の確かめを済ませてから答える。</p>
+      <p>初回は、次のことが順に起きる。公式の原稿は「待つ間に、足を伸ばしたりコーヒーを入れたりしてよい」と書いている。</p>
+      <ol>
+        <li><strong>image を作る</strong>: Nav2 の Dockerfile は、image をいくつかの<span class="term">stage</span>（段。前の stage の image に足していく、作り方の区切り）に分けて書いている。<code>devcontainer.json</code> は、そのうち開発用の <code>dever</code> の stage を指しているので、そこまでを作る。元になる <code>ros:jazzy</code> の image（ROS 2 Jazzy の基本の部分だけが入ったもの）を取得し、その上に、ビルドの道具・Nav2 の依存（rosdep で入れる）・TurtleBot のシミュレーションの部品（<code>/opt/underlay_ws</code> にビルドする）・開発の道具（<code>gdb</code> など）を重ねる。時間を縮めるため、Nav2 の CI が image の置き場所に公開している image（<code>ghcr.io/ros-navigation/navigation2:jazzy</code>）を、作り方が同じ部分の控えとして使う。</li>
+        <li><strong>container を起動し、Nav2 をビルドする</strong>: <code>devcontainer.json</code> の <code>onCreateCommand</code> が、次の 3 で見るスクリプトを呼んで、container の中の <code>/opt/overlay_ws</code>（Local Installation の章の <code>~/nav2_ws</code> に当たる workspace）で、Nav2 の全体を colcon でビルドする。同時に、VS Code の拡張機能が container の中に入る（8 節）。</li>
+        <li><strong>仕上げ</strong>: <code>updateContentCommand</code> と <code>postCreateCommand</code> が動く。前者のスクリプトは、ビルドが終わっていないパッケージ・失敗したパッケージ・ソースが変わったパッケージと、それらに依存するパッケージを選んでビルドする（2 の全体のビルドも、最初はすべてが「終わっていない」ので、このスクリプトで行われる）。公式の原稿は、この 2 つは container を起動するたびに動くと書いているが、Dev Container の仕様では、<code>updateContentCommand</code> と <code>postCreateCommand</code> は container を作るときに動くもので、起動のたびに動くのは別の項目（<code>postStartCommand</code>）である。どちらの振る舞いになるかは確かめていない。</li>
+      </ol>
+      <p>右下の <code>Starting Dev Container (show log)</code> の通知を押すと、今どこまで進んだかのログが見られる。公式の原稿によると、後からログを見るときは、コマンドパレットに <code>Dev Containers: Show Log</code> と打つと、ログを見るためのコマンドが並ぶ。</p>
+    </div>
+    <div class="expect">
+      <h4>期待する結果</h4>
+      <div class="prose">
+        <p>想定（VS Code の公式の文書と Nav2 の設定のファイルから）。待った後、VS Code の左下の表示が <code>Dev Container: Nav2</code> のような container の名前に変わり、左のファイルの一覧に Nav2 のソースが並ぶ。ログの最後のほうに、colcon のビルドの <code>Summary: … packages finished</code> が出ていれば、ビルドが終わっている。</p>
+      </div>
+    </div>
+    <div class="prose">
+      <p><strong>メモリの少ない PC では</strong>: 2 のビルドは、Local Installation の章の 4-4 節と同じく、Nav2 の全体を、既定の並べ方でビルドする（並べる数を絞る指定は無い）。その章の 4-5 節で見たとおり、メモリが足りないと PC ごと固まることがある。固まったら、PC を再起動するか、Windows の PowerShell で <code>wsl --shutdown</code> を実行して WSL を止め、WSL のターミナルから 4 節の初めのとおりに開き直す。それでもビルドが続かないときは、VS Code のターミナル（<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>`</kbd>。container の中の bash が開く。この後のコマンドの箱では、このターミナルを <code># T2</code> で表す）で、3 で見たスクリプトを自分で実行する。</p>
+    </div>
+<pre class="cmd"><code># T2
+cd /opt/overlay_ws/src/navigation2
+
+.devcontainer/update-content-command.sh</code></pre>
+    <div class="prose">
+      <p>スクリプトの中身から読むと、3 で見たとおりにパッケージを選んで、続きからビルドする。ただし、並べる数を絞らない同じ形でビルドするので、再び固まることがある。ここに書いた戻り方は、どれも確かめていない想定である（container を作る途中で止まった後に、VS Code が container の中のターミナルを開ける状態になるかも、確かめていない）。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s5">
+    <h2 id="s5">5. container の中で使う</h2>
+    <div class="prose">
+      <p>VS Code のターミナル（<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>`</kbd>）を開くと、container の中の bash が開く。ここから先の <code># T2</code> のコマンドは、このターミナルで実行する（4 節の終わりと同じ）。開いた直後の場所は、ソースのフォルダ <code>/opt/overlay_ws/src/navigation2</code> である。</p>
+      <p>この container では、ターミナルを開くと、TurtleBot のシミュレーションの部品を入れた underlay（<code>/opt/underlay_ws</code>）が自動で読み込まれる。Nav2 をビルドした overlay（<code>/opt/overlay_ws</code>）は自動では読み込まれないので、Local Installation の章の 5 節と同じく、自分で読み込む。</p>
+    </div>
+<pre class="cmd"><code># T2
+cd /opt/overlay_ws
+
+source install/setup.bash
+
+ros2 pkg prefix nav2_bringup</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>/opt/overlay_ws/install/nav2_bringup</code></pre>
+      <div class="prose">
+        <p>想定（Nav2 の設定のファイルから）。container の中でビルドした Nav2 が使われている。Local Installation の章では <code>/home/&lt;ユーザー名&gt;/nav2_ws/install/nav2_bringup</code> だったが、ここでは container の中の場所になる。container の中では、プロンプトが <code>root@…</code> になる。この dev container の設定はユーザーを指定していないので、Dev Container の仕様の既定どおり、元の image の既定のユーザー（ここでは管理者の root）で動く。</p>
+      </div>
+    </div>
+    <div class="prose">
+      <p>ソースを直したら、直したパッケージだけをビルドし直す。workspace の直下（<code>/opt/overlay_ws</code>）で実行する。</p>
+    </div>
+<pre class="cmd"><code># T2
+colcon build --symlink-install --mixin $OVERLAY_MIXINS --packages-select &lt;パッケージ名&gt;</code></pre>
+    <div class="prose">
+      <ul>
+        <li><code>--mixin $OVERLAY_MIXINS</code>: colcon の <span class="term">mixin</span>（よく使うビルドの指定に名前を付けたもの）を使う。<code>$OVERLAY_MIXINS</code> は <code>devcontainer.json</code> で <code>release ccache lld</code> に決められていて、最適化したビルド（release）、コンパイルの結果を控えて再利用する道具（ccache。控えは <code>/tmp/.ccache</code> の volume に置かれる）、速いリンカ（lld）を使う指定になる。4 節の全体のビルドと同じ指定にそろえるために付ける。</li>
+        <li><code>--packages-select &lt;パッケージ名&gt;</code>: 指定したパッケージだけをビルドする。</li>
+      </ul>
+      <p>container の中は root なので、container の中で新しく作ったファイルは、WSL の側から見ると root の持ち物になる。ソースのフォルダは WSL と共有しているので、そこで新しいファイルを作ると、WSL の側で書き換えるときに <code>sudo</code> が要ることがある（想定。Docker の bind mount の一般の振る舞いから）。ビルドの結果は volume の <code>/opt/overlay_ws</code> に置かれるので、この問題は起きない。</p>
+      <p>VS Code の外の、WSL の普段のターミナルから container の中に入ることもできる。この dev container は、container に <code>nav2</code> という名前を付ける設定になっている。</p>
+    </div>
+<pre class="cmd"><code># T1
+docker exec -it nav2 bash</code></pre>
+    <div class="prose">
+      <p><code>docker exec</code> は、動いている container の中で、コマンド（ここでは bash）を動かす。<code>-it</code> は、キーボードから打てるようにする指定である。公式の原稿は、この方法で開いた bash には、VS Code のターミナルと同じ環境の変数（VS Code と container をつなぐためのものなど）が設定されない、と注意している。<code>ros2</code> のコマンドを使うだけなら、上と同じく <code>source /opt/overlay_ws/install/setup.bash</code> を実行すればよい（想定）。ただし、上のビルドで使った <code>$OVERLAY_MIXINS</code> と、ccache の控えの置き場所を決める変数は、<code>devcontainer.json</code> の <code>remoteEnv</code> で決められている。Dev Container の仕様では、<code>remoteEnv</code> は VS Code とそのターミナルにだけ渡り、container の全体には渡らない。そのため、ビルドは VS Code のターミナルで行う。VS Code を閉じると container が止まり、このコマンドは使えなくなる（想定。VS Code の既定の振る舞いから）。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s6">
+    <h2 id="s6">6. 寿命と作り直し</h2>
+    <div class="prose">
+      <p>公式の原稿は、container は使い捨てのもので、環境を作り直すたびに消して作り直される、と注意している。消えるもの・残るものは次のとおりである。</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th scope="col">場所</th><th scope="col">作り直すと</th><th scope="col">例</th></tr></thead>
+        <tbody>
+          <tr><td>container の中（下の 2 つ以外）</td><td>消える</td><td>container の中で <code>apt install</code> した道具、<code>/root</code> の設定</td></tr>
+          <tr><td>ソースのフォルダ（bind mount）</td><td>残る（WSL のフォルダそのもの）</td><td><code>/opt/overlay_ws/src/navigation2</code> の中の変更</td></tr>
+          <tr><td>volume</td><td>残る</td><td><code>/opt/overlay_ws</code> のビルドの結果、<code>/tmp/.ccache</code> の控え</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">
+      <p>そのため、container の中で環境を変えたら、その変更を Dockerfile か <code>devcontainer.json</code> に書いておく。書いておけば、作り直しても同じ環境になり、チームのほかの人にも同じ変更が届く。volume は <code>devcontainerId</code>（その dev container に固有の、作り直しても変わらない名前）を付けた名前で作られるので、作り直しても同じ volume が使われ、ビルドをやり直さずに済む。</p>
+      <p>作り直すのは、主に次のときである。</p>
+      <ul>
+        <li><strong>Rebuild Container</strong>（コマンドパレットの <code>Dev Containers: Rebuild Container</code>）: Dockerfile や <code>devcontainer.json</code> を変えたとき、Nav2 の CI の image が新しくなったので取り込みたいとき。変わっていない部分は、前に作ったものを再利用する。</li>
+        <li><strong>Rebuild Container Without Cache</strong>（<code>Dev Containers: Rebuild Container Without Cache</code>）: 前に作ったものを使わずに、最初から作る。設定は変えていないが、Dockerfile の中の <code>apt upgrade</code> などをやり直させたいとき。公式の原稿は、新しいパッケージが入ることがあるので、そのときは overlay の volume を消して、古いビルドの結果と混ざらないようにするとよい、と書いている。</li>
+      </ul>
+      <p>手元の image・container・volume は、WSL のターミナルで次のように一覧できる。<code>overlay-</code> と <code>ccache-</code> で始まる 2 つの volume が、この dev container のものである。</p>
+    </div>
+<pre class="cmd"><code># T1
+docker image ls
+
+docker ps -a
+
+docker volume ls</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+<pre class="out"><code>DRIVER    VOLUME NAME
+local     ccache-&lt;英数字の並び&gt;
+local     overlay-&lt;英数字の並び&gt;</code></pre>
+      <div class="prose">
+        <p>想定（Nav2 の <code>devcontainer.json</code> の volume の名前の付け方から）。<code>docker volume ls</code> の表示の例である。<code>&lt;英数字の並び&gt;</code> の部分が <code>devcontainerId</code> で、PC ごとに違う。VS Code の拡張機能が自分のために作る volume など、ほかの volume が並ぶこともある。<code>docker image ls</code> には、dev container 用に作った image（<code>vsc-navigation2-</code> で始まる名前と見込まれる）と <code>hello-world</code> などが、<code>docker ps -a</code> には <code>nav2</code> という名前の container が並ぶ。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s7">
+    <h2 id="s7">7. 画面と通信</h2>
+    <div class="prose">
+      <p>このページでは、container の中から RViz2 や Gazebo の画面を出すことは扱わない。シミュレーションは、これまでどおり WSL で直接動かす。理由は次の 2 つである。</p>
+      <ul>
+        <li>既定の <code>devcontainer.json</code> では、container の外とつなぐ設定や、container の制限をゆるめる設定（下の表）が、どれもコメントにされて無効になっている。公式の原稿は、意図しない副作用や、container どうしの混線を避けるためと説明している。VS Code が手元の画面の仕組みを container に渡そうとすることはあるが、それで RViz2 や Gazebo が表示できるかは確かめていない。</li>
+        <li>Nav2 の Dockerfile には、画面をブラウザで見るための stage（<code>visualizer</code>）もあるが、古い Gazebo（Gazebo Classic）を前提にしている。このサイトでは新しい Gazebo（Harmonic）だけを扱う。</li>
+      </ul>
+      <p>既定で無効になっている設定は、<code>devcontainer.json</code> の <code>runArgs</code>（container を起動するときに Docker に渡す指定）に、コメントとして並んでいる。公式の原稿の説明によると、それぞれ次のためのものである。</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th scope="col">指定</th><th scope="col">何をするか</th><th scope="col">何のために</th></tr></thead>
+        <tbody>
+          <tr><td><code>--network=host</code></td><td>container が、WSL のネットワークをそのまま使う</td><td>container の外の ROS 2 の node と通信する（node どうしが互いを見つける仕組みが、container の外にも届くようにする）</td></tr>
+          <tr><td><code>--ipc=host</code></td><td>container の外と、メモリを共有した通信をできるようにする</td><td>container の外の RViz2 などと、共有メモリで速く通信する</td></tr>
+          <tr><td><code>--pid=host</code></td><td>container の外のプロセスが見えるようにする</td><td><code>--network=host</code> を使わずに、container の外の node を見つける</td></tr>
+          <tr><td><code>--privileged</code></td><td>container に、PC の機器への広い権限を与える</td><td>USB でつないだセンサーなどの機器を、container の中から使う</td></tr>
+          <tr><td><code>--cap-add=SYS_PTRACE</code>・<code>--security-opt=seccomp=unconfined</code></td><td>container の安全のための制限をゆるめる</td><td><code>gdb</code> などでプログラムをデバッグする</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">
+      <p>どれも、container を PC から切り離す仕組みを弱める指定である。公式の原稿は、必要に応じて有効にし、範囲を広げたり絞ったりするよう勧めている。有効にするときは、何のためにどれを有効にしたかを、チームで分かる形で残す。</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s8">
+    <h2 id="s8">8. 安全のために</h2>
+    <div class="prose">
+      <p>公式の原稿は、dev container を開く前に、開くフォルダとその作者を信頼できるかを確かめるよう注意している。dev container を開くと、Dockerfile と <code>devcontainer.json</code> に書かれたコマンドが自動で実行され、拡張機能が自動で入るからである。たとえば、他人の変更（pull request）を確かめるために開くときは、その変更に悪意のあるコードが含まれていないかを先に見る。VS Code がフォルダを信頼するかを尋ねるのは、このためである。</p>
+      <p>Nav2 の <code>jazzy</code> ブランチの設定では、開く前に、とくに次の 2 つを確かめておく（4 節の「開く前に確かめる」の詳しい説明）。どちらも、製品を開発する会社では、会社の決まりに照らして判断が要りうるものである。</p>
+      <ul>
+        <li><strong>自動で入る拡張機能</strong>: <code>devcontainer.json</code> の <code>extensions</code> に、ROS・CMake・Git の補助の拡張機能と並んで、AI がコードを補う GitHub Copilot（<code>GitHub.copilot</code>）がある。使うと、編集中のコードが外部のサービスに送られうる。入れたくなければ、開く前に <code>extensions</code> の一覧から外す（Nav2 のソースのファイルを変えることになるので、<code>git diff</code> に出る）。</li>
+        <li><strong>自動で同意するライセンス</strong>: Dockerfile は、ROS 2 の通信の実装の 1 つである RTI Connext DDS を含むパッケージ（<code>ros-jazzy-rmw-connextdds</code>）を入れる。その前に、<code>RTI_NC_LICENSE_ACCEPTED=yes</code> という、名前からしてライセンスへの同意を自動で済ませる設定を置いている。ROS 2 の公式の文書によると、RTI Connext DDS が無償なのは、試作・研究・非商用・学術の用途である。製品に使うなら、ライセンスを別に確かめる。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section aria-labelledby="s9">
+    <h2 id="s9">9. 製品に組み込むなら</h2>
+    <div class="prose">
+      <ul>
+        <li><strong>開発の環境をそろえる</strong>。自分たちの製品のリポジトリにも <code>.devcontainer</code> を置けば、チームの全員と CI が同じ環境でビルドできる。Nav2 の設定のように、CI と同じ Dockerfile を使い、CI が作った image を控えに使うと、「手元では通るのに CI では通らない」が減る。</li>
+        <li><strong>配る形にも Docker を使える</strong>。公式の Build and Install の <a href="https://docs.nav2.org/jazzy/getting_started/build_and_install/docker_installation/">Docker Installation</a> は、Nav2 のリポジトリの Dockerfile から <code>docker build</code> で image を作る方法と、Nav2 の版ごとに作られた image（<code>nav2_docker</code>）を使う方法を挙げている。ロボットに載せる PC へ、決まった版の Nav2 を image ごと届ける形も考えられる。どの image のどの版を使ったかは、Local Installation の章の 6 節のコミットと同じく記録する。</li>
+        <li><strong>ライセンスと利用の条件を確かめる</strong>。image に入るもの（8 節の RTI Connext DDS など）と、使う道具（Docker Desktop を選ぶ場合はその利用の条件）を、製品に使ってよいかの観点で確かめる。</li>
+        <li><strong>container の権限を絞る</strong>。7 節の指定は、開発には便利だが、PC から切り離す仕組みを弱める。ロボットで container を動かすときは、要るものだけを有効にする。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section aria-labelledby="s10">
+    <h2 id="s10">次に読むもの・片付け・出典</h2>
+    <div class="prose">
+      <p>次は <a href="04_navigation_concepts.html">Navigation Concepts</a> の章で、Nav2 を形作る考え方を見る。このページに出てきた用語は、<a href="glossary.html">用語集</a>にまとめてある。</p>
+      <p>dev container が要らなくなったら、image と volume が容量を使い続けるので、片付ける。消すものを 6 節の一覧で確かめてから、名前を指定して消す（消すと元に戻せない）。</p>
+    </div>
+<pre class="cmd"><code># T1
+docker rm -f nav2
+
+docker volume rm overlay-&lt;英数字の並び&gt; ccache-&lt;英数字の並び&gt;
+
+docker image rm &lt;dev container の image の名前&gt;</code></pre>
+    <div class="prose">
+      <p>1 行めは container を、2 行めは 2 つの volume を、3 行めは image を消す。<code>&lt;…&gt;</code> の部分は、6 節の一覧に出た名前に置き換える。6 節の一覧に、ほかの image（<code>hello-world</code> や、元にした <code>ros:jazzy</code> など）が出ていれば、要らないものは同じく <code>docker image rm</code> で消す。image を作るときの控え（build cache）も容量を使いうるので、<code>docker system df</code> で、何がどれだけ容量を使っているかを確かめる（想定。消し方は Docker の公式の文書の <a href="https://docs.docker.com/reference/cli/docker/builder/prune/"><code>docker builder prune</code></a> を参照する）。ソースのフォルダ（<code>~/nav2_ws/src/navigation2</code>）は WSL のフォルダなので、消えない。</p>
+      <p>出典: Nav2 の公式の文書「<a href="https://docs.nav2.org/jazzy/getting_started/dev_container/">Dev Containers</a>」と「<a href="https://docs.nav2.org/jazzy/getting_started/dev_container/devcontainer_guide/">Dev Container Guide</a>」（原稿: <a href="https://github.com/ros-navigation/docs.nav2.org/blob/b22554c/docs/getting_started/dev_container/index.md">index.md</a>・<a href="https://github.com/ros-navigation/docs.nav2.org/blob/b22554c/docs/getting_started/dev_container/devcontainer_guide.md">devcontainer_guide.md</a>、<code>ros-navigation/docs.nav2.org</code> の <code>jazzy</code> ブランチ、コミット <code>b22554c</code>、2026-08-31。著作者: Open Navigation LLC と Nav2 の文書の寄稿者）。ライセンスは <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>。このページは、その内容を日本語で再構成し、説明の追加（WSL での準備、ビルドの結果の置き場所、root の注意、7 節の表の形、8 節の確かめる所、9 節など）と省略（ほかの道具・GitHub Codespaces・colcon の拡張の詳細・環境の変数を読み込む手順）を加えたもので、逐語の翻訳ではない。9 節は、同じコミットの「<a href="https://github.com/ros-navigation/docs.nav2.org/blob/b22554c/docs/getting_started/build_and_install/docker_installation.md">Docker Installation</a>」の要点も使った。</p>
+      <p>Nav2 の dev container の設定（<a href="https://github.com/ros-navigation/navigation2/tree/c7046550/.devcontainer"><code>.devcontainer</code></a> と <a href="https://github.com/ros-navigation/navigation2/blob/c7046550/Dockerfile"><code>Dockerfile</code></a>。<code>ros-navigation/navigation2</code> の <code>jazzy</code> ブランチ、コミット <code>c7046550</code>）は、中身を読んで説明に使ったが、抜粋はしていない（設定の項目の名前と値だけを書いた）。</p>
+      <p>3-2 節・3-3 節の手順は、Docker の公式の文書「<a href="https://docs.docker.com/engine/install/ubuntu/">Install Docker Engine on Ubuntu</a>」（<a href="https://github.com/docker/docs/blob/f6ab951/content/manuals/engine/install/ubuntu.md">原稿</a>）と「<a href="https://docs.docker.com/engine/install/linux-postinstall/">Linux post-installation steps for Docker Engine</a>」（<a href="https://github.com/docker/docs/blob/f6ab951/content/manuals/engine/install/linux-postinstall.md">原稿</a>）を基にした（<code>docker/docs</code> の <code>main</code> ブランチ、コミット <code>f6ab951</code>、2026-11-27。著作者: Docker, Inc. と文書の寄稿者。ライセンス: <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>）。コマンドはそれぞれのページのものと同等である（行頭の <code>$</code> とコメントを除き、URL の部分を展開した）。説明は日本語で要約した。</p>
+      <p>3-1 節・3-4 節・4 節の VS Code の操作と、WSL の Docker を使う形は、VS Code の公式の文書「<a href="https://code.visualstudio.com/docs/devcontainers/containers">Developing inside a Container</a>」（<a href="https://github.com/microsoft/vscode-docs/blob/1fe2a3e/docs/devcontainers/containers.md">原稿</a>）・「<a href="https://code.visualstudio.com/docs/remote/wsl">Developing in WSL</a>」（<a href="https://github.com/microsoft/vscode-docs/blob/1fe2a3e/docs/remote/wsl.md">原稿</a>）・「<a href="https://code.visualstudio.com/remote/advancedcontainers/docker-options">Alternative ways to install Docker</a>」（<a href="https://github.com/microsoft/vscode-docs/blob/1fe2a3e/remote/advancedcontainers/docker-options.md">原稿</a>。systemd の注意と、案内している Microsoft の記事「<a href="https://devblogs.microsoft.com/commandline/systemd-support-is-now-available-in-wsl/">Systemd support is now available in WSL!</a>」）を基にした（<code>microsoft/vscode-docs</code> の <code>main</code> ブランチ、コミット <code>1fe2a3e</code>、2026-11-26。Copyright (c) Microsoft Corporation。ライセンス: 文書は <a href="https://creativecommons.org/licenses/by/3.0/us/">CC BY 3.0 US</a>）。内容を日本語で要約して使った。</p>
+      <p>8 節の RTI Connext DDS の無償の範囲は、ROS 2 の公式の文書「<a href="https://docs.ros.org/en/jazzy/Installation/RMW-Implementations/DDS-Implementations/Working-with-RTI-Connext-DDS.html">Working with RTI Connext DDS</a>」（<a href="https://github.com/ros2/ros2_documentation/blob/bb5ba42/source/Installation/RMW-Implementations/DDS-Implementations/Working-with-RTI-Connext-DDS.rst">原稿</a>、<code>ros2/ros2_documentation</code> の <code>jazzy</code> ブランチ、コミット <code>bb5ba42</code>、2026-11-19。著作者: Open Robotics と ROS 2 の文書の寄稿者。ライセンス: <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>）を要約した。</p>
+      <p>4 節と 5 節の <code>updateContentCommand</code>・<code>remoteEnv</code>・既定のユーザーの振る舞いは、Dev Container の仕様「<a href="https://containers.dev/implementors/json_reference/">Dev Container metadata reference</a>」（<a href="https://github.com/devcontainers/devcontainers.github.io/blob/d2c589e/_implementors/json_reference.md">原稿</a>、<code>devcontainers/devcontainers.github.io</code> の <code>gh-pages</code> ブランチ、コミット <code>d2c589e</code>、2026-11-23。Copyright (c) Microsoft Corporation。ライセンス: <a href="https://opensource.org/licenses/MIT">MIT License</a>）を要約した。</p>
+      <p>公式の画像は使っておらず、図はこの教材で作った。</p>
+    </div>
+  </section>
+
+</div></main>
+
+<footer><div class="wrap">
+  <p>Nav2 日本語ガイドは、Nav2 の公式の文書を基にした非公式の学習教材で、Nav2・ROS 2・Gazebo のプロジェクトや Docker, Inc.・Microsoft とは関係がない。ライセンスは <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>（出典の文書から引き継いだ部分は、それぞれのライセンスに従う）。</p>
+  <p>この教材は、作成者の指示のもとで、Anthropic の AI である Claude（Claude Code）が作成した。</p>
+  <p>Nav2・TurtleBot・ROS・Gazebo・Ubuntu・Windows・Docker・Visual Studio Code・GitHub Copilot・RTI Connext などの名前は、それぞれの持ち主の商標でありうる。</p>
+</div></footer>
+</body>
+</html>
