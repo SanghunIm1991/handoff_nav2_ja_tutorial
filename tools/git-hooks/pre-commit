@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # コミットの直前に、ステージした内容の壊れ方を機械で止め、手で動かしてきた点検の結果を知らせる。
 # 有効にする: git config core.hooksPath tools/git-hooks（PC ごとに 1 回）
-# 止めるもの: 空になったファイル、10 行以上から半分未満に減ったファイル、<!doctype や </html> が 2 つ以上ある HTML、列の数がそろわない Markdown の表、追加した行の中のこの PC のユーザー名・PC 名・プロンプトの形（サイトとリポジトリの URL の中の持ち主の名前は除いてから探す）。
+# 止めるもの: 空になったファイル、10 行以上から半分未満に減ったファイル、<!doctype や </html> が 2 つ以上ある HTML、< の直後が日本語の文字の並びがある HTML（タグとして読まれて消える。&lt; と書く）、列の数がそろわない Markdown の表、追加した行の中のこの PC のユーザー名・PC 名・プロンプトの形（サイトとリポジトリの URL の中の持ち主の名前は除いてから探す）。
 # 意図して大きく減らすときだけ ALLOW_SHRINK=1 を付けてコミットする（減り方の検査だけを通す。付ける前にユーザーに確かめる）。
 # 知らせるもの（止めない）: pages-html-page の点検、assets/site.css のクラスの使用、カタカナの用語の残り。
 set -u
@@ -31,6 +31,8 @@ for f in "${files[@]}"; do
       e=$(git show ":$f" | grep -ci '</html>')
       [ "$d" -gt 1 ] && block "$f に <!doctype が $d 個ある"
       [ "$e" -gt 1 ] && block "$f に </html> が $e 個ある"
+      lt=$(git show ":$f" | grep -nP '<[^\x00-\x7F]' | cut -d: -f1 | head -3 | tr '\n' ' ')
+      [ -n "$lt" ] && block "$f の行 ${lt}に、< の直後が日本語の文字の並びがある（タグとして読まれて表示から消える。&lt; と書く）"
       ;;
     *.md)
       bad=$(git show ":$f" | awk 'NR==1{n=0} /^\|/{l=$0; gsub(/\\\|/,"",l); c=gsub(/\|/,"",l); if(!n){n=c} else if(c!=n){print NR": 列の区切りが "c" 個（表の先頭は "n" 個）"}; next} {n=0}')

@@ -73,7 +73,7 @@ Nav2 の公式の文書（https://docs.nav2.org/ ）を、日本語の学習教�
 ## 記録と Git
 
 - 判断と承認の経緯は `qa-log` スキルに従って `docs/qa_log.md` に記録する。加えて、アカウント名・PC の実測値・ドライブのパスは書かない。Claude の作業メモは「メモリ」と書かず「Claude の作業メモ」と書く。
-- コミットは `git-conventions` スキルに従う。push は、そのたびにユーザーの承認を得る。承認は QA 表に記録してコミットしてから、その記録も同じ push で送る（push の後に記録すると、記録のコミットが未 push で残る）。
+- コミットは `git-conventions` スキルに従う。push は、そのたびにユーザーの承認を得る。承認は QA 表に記録してコミットしてから、その記録も同じ push で送る（push の後に記録すると、記録のコミットが未 push で残る）。push の前の点検は `tools/push-check.sh`（`~/.claude` などほかのリポジトリにはフォルダを渡す）で行い、「問題は 0 件」を確かめてから送る。
 - コミットの前に、`tools/git-hooks/pre-commit` が動く（PC ごとに `git config core.hooksPath tools/git-hooks` で有効にする）。空になったファイル・半分未満に減ったファイル・壊れた HTML・列のそろわない表・追加した行の中のこの PC のユーザー名と PC 名（サイトとリポジトリの URL の中の持ち主の名前は除いてから探す）とプロンプトの形を止め、点検の結果を知らせる。止められたら、原因を直してからコミットし直す。意図して大きく減らすときだけ `ALLOW_SHRINK=1` を付けてよいが、付ける前にユーザーに確かめる。`--no-verify` でフックを飛ばさない。
 - `/review-session` でこのリポジトリの作業を点検するときは、サブエージェント `project-session-reviewer`（`.claude/agents/`。道具は Read・Grep・Glob だけ）に、作業の経緯・コミット・変更したファイルを渡して頼む。
 - リポジトリは Public なので、最初の push の前と、公開の範囲が広がる前に、`public-release-review` スキルで点検する。
