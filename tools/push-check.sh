@@ -16,7 +16,7 @@ n=$(git rev-list --count "$r..HEAD")
 echo "送るコミット: $n"
 git log --oneline "$r..HEAD"
 [ "$n" -gt 0 ] || exit 0
-# サイトとリポジトリの URL の中の持ち主の名前は公開済みなので、取り除いてから探す
+# サイトとリポジトリの URL の中の持ち主の名前は公開済みなので、取り除いてから探す。探す形は、このファイル自身に当たらないよう [s] のように書く
 d=$(git diff "$r..HEAD" | grep '^+' | grep -v '^+++' | sed -E 's#github\.com/[A-Za-z0-9-]+#github.com/OWNER#g; s#[A-Za-z0-9-]+\.github\.io#OWNER.github.io#g')
 cnt(){ printf '%s\n' "$d" | grep -ciE -- "$1" || true; }
 bad=0
@@ -24,7 +24,7 @@ show(){ echo "$1: $2"; [ "$2" -eq 0 ] || bad=1; }
 show "noreply でない名義" "$(git log --format='%ae%n%ce' "$r..HEAD" | grep -vc 'users.noreply.github.com' || true)"
 show "ユーザー名" "$(printf '%s\n' "$d" | grep -ciF -- "$(id -un)" || true)"
 show "PC 名" "$(printf '%s\n' "$d" | grep -ciF -- "$(hostname)" || true)"
-show "ホームのパス" "$(cnt '/home/[a-z]|C:\\\\Users|/mnt/c/Users')"
+show "ホームのパス" "$(cnt '/home/[a-z]|C:\\\\User[s]|/mnt/c/User[s]')"
 show "メールの形" "$(printf '%s\n' "$d" | grep -E '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}' | grep -vcE 'noreply@anthropic\.com|users\.noreply\.github\.com|@example\.invalid' || true)"
 show "認証情報の形" "$(cnt 'gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|Bearer [A-Za-z0-9._-]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY')"
 [ "$bad" -eq 0 ] && echo "問題は 0 件" || { echo "問題がある（push しない）"; exit 1; }
