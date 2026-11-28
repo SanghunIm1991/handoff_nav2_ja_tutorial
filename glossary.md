@@ -29,6 +29,7 @@ Nav2 日本語ガイド（非公式・作成中）の本文に出てきた用語
 | Dockerfile | Docker ＋ file | Docker の image の作り方を、順に書いたファイル | [Dev Container の 1 節](03_devcontainer_guide.html#s1) |
 | feedback | feedback〈帰ってくる知らせ〉 | ROS 2 の action で、仕事の途中に action server から届く経過の知らせ。Nav2 の目標では、今の位置・残りの道のり・回復の回数などが入る | [Navigation Concepts の 2 節](04_navigation_concepts.html#s2) |
 | footprint | footprint〈足跡、設置面〉 | costmap が使うロボットの外形。半径 `robot_radius` の円か、点の並びの多角形で表す | [Navigation Concepts の 5 節](04_navigation_concepts.html#s5-1) |
+| frame | frame〈枠組み〉 | 座標系。位置を測るときの原点と軸の向き。`map`・`odom`・`base_link` など、名前で区別する | [Navigation Concepts の 6 節](04_navigation_concepts.html#s6) |
 | image | image〈像、写し〉 | Docker の container の元になる、ファイルとプログラムの一式 | [Dev Container の 1 節](03_devcontainer_guide.html#s1) |
 | launch file | launch〈始動する〉＋ file〈ファイル〉 | どの node を、どの設定で起動するかを書いたファイル。`ros2 launch` で、書かれた node をまとめて起動する。Python・XML・YAML で書ける | [Quickstart の 2 節](01_quickstart.html#s2) |
 | layer | layer〈層〉 | costmap を作るために重ねる 1 枚 1 枚。地図・障害物・ふくらませた値などを、それぞれの plugin が取り込む | [Navigation Concepts の 7 節](04_navigation_concepts.html#s7) |
@@ -42,6 +43,9 @@ Nav2 日本語ガイド（非公式・作成中）の本文に出てきた用語
 | package.xml | package〈パッケージ〉＋ XML〈ファイルの書式〉 | ROS 2 のパッケージの名前・版・依存するものを書いたファイル。rosdep はこれを読んで、足りない依存を入れる | [Local Installation の 4-3 節](02_local_installation.html#s4-3) |
 | particle cloud | particle〈粒子〉＋ cloud〈雲〉 | AMCL が考えている「ロボットがいるかもしれない位置」の候補の集まり。RViz では小さな矢印の群れとして描かれる | [Quickstart の 4 節](01_quickstart.html#s4) |
 | planner | planner〈計画するもの〉 | Nav2 で、目標までの経路を計算する部品。global costmap を使う | [Navigation Concepts の 5 節](04_navigation_concepts.html#s5) |
+| QoS | Quality of Service〈サービスの質〉の略 | ROS 2 で、topic の届け方を決める設定の組。後から購読を始めた node にも最後の値を届けるか（durability）などを決める | [Setting Up Transformations の 3-4 節](07_setup_transforms.html#s3-4) |
+| quaternion | quaternion〈四元数〉 | 向き（回転）を x・y・z・w の 4 つの数で表す書き方。(0, 0, 0, 1) は回転していないことを表す | [Setting Up Transformations の 3-1 節](07_setup_transforms.html#s3-1) |
+| REP | ROS Enhancement Proposal の略 | ROS のパッケージどうしが正しく組み合わさるための決まりの文書。座標系の名前（REP 105）や単位と向き（REP 103）など | [Navigation Concepts の 6 節](04_navigation_concepts.html#s6) |
 | rosdep | ROS ＋ dependency〈依存〉 | ソースのパッケージが必要とするほかのパッケージを調べ、apt でまとめて入れる道具 | [環境構築の 5 節](00_setup.html#s5) |
 | rosdep key | rosdep ＋ key〈鍵、見出しの名前〉 | パッケージが求めるものの名前（`package.xml` に書かれている）。rosdep が対応表で apt のパッケージの名前に置き換える | [Local Installation の 4-2 節](02_local_installation.html#s4-2) |
 | plugin | plugin〈差し込むもの〉 | 実行時に読み込む部品のライブラリ。ROS 2 の pluginlib の仕組みで、Nav2 のサーバーや costmap の layer は、計算を plugin に任せる | [Navigation Concepts の 4 節](04_navigation_concepts.html#s4) |
@@ -51,8 +55,10 @@ Nav2 日本語ガイド（非公式・作成中）の本文に出てきた用語
 | SLAM | Simultaneous Localization and Mapping〈位置の推定と地図づくりを同時に行う〉の略 | 自分の位置を推定しながら地図を作る方法。Nav2 の既定は SLAM Toolbox | [Navigation Concepts の 6 節](04_navigation_concepts.html#s6) |
 | smoother | smoother〈なめらかにするもの〉 | Nav2 で、planner の経路のぎざぎざや急な向きの変化をならす部品 | [Navigation Concepts の 5 節](04_navigation_concepts.html#s5) |
 | stage | stage〈段階〉 | Dockerfile で、image を作る手順を区切った 1 つ 1 つ。前の stage の image に足していき、使う stage を選べる | [Dev Container の 4 節](03_devcontainer_guide.html#s4) |
+| static transform | static〈動かない〉＋ transform〈変換〉 | 時間がたっても変わらない座標系どうしの関係（固定の変換）。`/tf_static` の topic で配る | [Setting Up Transformations の 3 節](07_setup_transforms.html#s3) |
 | systemd | system ＋ daemon の d | Ubuntu で、裏で動くプログラム（Docker Engine など）を起動・管理する仕組み | [Dev Container の 3-1 節](03_devcontainer_guide.html#s3-1) |
 | tf | transform〈変換〉の略 | 座標系どうしの位置関係。また、それを配る ROS 2 の仕組みと topic の名前 | [Quickstart の 1 節](01_quickstart.html#s1) |
+| tf2 | tf（transform）の 2 代め | ROS 2 で、座標系どうしの関係を木の形で持ち、任意の 2 つの座標系の間の変換を計算するライブラリ | [Navigation Concepts の 6 節](04_navigation_concepts.html#s6) |
 | tick | tick〈時計のカチッという音〉 | behavior tree で、根から節へ送る「動け」という合図。受けた節は SUCCESS・FAILURE・RUNNING のどれかを返す | [Nav2 Behavior Trees の 1 節](05_nav2_behavior_trees.html#s1) |
 | topic | topic〈話題〉 | ROS 2 で、node どうしが決まった型のデータを流す、名前つきの通り道 | [環境構築の 7 節](00_setup.html#s7) |
 | underlay | underlay〈下に敷くもの〉 | overlay の下にある元からの環境。apt で入れた ROS 2（`/opt/ros/jazzy`）など | [Local Installation の 5 節](02_local_installation.html#s5) |
