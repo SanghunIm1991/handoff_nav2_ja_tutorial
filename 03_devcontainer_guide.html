@@ -438,6 +438,7 @@ local     overlay-&lt;英数字の並び&gt;</code></pre>
         <li><strong>自動で入る拡張機能</strong>: <code>devcontainer.json</code> の <code>extensions</code> に、ROS・CMake・Git の補助の拡張機能と並んで、AI がコードを補う GitHub Copilot（<code>GitHub.copilot</code>）がある。使うと、編集中のコードが外部のサービスに送られうる。入れたくなければ、開く前に <code>extensions</code> の一覧から外す（Nav2 のソースのファイルを変えることになるので、<code>git diff</code> に出る）。</li>
         <li><strong>自動で同意するライセンス</strong>: Dockerfile は、ROS 2 の通信の実装の 1 つである RTI Connext DDS を含むパッケージ（<code>ros-jazzy-rmw-connextdds</code>）を入れる。その前に、<code>RTI_NC_LICENSE_ACCEPTED=yes</code> という、名前からしてライセンスへの同意を自動で済ませる設定を置いている。ROS 2 の公式の文書によると、RTI Connext DDS が無償なのは、試作・研究・非商用・学術の用途である。製品に使うなら、ライセンスを別に確かめる。</li>
       </ul>
+      <p>このほかにも、container を作るときに自動で起きることがある。<code>devcontainer.json</code> の <code>features</code>（image に足す部品の指定）で、GitHub をコマンドで操作する道具（GitHub CLI）が入る。また、<code>onCreateCommand</code> のスクリプトは、container の中の git に、どのフォルダのリポジトリも持ち主を問わず信頼する設定（<code>safe.directory "*"</code>）を入れる。どちらも container の中だけの設定である。</p>
     </div>
   </section>
 

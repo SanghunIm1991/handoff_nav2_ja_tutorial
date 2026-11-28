@@ -27,10 +27,10 @@
 
 | 順 | ページ | ファイル | 元にする公式のページ | 主に当たる到達点 | 状態 |
 | --- | --- | --- | --- | --- | --- |
-| 3 | Dev Container | `03_devcontainer_guide.html`（このページを書くときに、Navigation Concepts を `04_navigation_concepts.html` に改める） | Getting Started / Dev Container | 1 | レビュー済み（ユーザーの確認待ち。Docker が未導入のため、3-1 節のほかは想定） |
+| 3 | Dev Container | `03_devcontainer_guide.html`（2026-11-28 に足した。このとき Navigation Concepts を `04_navigation_concepts.html` に改めた） | Getting Started / Dev Container | 1 | レビュー済み（ユーザーの確認待ち。Docker が未導入のため、3-1 節のほかは想定） |
 | 5 | Nav2 Behavior Trees | （構成案で決める） | Getting Started / Nav2 Behavior Trees | 2 | 未着手 |
 
-書く順番は Quickstart を先にし、HTML のページの器をそこで決める。読む順番は表のとおり環境構築が先。ROS 2 の基礎は独立したページを作らず、各ページで初めて使う場面で説明する（`CLAUDE.md` の「内容の方針」）。一区切りの後の範囲は、到達点を基準に、区切りごとに決めてこの表に足す。
+書く順番は Quickstart を先にし、HTML のページの器をそこで決める。読む順番は表のとおり環境構築が先。ROS 2 の基礎は独立したページを作らず、各ページで初めて使う場面で説明する（`CLAUDE.md` の「内容の方針」）。一区切りの後の範囲は、公式の原稿の `docs/.nav.yml` の並びを基本にし、到達点で過不足を見て、区切りごとにユーザーに確かめてこの表に足す（2026-11-28）。2 つめの区切りより後は、Configuration & Development を公式の順（First-Time Robot Setup Guide → Navigation Plugins → Configuration Guide → Tuning Guide → Simple Commander API）に進める予定で、Tutorials は関係する章の後に差し込む。
 
 今の状態（2026-11-28）: 最初の一区切りの 4 ページを Pages に載せ、push 済み（2026-11-22）。2 つめの区切りを Dev Container と Nav2 Behavior Trees に決めた（その後は Configuration & Development を公式の順に進める。QA 表の 2026-11-28 の行）。Dev Container のページ（`03_devcontainer_guide.html`）を書き、2 回のレビューに対応した。Navigation Concepts は `04_navigation_concepts.html` に改めた。Dev Container の確かめは、ユーザーが Docker を入れた後に、確認待ちの一覧の 3 項目で行う。次は Nav2 Behavior Trees の構成案を作る。push はまだ（push のたびにユーザーの承認を得る）。確認待ちの一覧と「Pages に載せた後に確かめること」には、ユーザーの印や指摘はまだ無い。
 
@@ -60,14 +60,14 @@
 元にする公式のページ: Getting Started / Dev Container（`index.md` と `devcontainer_guide.md`。`jazzy`、`b22554c`）。Docker の導入は Build and Install / Docker Installation（同じコミット）の要点だけを使う。照合に使う設定: `ros-navigation/navigation2` の `jazzy`（`c7046550`）の `.devcontainer/` と `Dockerfile`。前提: Local Installation のページ（`~/nav2_ws/src/navigation2` を clone 済み）。
 
 調べて分かったこと（構成に効くもの）:
-- 既定の `devcontainer.json` は `Dockerfile` の `dever` の段を使い、`ghcr.io/ros-navigation/navigation2:jazzy` を `cacheFrom` にする。`dever` の元の `builder` の段は、underlay（`nav2_minimal_turtlebot_simulation`）と overlay の依存を rosdep で入れるので、Gazebo（`ros_gz_sim` の依存）は像に入りうる（未確認）。ただし既定の `devcontainer.json` には画面を出すための設定が無く、画面を見る `visualizer` の段は Gazebo Classic（gzweb・`gzserver`）を前提にしている。
-- `onCreateCommand` で、containerの中の overlay（`/opt/overlay_ws`）の全体をビルドする。初回は 30 分を超えうる。overlay と ccache は名前付きの volumeに置かれ、containerを作り直しても残る。
-- `runArgs` の `--network=host`・`--ipc=host`・`--privileged` などは、既定ではコメントにしてある（containerの外と混線しないように）。
+- 既定の `devcontainer.json` は `Dockerfile` の `dever` の段を使い、`ghcr.io/ros-navigation/navigation2:jazzy` を `cacheFrom` にする。`dever` の元の `builder` の段は、underlay（`nav2_minimal_turtlebot_simulation`）と overlay の依存を rosdep で入れるので、Gazebo（`ros_gz_sim` の依存）は image に入りうる（未確認）。ただし既定の `devcontainer.json` には画面を出すための設定が無く、画面を見る `visualizer` の段は Gazebo Classic（gzweb・`gzserver`）を前提にしている。
+- `onCreateCommand` で、container の中の overlay（`/opt/overlay_ws`）の全体をビルドする。初回は 30 分を超えうる。overlay と ccache は名前付きの volume に置かれ、container を作り直しても残る。
+- `runArgs` の `--network=host`・`--ipc=host`・`--privileged` などは、既定ではコメントにしてある（container の外と混線しないように）。
 - 自動で入る拡張機能に `GitHub.copilot`（外部と通信する AI の機能）がある。
 - `Dockerfile` の `builder` の段で `RTI_NC_LICENSE_ACCEPTED=yes` として、RTI Connext のライセンスへの同意を自動で済ませている。
 - 今の環境には Docker が無い（VS Code は Windows の側にある）。
 
-決めたこと（2026-11-28）: Docker は WSL の Ubuntu に Docker Engine を入れる手順にする（導入はユーザー）。ページは Local Installation の直後に置く。containerの中で画面を出すことは説明だけにする。
+決めたこと（2026-11-28）: Docker は WSL の Ubuntu に Docker Engine を入れる手順にする（導入はユーザー）。ページは Local Installation の直後に置く。container の中で画面を出すことは説明だけにする。
 
 | 節 | 中身 | 公式との違い |
 | --- | --- | --- |
@@ -76,12 +76,12 @@
 | 1. 全体像 | Windows の VS Code → WSL → Docker → container（`ros:jazzy` → `builder` → `dever`）、ソースの bind mount と 2 つの volume（インラインの SVG） | 足す |
 | 2. dev container とは | 何か・なぜ使うか・どう動くか。Local Installation（WSL に直接入れる）との違い | 再構成 |
 | 3. 準備 | WSL の Ubuntu に Docker Engine を入れる（Docker の公式の手順の要点。systemd の確かめ方）、`docker` グループの意味、VS Code の WSL と Dev Containers の拡張機能 | 足す（公式は前提として列挙するだけ） |
-| 4. containerで開く | `code .` → Reopen in Container。初回に起きること（image の作成、`onCreateCommand` での全体のビルド）と待ち時間、ログの見方 | 再構成 |
-| 5. 中で使う | ターミナル、`/opt/overlay_ws`、一部のパッケージだけのビルド、`docker exec` と `devcontainer exec` の違い | 再構成 |
-| 6. 寿命と作り直し | containerは使い捨てで、volumeとソースは残る。Rebuild と Without Cache。変更は `Dockerfile` と `devcontainer.json` に書く | 再構成 |
+| 4. container で開く | `code .` → Reopen in Container。初回に起きること（image の作成、`onCreateCommand` での全体のビルド）と待ち時間、ログの見方 | 再構成 |
+| 5. 中で使う | ターミナル、`/opt/overlay_ws`、一部のパッケージだけのビルド、`docker exec` で入る形と、そのとき VS Code のターミナルと環境の変数が違うこと（`devcontainer exec` は扱わないことにした） | 再構成 |
+| 6. 寿命と作り直し | container は使い捨てで、volume とソースは残る。Rebuild と Without Cache。変更は `Dockerfile` と `devcontainer.json` に書く | 再構成 |
 | 7. 画面と通信 | 既定の設定では画面を扱わないこと（確かめていない）。`visualizer` の段は Gazebo Classic が前提なので扱わない。`runArgs` の各項目の意味と、コメントにしてある理由 | 足す（Classic の部分は説明だけ） |
 | 8. 安全のために | 信頼できるワークスペースだけ開く。自動で入る拡張機能（Copilot など）と、自動で同意しているライセンス（RTI Connext）を、開く前に確かめる | 公式の注意に、具体の確かめ所を足す |
-| 9. 製品に組み込むなら | チームと CI で環境をそろえる。`docker build` と `nav2_docker` の像（Docker Installation の要点）を自社の配布に使う場合の考え方。ライセンスの確認 | 足す |
+| 9. 製品に組み込むなら | チームと CI で環境をそろえる。`docker build` と `nav2_docker` の image（Docker Installation の要点）を自社の配布に使う場合の考え方。ライセンスの確認 | 足す |
 | 末尾 | 次のページ・出典・このページの用語 | — |
 
 ## Quickstart の構成案
