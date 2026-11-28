@@ -35,7 +35,7 @@ dpkg-query -W -f='${Version}\n' 'ros-jazzy-nav2-*' ros-jazzy-navigation2 | cut -
 
 ## 起動して確かめる
 
-- **道具**: Quickstart のシミュレーション（`tb3_simulation_launch.py`）の起動・初期位置・停止は、`tools/sim/sim.sh`（使い方はファイルの冒頭）を使う。承認を求める一覧も、このスクリプトの動作（`start`・`initpose`・`run`・`stop`）で書く。スクリプトの中で `&` で裏に回すと、bash が SIGINT と SIGQUIT を無視にして `stop` が効かなくなるので、`env --default-signal=INT,QUIT` で戻してある（2026-11-28、これが無い版で SIGINT が届かず、SIGTERM で止めた）。
+- **道具**: Quickstart のシミュレーション（`tb3_simulation_launch.py`）の起動・初期位置・停止は、`tools/sim/sim.sh`（使い方はファイルの冒頭）を使う。承認を求める一覧も、このスクリプトの動作（`start`・`initpose`・`run`・`stop`）で書く（`wait` はログを読むだけなので、承認は要らない）。`stop` で止まらなかったときは、SIGTERM を送るかを、承認を得てから決める。スクリプトの中で `&` で裏に回すと、bash が SIGINT と SIGQUIT を無視にして `stop` が効かなくなるので、`env --default-signal=INT,QUIT` で戻してある（2026-11-28、これが無い版で SIGINT が届かず、SIGTERM で止めた）。
 - **起動の形**: `ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST` を付け、ログは `stdbuf -oL -eL` で行ごとに出す（`timeout` で止めたときの出力の欠けを防ぐ）。止めるときは `pkill -f` ではなく PID で止める。
 - **Gazebo は画面なしで動かす**: `gz sim -s` と、手で起動する `parameter_bridge` で確かめる。`GZ_IP`・`GZ_PARTITION`・`ROS_DOMAIN_ID` で、ほかのプロセスと分ける。Nav2 の `tb3_simulation_launch.py` は `headless` の既定が true（Gazebo の画面が出ない）。
 - **WSL の壁時計**: 約 36 秒ごとに約 3.6 秒進むことがある。経過時間は STEADY_TIME で測り、ログの時刻の飛びを node の停止と取り違えない。Nav2 は TF の時刻と `use_sim_time` に敏感なので、特に注意する。

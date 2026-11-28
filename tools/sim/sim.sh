@@ -52,17 +52,29 @@ case $act in
     waitfor "$1" "${2:-180}"; rc=$?
     echo "経過 $(( $(date +%s) - $(cat "$dir/start.txt") )) 秒"; exit $rc ;;
   initpose)
+    [ $# -ge 2 ] || { echo "使い方: tools/sim/sim.sh <作業フォルダ> initpose <x> <y>"; exit 2; }
     waitfor 'lifecycle_manager_localization.*Managed nodes are active' 180 >/dev/null || { echo "位置の推定の側が完了しなかった"; exit 1; }
     "$self" "$dir" run ros2 topic pub --once /initialpose geometry_msgs/msg/PoseWithCovarianceStamped \
-      "{header: {frame_id: map}, pose: {pose: {position: {x: $1, y: $2, z: 0.0}, orientation: {w: 1.0}}}}" >/dev/null 2>&1
+      "{header: {frame_id: map}, pose: {pose: {position: {x: $1, y: $2, z: 0.0}, orientation: {w: 1.0}}}}" >/dev/null 2>&1 \
+      || { echo "初期位置を送れなかった"; exit 1; }
     echo "初期位置を送った（起動から $(( $(date +%s) - $(cat "$dir/start.txt") )) 秒）"
     waitfor 'lifecycle_manager_navigation.*(Managed nodes are active|Aborting)' 120 | grep -q 'Managed nodes are active' \
       && echo "移動の側が完了した" || { echo "移動の側が完了しなかった（launch.log を見る）"; exit 1; } ;;
   stop)
-    pid=$(cat "$dir/launch.pid")
-    kill -INT "$pid" 2>/dev/null
-    timeout 60 bash -c "while kill -0 $pid 2>/dev/null; do :; done"
-    kill -0 "$pid" 2>/dev/null && echo "まだ動いている（PID $pid）" || echo "launch は止まった"
+    pid=$(cat "$dir/launch.pid" 2>/dev/null)
+    # PID が別のプロセスに使い回されていても止めないよう、送る前に、この道具で起動した ros2 launch かを確かめる
+    if [ -n "$pid" ] && tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null | grep -q 'ros2 launch nav2_bringup tb3_simulation_launch.py'; then
+      kill -INT "$pid"
+      timeout 60 bash -c "while kill -0 $pid 2>/dev/null; do sleep 0.5; done"
+      if kill -0 "$pid" 2>/dev/null; then
+        echo "まだ動いている（PID $pid）。SIGTERM を送るかは、承認を得てから決める"
+      else
+        echo "launch は止まった"; rm -f "$dir/launch.pid"
+      fi
+    else
+      echo "launch.pid の PID は、この道具で起動した ros2 launch として動いていない。何も送らない"
+      rm -f "$dir/launch.pid"
+    fi
     pgrep -af "$leftover" | grep -vE "pgrep|$self" || echo "残りのプロセスは無い" ;;
   *) sed -n '6,12p' "$self"; exit 2 ;;
 esac
