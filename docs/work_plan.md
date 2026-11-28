@@ -61,24 +61,24 @@
 
 調べて分かったこと（構成に効くもの）:
 - 既定の `devcontainer.json` は `Dockerfile` の `dever` の段を使い、`ghcr.io/ros-navigation/navigation2:jazzy` を `cacheFrom` にする。`dever` の元の `builder` の段は、underlay（`nav2_minimal_turtlebot_simulation`）と overlay の依存を rosdep で入れるので、Gazebo（`ros_gz_sim` の依存）は像に入りうる（未確認）。ただし既定の `devcontainer.json` には画面を出すための設定が無く、画面を見る `visualizer` の段は Gazebo Classic（gzweb・`gzserver`）を前提にしている。
-- `onCreateCommand` で、コンテナの中の overlay（`/opt/overlay_ws`）の全体をビルドする。初回は 30 分を超えうる。overlay と ccache は名前付きのボリュームに置かれ、コンテナを作り直しても残る。
-- `runArgs` の `--network=host`・`--ipc=host`・`--privileged` などは、既定ではコメントにしてある（コンテナの外と混線しないように）。
+- `onCreateCommand` で、containerの中の overlay（`/opt/overlay_ws`）の全体をビルドする。初回は 30 分を超えうる。overlay と ccache は名前付きの volumeに置かれ、containerを作り直しても残る。
+- `runArgs` の `--network=host`・`--ipc=host`・`--privileged` などは、既定ではコメントにしてある（containerの外と混線しないように）。
 - 自動で入る拡張機能に `GitHub.copilot`（外部と通信する AI の機能）がある。
 - `Dockerfile` の `builder` の段で `RTI_NC_LICENSE_ACCEPTED=yes` として、RTI Connext のライセンスへの同意を自動で済ませている。
 - 今の環境には Docker が無い（VS Code は Windows の側にある）。
 
-決めたこと（2026-11-28）: Docker は WSL の Ubuntu に Docker Engine を入れる手順にする（導入はユーザー）。ページは Local Installation の直後に置く。コンテナの中で画面を出すことは説明だけにする。
+決めたこと（2026-11-28）: Docker は WSL の Ubuntu に Docker Engine を入れる手順にする（導入はユーザー）。ページは Local Installation の直後に置く。containerの中で画面を出すことは説明だけにする。
 
 | 節 | 中身 | 公式との違い |
 | --- | --- | --- |
 | 冒頭 | 製品の開発でチームの環境がばらつく、という物語調の導入。注記（出典・Jazzy が前提・確かめた範囲） | 足す |
 | 0. 学習目標と完了条件 | VS Code で `navigation2` の `jazzy` を dev container で開き、中のターミナルで `colcon build` と `ros2` のコマンドが通る | 足す |
-| 1. 全体像 | Windows の VS Code → WSL → Docker → コンテナ（`ros:jazzy` → `builder` → `dever`）、ソースの bind mount と 2 つのボリューム（インラインの SVG） | 足す |
+| 1. 全体像 | Windows の VS Code → WSL → Docker → container（`ros:jazzy` → `builder` → `dever`）、ソースの bind mount と 2 つの volume（インラインの SVG） | 足す |
 | 2. dev container とは | 何か・なぜ使うか・どう動くか。Local Installation（WSL に直接入れる）との違い | 再構成 |
 | 3. 準備 | WSL の Ubuntu に Docker Engine を入れる（Docker の公式の手順の要点。systemd の確かめ方）、`docker` グループの意味、VS Code の WSL と Dev Containers の拡張機能 | 足す（公式は前提として列挙するだけ） |
-| 4. コンテナで開く | `code .` → Reopen in Container。初回に起きること（像のビルド、`onCreateCommand` での全体のビルド）と待ち時間、ログの見方 | 再構成 |
+| 4. containerで開く | `code .` → Reopen in Container。初回に起きること（image の作成、`onCreateCommand` での全体のビルド）と待ち時間、ログの見方 | 再構成 |
 | 5. 中で使う | ターミナル、`/opt/overlay_ws`、一部のパッケージだけのビルド、`docker exec` と `devcontainer exec` の違い | 再構成 |
-| 6. 寿命と作り直し | コンテナは使い捨てで、ボリュームとソースは残る。Rebuild と Without Cache。変更は `Dockerfile` と `devcontainer.json` に書く | 再構成 |
+| 6. 寿命と作り直し | containerは使い捨てで、volumeとソースは残る。Rebuild と Without Cache。変更は `Dockerfile` と `devcontainer.json` に書く | 再構成 |
 | 7. 画面と通信 | 既定の設定では画面を扱わないこと（確かめていない）。`visualizer` の段は Gazebo Classic が前提なので扱わない。`runArgs` の各項目の意味と、コメントにしてある理由 | 足す（Classic の部分は説明だけ） |
 | 8. 安全のために | 信頼できるワークスペースだけ開く。自動で入る拡張機能（Copilot など）と、自動で同意しているライセンス（RTI Connext）を、開く前に確かめる | 公式の注意に、具体の確かめ所を足す |
 | 9. 製品に組み込むなら | チームと CI で環境をそろえる。`docker build` と `nav2_docker` の像（Docker Installation の要点）を自社の配布に使う場合の考え方。ライセンスの確認 | 足す |
