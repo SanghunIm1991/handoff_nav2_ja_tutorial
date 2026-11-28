@@ -86,7 +86,7 @@ if [ -f assets/site.css ]; then
 fi
 kata=$(for f in "${files[@]}"; do case "$f" in docs/qa_log.md) ;; *.html|*.md) grep -nHE 'ノード|トピック|オドメトリ|コンテナ|ボリューム|イメージ|launch ファイル' "$f" 2>/dev/null;; esac; done)
 [ -n "$kata" ] && note "カタカナの用語が残っている（英語にする決まり）:"$'\n'"$kata"
-# QA 表に追加した行で、質問の欄に「推奨」があるのに、「選択肢」の後を「／」で分けた案のどれかに「良い点」か「デメリット」が無いもの
+# QA 表に追加した行で、質問の欄に推奨の印「（推奨」があるのに、「選択肢」の後を「／」で分けた案のどれかに「良い点」か「デメリット」が無いもの
 # （qa-log スキルの決まり。文書の決まりだけでは 2026-11-28 に 2 回漏れた）。補記の行は除く。
 qa=$(git diff --cached -U0 -- docs/qa_log.md | grep -E '^\+\| ' | python3 -I -c '
 import sys
@@ -94,7 +94,7 @@ for l in sys.stdin:
     c=l[1:].split("|")
     if len(c)<5: continue
     q=c[3]
-    if "推奨" not in q or "（補記" in q: continue
+    if "（推奨" not in q or "（補記" in q: continue
     segs=(q.split("選択肢",1)[1] if "選択肢" in q else q).split("／")
     bad=[str(i+1) for i,s in enumerate(segs) if not ("良い点" in s and "デメリット" in s)]
     if len(segs)>1 and bad: print("  "+c[1].strip()+" "+c[2].strip()+": 案 "+"・".join(bad)+"（全 "+str(len(segs))+" 案）")
