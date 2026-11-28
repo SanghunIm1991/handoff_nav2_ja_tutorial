@@ -28,12 +28,12 @@
 | 順 | ページ | ファイル | 元にする公式のページ | 主に当たる到達点 | 状態 |
 | --- | --- | --- | --- | --- | --- |
 | 3 | Dev Container | `03_devcontainer_guide.html`（2026-11-28 に足した。このとき Navigation Concepts を `04_navigation_concepts.html` に改めた） | Getting Started / Dev Container | 1 | レビュー済み（ユーザーの確認待ち。Docker が未導入のため、3-1 節のほかは想定） |
-| 5 | Nav2 Behavior Trees | `05_nav2_behavior_trees.html` | Getting Started / Nav2 Behavior Trees の `index.md`・Nav2 に特有の節・既定の木の詳しい説明 | 2 | 構成案を決め、実習を確かめた。書く |
+| 5 | Nav2 Behavior Trees | `05_nav2_behavior_trees.html` | Getting Started / Nav2 Behavior Trees の `index.md`・Nav2 に特有の節・既定の木の詳しい説明 | 2 | レビュー済み（ユーザーの確認待ち） |
 | 6 | 用意されている木（Provided Nav2 Behavior Trees） | `06_provided_behavior_trees.html` | Getting Started / Nav2 Behavior Trees の `trees/` の 7 本（Navigate To Pose は 1 枚めの 5 節で読み、2 枚めの表では 1 枚めへ送る） | 2 | 構成案は 5 の後で詰める |
 
 書く順番は Quickstart を先にし、HTML のページの器をそこで決める。読む順番は表のとおり環境構築が先。ROS 2 の基礎は独立したページを作らず、各ページで初めて使う場面で説明する（`CLAUDE.md` の「内容の方針」）。一区切りの後の範囲は、公式の原稿の `docs/.nav.yml` の並びを基本にし、到達点で過不足を見て、区切りごとにユーザーに確かめてこの表に足す（2026-11-28）。2 つめの区切りより後は、Configuration & Development を公式の順（First-Time Robot Setup Guide → Navigation Plugins → Configuration Guide → Tuning Guide → Simple Commander API）に進める予定で、Tutorials は関係する章の後に差し込む。
 
-今の状態（2026-11-28）: 最初の一区切りの 4 ページと Dev Container の章を Pages に載せた（push の状態は `git status` で確かめる）。Nav2 Behavior Trees は 2 ページに分けると決め（QA 表の 2026-11-28 の構成案の行）、1 枚め `05_nav2_behavior_trees.html` の実習（`behavior_tree` の欄で木を切り替える）を画面なしで確かめた（結果は QA 表の「Nav2 Behavior Trees の確認」の行、表示の控えは `notes/outputs/05_nav2_behavior_trees/` の `launch.log`・`goal_*.txt`）。次は `05_nav2_behavior_trees.html` を書く（構成案は下の「Nav2 Behavior Trees の構成案」、写しは `notes/sources/05_nav2_behavior_trees/`）。シミュレーションを起動して確かめるときは `tools/sim/sim.sh`（`docs/verification_notes.md` の「起動して確かめる」）を使い、承認の一覧もその動作で書く。その後、2 枚め `06_provided_behavior_trees.html` の細部を詰める。確認待ちの一覧と「Pages に載せた後に確かめること」には、ユーザーの印や指摘はまだ無い。
+今の状態（2026-11-28）: 最初の一区切りの 4 ページと Dev Container の章を Pages に載せた（push の状態は `git status` で確かめる）。Nav2 Behavior Trees は 2 ページに分けると決め（QA 表の 2026-11-28 の構成案の行）、1 枚め `05_nav2_behavior_trees.html` の実習（`behavior_tree` の欄で木を切り替える）を画面なしで確かめた（結果は QA 表の「Nav2 Behavior Trees の確認」の行、表示の控えは `notes/outputs/05_nav2_behavior_trees/` の `launch.log`・`goal_*.txt`）。`05_nav2_behavior_trees.html` を書き、2 回のレビューに対応した（QA 表の「Nav2 Behavior Trees のレビュー」の行）。シミュレーションを起動して確かめるときは `tools/sim/sim.sh`（`docs/verification_notes.md` の「起動して確かめる」）を使い、承認の一覧もその動作で書く。次は、2 枚め `06_provided_behavior_trees.html` の構成案の細部を詰める（下の「Nav2 Behavior Trees の構成案」の 2 枚めの骨組み。写しは `notes/sources/05_nav2_behavior_trees/` の `trees_*.md` と `apt_1.3.14/`）。確認待ちの一覧と「Pages に載せた後に確かめること」には、ユーザーの印や指摘はまだ無い。
 
 ## 環境構築の構成案
 
@@ -211,6 +211,7 @@ RViz の操作（4 節・5 節）は、ユーザーが撮影した写真を後�
 - [ ] Dev Container の 3-2 節〜3-3 節: Docker Engine の導入（apt の取得元を足す・`docker` グループに入れる・`wsl --shutdown` で開き直す）を通し、`systemctl status docker` と `docker run hello-world` の表示が本文と合っているか（読者の環境を変える手順で、作成時は Docker が入っていなかったため、すべて想定で書いた）
 - [ ] Dev Container の 3-4 節〜6 節: VS Code の拡張機能を入れ、`code .` → Reopen in Container で、container の作成と Nav2 のビルドが終わるか。左下の表示・ログのコマンド名・5 節の `ros2 pkg prefix nav2_bringup` の表示・プロンプトが `root@…` になること・`docker exec -it nav2 bash`・6 節の `docker volume ls` の volume の名前と image の名前が本文と合っているか。ビルドで PC が固まったときに、開き直して続きから進むか（どれも想定で書いた。ビルドは 1 時間を超えうる）
 - [ ] Dev Container の末尾の片付け: `docker rm -f`・`docker volume rm`・`docker image rm` で、container・volume・image が消え、ソースのフォルダが残るか（読者の環境を壊しうる手順のため）
+- [ ] Nav2 Behavior Trees の 4 節: RViz の 2D Pose Estimate で初期位置を与えた状態で、4-2 節のファイルを作り、4-3〜4-5 節の `ros2 action send_goal` の表示と T1 のログが本文と合っているか（作成時は画面を出さず、初期位置をコマンドで与えて確かめた。4-4 節・4-5 節の結果は位置と向きで変わりうるので、違ったときに本文の説明で迷わないかも見る）
 
 ## Pages に載せた後に確かめること
 

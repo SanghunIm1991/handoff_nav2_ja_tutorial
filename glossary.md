@@ -6,20 +6,25 @@ Nav2 日本語ガイド（非公式・作成中）の本文に出てきた用語
 
 | 用語 | 元の語 | 意味 | 初出 |
 | --- | --- | --- | --- |
-| action | action〈行動〉 | ROS 2 で、時間のかかる依頼（目標まで行く、など）を送り、途中の経過と最後の結果を受け取る仕組み | [Quickstart の 5 節](01_quickstart.html#s5) |
+| action（ROS 2） | action〈行動〉 | ROS 2 で、時間のかかる依頼（目標まで行く、など）を送り、途中の経過と最後の結果を受け取る仕組み | [Quickstart の 5 節](01_quickstart.html#s5) |
+| action（BT の節） | action〈行動〉 | behavior tree で、実際の仕事をする節。Nav2 では、多くが planner・controller などのサーバーを ROS 2 の action で呼ぶ | [Nav2 Behavior Trees の 1 節](05_nav2_behavior_trees.html#s1) |
 | AMCL | Adaptive Monte Carlo Localization の略 | Nav2 で、レーザーで測った周囲の距離と地図を照らし合わせ、地図の上のロボットの位置を推定する node | [Quickstart の 3 節](01_quickstart.html#s3) |
 | behavior | behavior〈振る舞い〉 | Nav2 の behavior_server が受け持つ動き。主な用途は、困った状況から抜け出すための動き（recovery。その場で回る・下がる・待つなど）で、それに限らず、costmap などの重い資源を共有したい動きを置ける | [Navigation Concepts の 5 節](04_navigation_concepts.html#s5) |
 | behavior tree | behavior〈振る舞い〉＋ tree〈木〉 | やるべき仕事を木の形に並べて、複雑な手順を組み立てる方法。Nav2 では bt_navigator が XML で書かれた木を進める | [Navigation Concepts の 4 節](04_navigation_concepts.html#s4) |
 | bind mount | bind〈結びつける〉＋ mount〈取り付ける〉 | 手元のフォルダを、Docker の container の中の別の場所に見せる仕組み。どちらから直しても同じファイルが変わる | [Dev Container の 1 節](03_devcontainer_guide.html#s1) |
+| blackboard | blackboard〈黒板〉 | behavior tree の節どうしが値を受け渡す共有の置き場。XML では `{path}` のように波かっこで書く | [Nav2 Behavior Trees の 1 節](05_nav2_behavior_trees.html#s1) |
 | bond | bond〈きずな、結びつき〉 | Nav2 の lifecycle manager とサーバーの間のつながりを見張る仕組み。サーバーが落ちると、lifecycle manager がシステム全体を止める | [Navigation Concepts の 3 節](04_navigation_concepts.html#s3) |
 | bt_navigator | behavior tree ＋ navigator〈道案内をするもの〉 | 目標を `navigate_to_pose` の action で受け取り、behavior tree に沿って各サーバーに仕事を頼む Nav2 の node | [Navigation Concepts の 1 節](04_navigation_concepts.html#s1) |
 | colcon | collective construction〈まとめて組み立てる〉の略 | 複数の ROS 2 のパッケージを、依存の順にまとめてビルドする道具 | [環境構築の 5 節](00_setup.html#s5) |
+| condition（BT の節） | condition〈条件〉 | behavior tree で、条件を確かめるだけの節。成り立てば SUCCESS、成り立たなければ FAILURE を返す | [Nav2 Behavior Trees の 1 節](05_nav2_behavior_trees.html#s1) |
 | container（ROS 2） | container〈入れ物〉 | ROS 2 で、複数の node を 1 つのプロセスの中にまとめて動かす入れ物（component container）。Quickstart の launch file の既定では、Nav2 の node が `nav2_container` にまとめられる | [Quickstart の 6 節](01_quickstart.html#s6) |
 | container（Docker） | container〈入れ物〉 | image を元に動かす、ほかから切り離された環境。中のプログラムからは、自分だけの OS があるように見える | [Dev Container の 1 節](03_devcontainer_guide.html#s1) |
+| control（BT の節） | control〈制御〉 | behavior tree で、複数の子をどの順に tick するかを決める節（`PipelineSequence`・`RecoveryNode` など） | [Nav2 Behavior Trees の 1 節](05_nav2_behavior_trees.html#s1) |
 | controller | controller〈制御するもの〉 | Nav2 で、planner の経路に沿って走るための速度の指令を、周期ごとに計算する部品。local costmap を使う | [Navigation Concepts の 5 節](04_navigation_concepts.html#s5) |
 | costmap | cost〈費用。ここでは危険の度合い〉＋ map〈地図〉 | ロボットがぶつかる危険の大きさを、地図のマスごとに表したもの。Nav2 はこれを見て経路を考える | [Quickstart の 3 節](01_quickstart.html#s3) |
 | costmap filter | costmap ＋ filter〈ふるい、こし器〉 | 地図に付けた印（filter mask）を読んで、場所に応じて costmap や振る舞いを変える layer。立ち入り禁止・速度の制限などに使う | [Navigation Concepts の 7 節](04_navigation_concepts.html#s7-1) |
 | daemon | daemon〈守護の精霊〉。裏で動き続けるプログラムを指す | `ros2` コマンドが裏で使う、node や topic の一覧を覚えておく補助のプロセス（`_ros2_daemon`）。次のコマンドを速く動かすために、コマンドが終わっても残る | [Quickstart の 6 節](01_quickstart.html#s6) |
+| decorator（BT の節） | decorator〈飾るもの〉 | behavior tree で、1 つの子を包んで tick の送り方を変える節（`RateController` など） | [Nav2 Behavior Trees の 1 節](05_nav2_behavior_trees.html#s1) |
 | dev container | development〈開発〉＋ container | 開発に要る道具と依存をすべて入れた Docker の container。設定はプロジェクトの `.devcontainer/devcontainer.json` に書く | [Dev Container の冒頭](03_devcontainer_guide.html) |
 | Dockerfile | Docker ＋ file | Docker の image の作り方を、順に書いたファイル | [Dev Container の 1 節](03_devcontainer_guide.html#s1) |
 | footprint | footprint〈足跡、設置面〉 | costmap が使うロボットの外形。半径 `robot_radius` の円か、点の並びの多角形で表す | [Navigation Concepts の 5 節](04_navigation_concepts.html#s5-1) |
@@ -41,11 +46,13 @@ Nav2 日本語ガイド（非公式・作成中）の本文に出てきた用語
 | plugin | plugin〈差し込むもの〉 | 実行時に読み込む部品のライブラリ。ROS 2 の pluginlib の仕組みで、Nav2 のサーバーや costmap の layer は、計算を plugin に任せる | [Navigation Concepts の 4 節](04_navigation_concepts.html#s4) |
 | route | route〈道順〉 | Nav2 で、あらかじめ用意した道のグラフの上で道順を計算する部品（route_server） | [Navigation Concepts の 5 節](04_navigation_concepts.html#s5) |
 | RViz | ROS visualization〈ROS の可視化〉の略 | ROS 2 のデータ（地図・ロボットの位置・経路など）を画面に描く道具 | [環境構築の 2 節](00_setup.html#s2) |
+| service | service〈奉仕、役務〉 | ROS 2 で、依頼を送ると答えが 1 回返って終わる仕組み。action と違い、途中の経過は返らない | [Nav2 Behavior Trees の 2 節](05_nav2_behavior_trees.html#s2) |
 | SLAM | Simultaneous Localization and Mapping〈位置の推定と地図づくりを同時に行う〉の略 | 自分の位置を推定しながら地図を作る方法。Nav2 の既定は SLAM Toolbox | [Navigation Concepts の 6 節](04_navigation_concepts.html#s6) |
 | smoother | smoother〈なめらかにするもの〉 | Nav2 で、planner の経路のぎざぎざや急な向きの変化をならす部品 | [Navigation Concepts の 5 節](04_navigation_concepts.html#s5) |
 | stage | stage〈段階〉 | Dockerfile で、image を作る手順を区切った 1 つ 1 つ。前の stage の image に足していき、使う stage を選べる | [Dev Container の 4 節](03_devcontainer_guide.html#s4) |
 | systemd | system ＋ daemon の d | Ubuntu で、裏で動くプログラム（Docker Engine など）を起動・管理する仕組み | [Dev Container の 3-1 節](03_devcontainer_guide.html#s3-1) |
 | tf | transform〈変換〉の略 | 座標系どうしの位置関係。また、それを配る ROS 2 の仕組みと topic の名前 | [Quickstart の 1 節](01_quickstart.html#s1) |
+| tick | tick〈時計のカチッという音〉 | behavior tree で、根から節へ送る「動け」という合図。受けた節は SUCCESS・FAILURE・RUNNING のどれかを返す | [Nav2 Behavior Trees の 1 節](05_nav2_behavior_trees.html#s1) |
 | topic | topic〈話題〉 | ROS 2 で、node どうしが決まった型のデータを流す、名前つきの通り道 | [環境構築の 7 節](00_setup.html#s7) |
 | underlay | underlay〈下に敷くもの〉 | overlay の下にある元からの環境。apt で入れた ROS 2（`/opt/ros/jazzy`）など | [Local Installation の 5 節](02_local_installation.html#s5) |
 | URDF | Unified Robot Description Format の略 | ロボットの形（部品の大きさとつながり方）を記述するファイルの書式 | [Quickstart の 8 節](01_quickstart.html#s8) |
