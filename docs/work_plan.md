@@ -32,7 +32,7 @@
 
 書く順番は Quickstart を先にし、HTML のページの器をそこで決める。読む順番は表のとおり環境構築が先。ROS 2 の基礎は独立したページを作らず、各ページで初めて使う場面で説明する（`CLAUDE.md` の「内容の方針」）。一区切りの後の範囲は、公式の原稿の `docs/.nav.yml` の並びを基本にし、到達点で過不足を見て、区切りごとにユーザーに確かめてこの表に足す（2026-11-28）。2 つめの区切りより後は、Configuration & Development を公式の順（First-Time Robot Setup Guide → Navigation Plugins → Configuration Guide → Tuning Guide → Simple Commander API）に進める予定で、Tutorials は関係する章の後に差し込む。
 
-今の状態（2026-11-28）: 最初の一区切りの 4 ページを Pages に載せ、push 済み（2026-11-22）。2 つめの区切りを Dev Container と Nav2 Behavior Trees に決めた（その後は Configuration & Development を公式の順に進める。QA 表の 2026-11-28 の行）。Dev Container のページ（`03_devcontainer_guide.html`）を書き、2 回のレビューに対応した。Navigation Concepts は `04_navigation_concepts.html` に改めた。Dev Container の確かめは、ユーザーが Docker を入れた後に、確認待ちの一覧の 3 項目で行う。次は Nav2 Behavior Trees の構成案を作る。push はまだ（push のたびにユーザーの承認を得る）。確認待ちの一覧と「Pages に載せた後に確かめること」には、ユーザーの印や指摘はまだ無い。
+今の状態（2026-11-28）: 最初の一区切りの 4 ページを Pages に載せ、push 済み（2026-11-22）。2 つめの区切りを Dev Container と Nav2 Behavior Trees に決めた（その後は Configuration & Development を公式の順に進める。QA 表の 2026-11-28 の行）。Dev Container のページ（`03_devcontainer_guide.html`）を書き、2 回のレビューに対応した。Navigation Concepts は `04_navigation_concepts.html` に改めた。Dev Container の確かめは、ユーザーが Docker を入れた後に、確認待ちの一覧の 3 項目で行う。次は Nav2 Behavior Trees の構成案を作る。ここまでを push 済み（2026-11-28、`2e80aad` まで）。確認待ちの一覧と「Pages に載せた後に確かめること」には、ユーザーの印や指摘はまだ無い。
 
 ## 環境構築の構成案
 
