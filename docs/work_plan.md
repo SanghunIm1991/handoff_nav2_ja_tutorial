@@ -28,7 +28,8 @@
 | 順 | ページ | ファイル | 元にする公式のページ | 主に当たる到達点 | 状態 |
 | --- | --- | --- | --- | --- | --- |
 | 3 | Dev Container | `03_devcontainer_guide.html`（2026-11-28 に足した。このとき Navigation Concepts を `04_navigation_concepts.html` に改めた） | Getting Started / Dev Container | 1 | レビュー済み（ユーザーの確認待ち。Docker が未導入のため、3-1 節のほかは想定） |
-| 5 | Nav2 Behavior Trees | （構成案で決める） | Getting Started / Nav2 Behavior Trees | 2 | 未着手 |
+| 5 | Nav2 Behavior Trees | `05_nav2_behavior_trees.html` | Getting Started / Nav2 Behavior Trees の `index.md`・Nav2 に特有の節・既定の木の詳しい説明 | 2 | 構成案を決めた。書く |
+| 6 | 用意されている木（Provided Nav2 Behavior Trees） | `06_provided_behavior_trees.html` | Getting Started / Nav2 Behavior Trees の `trees/` の 7 本 | 2 | 構成案は 5 の後で詰める |
 
 書く順番は Quickstart を先にし、HTML のページの器をそこで決める。読む順番は表のとおり環境構築が先。ROS 2 の基礎は独立したページを作らず、各ページで初めて使う場面で説明する（`CLAUDE.md` の「内容の方針」）。一区切りの後の範囲は、公式の原稿の `docs/.nav.yml` の並びを基本にし、到達点で過不足を見て、区切りごとにユーザーに確かめてこの表に足す（2026-11-28）。2 つめの区切りより後は、Configuration & Development を公式の順（First-Time Robot Setup Guide → Navigation Plugins → Configuration Guide → Tuning Guide → Simple Commander API）に進める予定で、Tutorials は関係する章の後に差し込む。
 
@@ -83,6 +84,32 @@
 | 8. 安全のために | 信頼できるワークスペースだけ開く。自動で入る拡張機能（Copilot など）と、自動で同意しているライセンス（RTI Connext）を、開く前に確かめる | 公式の注意に、具体の確かめ所を足す |
 | 9. 製品に組み込むなら | チームと CI で環境をそろえる。`docker build` と `nav2_docker` の image（Docker Installation の要点）を自社の配布に使う場合の考え方。ライセンスの確認 | 足す |
 | 末尾 | 次のページ・出典・このページの用語 | — |
+
+## Nav2 Behavior Trees の構成案
+
+元にする公式のページ: Getting Started / Nav2 Behavior Trees（`jazzy`、`b22554c`）の 10 本の原稿（`index.md`、Nav2 に特有の節の紹介、既定の木の詳しい説明、7 つの木の例。合わせて約 1,150 行）。2 ページに分ける（2026-11-28 に決めた）。1 枚めは `05_nav2_behavior_trees.html`（Navigation Concepts と同じく、フォルダの名前を使う）で、`index.md`・Nav2 に特有の節・既定の木の詳しい説明と実習を扱う。2 枚めは `06_provided_behavior_trees.html`（木の原稿は 1 つのファイルではないので、公式の索引の見出し「Provided Nav2 Behavior Trees」から付けた）で、`trees/` の木の例を 1 つずつ説明する。木の XML は、原稿も `nav2_bt_navigator`・`nav2_behavior_tree` の `package.xml` も Apache-2.0。前提: Quickstart（シミュレーションの起動）と Navigation Concepts の 4 節（BT の基本）。主に当たる到達点: 2（behavior tree が何をしているかを説明できる）。
+
+調べて分かったこと（根拠を添える）:
+- 6 つの木の例（Navigate To Pose・Navigate Through Poses・Pause Near Goal-Obstacle・Consistent Replanning・Follow Dynamic Point・Odometry Calibration）と既定の木の詳しい説明の XML は、apt の `ros-jazzy-nav2-bt-navigator` 1.3.14 の `/opt/ros/jazzy/share/nav2_bt_navigator/behavior_trees/` の同名のファイルと、節と属性がすべて同じ（Python で XML を読んで比べた。違いは行の折り返しと見出しのコメントだけ）。
+- Navigate on Route Graph with Recovery の木は、Jazzy では公式の形のまま使えない見込み。XML が apt にも `jazzy` のソースの先頭（`c7046550`）にも無く、使う節のうち `WouldARouteRecoveryHelp` が `/opt/ros/jazzy/share/nav2_behavior_tree/nav2_tree_nodes.xml` に無い（ほかの `ComputeRoute`・`ConcatenatePaths` などはある）。実際に読み込んで確かめてはいない。
+- `index.md` の「とても簡単な navigator」の XML（`PipelineSequence`・`DistanceController`・`ComputePathToPose`・`FollowPath`）は、`BTCPP_format` の属性が無い。Jazzy の BehaviorTree.CPP V4 で読み込めるかは確かめていない（推測では、読めるが知らせが出るか、読めない）。
+- 目標の型 `nav2_msgs/action/NavigateToPose` に `string behavior_tree` の欄がある（`/opt/ros/jazzy/share/nav2_msgs/action/NavigateToPose.action`）。目標ごとに木のファイルを指定できるので、設定のファイルを変えずに、自分で書いた木で走らせられる。
+- 原稿の図（`assets/*.png`）は転載しない。既定の木は 30 節あり、図にするなら SVG の手描き（`svg-diagram`）の規模。
+
+| 節 | 中身 | 公式との違い |
+| --- | --- | --- |
+| 冒頭 | 製品で「障害物が消えるまで待ちたい」「エレベーターを待ちたい」など、動きの手順を変えたくなる場面の物語調の導入。注記 | 足す |
+| 0. 学習目標と完了条件 | 既定の木を読んで、どの順で何を試すかを説明できる。自分で書いた木の XML で、シミュレーションのロボットを目標へ動かせる | 足す |
+| 1. 全体像 | BT の節の 4 種類（action・condition・decorator・control）と、Nav2 の木で節が action でサーバーを呼ぶこと。BT の node と ROS 2 の node・action の語の違い | 公式の warning を前に出す |
+| 2. Nav2 に特有の節 | 主な action・condition・decorator と、`PipelineSequence`・`RecoveryNode`・`RoundRobin` の働き | 再構成。図は自作 |
+| 3. いちばん簡単な木 | `index.md` の簡単な navigator。何が無いか（回復・再試行など） | 再構成 |
+| 4. 実習: 自分の木で走らせる | Quickstart の起動 → 初期位置 → `ros2 action send_goal` で、既定の木と 3 節の木を `behavior_tree` の欄で指定して走らせ、ログの違いを見る | 足す |
+| 5. 既定の木を読む | Navigate To Pose の木（詳しい説明の原稿）。航行の subtree と回復の subtree、再計画の周期、回復の順番 | 再構成 |
+| 6. 次のページへ | 用意されている木の例は、次のページ（`06_provided_behavior_trees.html`）で 1 つずつ見る | — |
+| 7. 製品に組み込むなら | 自社の木を作るときの考え方（既定の木から始める、木のファイルの版の管理、自作の節は plugin の章へ） | 足す |
+| 末尾 | 次のページ・出典・このページの用語 | — |
+
+2 枚め（`06_provided_behavior_trees.html`）の骨組み: 冒頭・学習目標 → 木の一覧の表（何をする木か・ファイル名・既定の木との違い） → 木ごとの節（Navigate Through Poses・Pause Near Goal-Obstacle・Consistent Replanning・Follow Dynamic Point・Odometry Calibration） → Route Graph の木は「Jazzy の版には入っていない」と理由を添えて一言だけ触れ、公式へリンクする → 製品に組み込むなら。実習を置くかと細部は、1 枚めを書いた後に詰める。
 
 ## Quickstart の構成案
 
