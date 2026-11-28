@@ -3,7 +3,7 @@
 # 有効にする: git config core.hooksPath tools/git-hooks（PC ごとに 1 回）
 # 止めるもの: 空になったファイル、10 行以上から半分未満に減ったファイル、<!doctype や </html> が 2 つ以上ある HTML、< の直後が日本語の文字の並びがある HTML（タグとして読まれて消える。&lt; と書く）、列の数がそろわない Markdown の表、追加した行の中のこの PC のユーザー名・PC 名・プロンプトの形（サイトとリポジトリの URL の中の持ち主の名前は除いてから探す）。
 # 意図して大きく減らすときだけ ALLOW_SHRINK=1 を付けてコミットする（減り方の検査だけを通す。付ける前にユーザーに確かめる）。
-# 知らせるもの（止めない）: pages-html-page の点検、assets/site.css のクラスの使用、カタカナの用語の残り。
+# 知らせるもの（止めない）: pages-html-page の点検、assets/site.css のクラスの使用、カタカナの用語の残り、QA 表の推奨付きの問いで良い点かデメリットの無い案。
 set -u
 root=$(git rev-parse --show-toplevel) || exit 1
 cd "$root" || exit 1
@@ -86,6 +86,20 @@ if [ -f assets/site.css ]; then
 fi
 kata=$(for f in "${files[@]}"; do case "$f" in docs/qa_log.md) ;; *.html|*.md) grep -nHE 'ノード|トピック|オドメトリ|コンテナ|ボリューム|イメージ|launch ファイル' "$f" 2>/dev/null;; esac; done)
 [ -n "$kata" ] && note "カタカナの用語が残っている（英語にする決まり）:"$'\n'"$kata"
+# QA 表に追加した行で、質問の欄に「推奨」があるのに、「選択肢」の後を「／」で分けた案のどれかに「良い点」か「デメリット」が無いもの
+# （qa-log スキルの決まり。文書の決まりだけでは 2026-11-28 に 2 回漏れた）。補記の行は除く。
+qa=$(git diff --cached -U0 -- docs/qa_log.md | grep -E '^\+\| ' | python3 -I -c '
+import sys
+for l in sys.stdin:
+    c=l[1:].split("|")
+    if len(c)<5: continue
+    q=c[3]
+    if "推奨" not in q or "（補記" in q: continue
+    segs=(q.split("選択肢",1)[1] if "選択肢" in q else q).split("／")
+    bad=[str(i+1) for i,s in enumerate(segs) if not ("良い点" in s and "デメリット" in s)]
+    if len(segs)>1 and bad: print("  "+c[1].strip()+" "+c[2].strip()+": 案 "+"・".join(bad)+"（全 "+str(len(segs))+" 案）")
+' 2>/dev/null)
+[ -n "$qa" ] && note "QA 表の推奨付きの問いで、良い点かデメリットが無い案がある（各案に 1 句ずつ書く）:"$'\n'"$qa"
 
 [ "$fail" -eq 1 ] && { echo "[pre-commit] コミットを止めた。直してから、もう一度コミットする" >&2; exit 1; }
 exit 0
