@@ -71,7 +71,7 @@
     <div class="prose">
       <p><strong>Navigate on Route Graph with Recovery の木について</strong>: 公式の <code>jazzy</code> 版の文書には載っているが、この木の XML は、Jazzy の apt の版（1.3.14）にも、Nav2 のソースの <code>jazzy</code> ブランチにも入っていない。木が使う節のうち <code>WouldARouteRecoveryHelp</code> も、Jazzy の版の節の一覧（<code>nav2_behavior_tree</code> の <code>nav2_tree_nodes.xml</code>）に無い。そのため、Jazzy では公式の形のままでは使えない見込みで（読み込んで確かめてはいない）、このページでは扱わない。中身は公式のページで読める。</p>
       <p>同じフォルダには、公式の原稿が説明していない木も 6 つ入っている（<code>navigate_w_replanning_time.xml</code>・<code>navigate_w_replanning_distance.xml</code>・<code>navigate_w_replanning_speed.xml</code>・<code>navigate_w_replanning_only_if_goal_is_updated.xml</code>・<code>navigate_w_replanning_only_if_path_becomes_invalid.xml</code>・<code>navigate_w_recovery_and_replanning_only_if_path_becomes_invalid.xml</code>）。名前は、経路を計算し直すきっかけ（時間・距離・速さ・目標の更新・経路が無効になったとき）を表している。このページでは中身を扱わないが、XML を開けば、これまでに見た節の組み合わせで読める。</p>
-      <p><strong>名前の決まり</strong>: 経路を計算し・追う木では、経路を追う節は <code>controller_id</code> に <code>FollowPath</code>、経路を計算する節は <code>planner_id</code> に <code>GridBased</code> という名前を使う（実際には、<code>…Selector</code> の節を通して渡す）。これは、Navigation Concepts の章の 5 節で見たとおり、Quickstart の既定の設定で controller のサーバーと planner のサーバーに登録したやり方の名前で、中身は MPPI と NavFn である。公式の原稿は、木に書くやり方の名前を、DWB のようなアルゴリズムの名前ではなく、「経路を追う」のような役目の名前にしておくと、木やアプリを書く人がアルゴリズムの細部を気にせずに済む、と説明している。</p>
+      <p><strong>名前の決まり</strong>: 経路を計算し・追う木では、経路を追う節は <code>controller_id</code> に <code>FollowPath</code>、経路を計算する節は <code>planner_id</code> に <code>GridBased</code> という名前を使う（実際には、<code>…Selector</code> の節を通して渡す）。これは、Navigation Concepts の章の 5 節で見たとおり、Quickstart の既定の設定で controller のサーバーと planner のサーバーに登録したやり方の名前で、中身は MPPI と NavFn である。公式の原稿は、木に書くやり方の名前を、DWB のようなアルゴリズムの名前ではなく、方式や役目を表す名前（<code>FollowPath</code>・<code>GridBased</code>）にしておくと、木やアプリを書く人がアルゴリズムの細部を気にせずに済む、と説明している。</p>
     </div>
   </section>
 
@@ -101,8 +101,8 @@
       <ul>
         <li><code>RateController hz="0.333"</code>: 経路の計算を、約 3 秒に 1 回にする（既定の木は 1 秒に 1 回）。</li>
         <li><code>{goals}</code>: bt_navigator が受け取った位置の並びが入る blackboard の変数。既定の木の <code>{goal}</code>（1 つの目標）に当たる。</li>
-        <li><code>RemovePassedGoals</code>: ロボットが、並びの先頭（次に向かう経由点）から <code>radius</code>（0.7 m）以内に入ったら、その経由点を並びから取り除き、<code>{goals}</code> に書き戻す。公式の原稿は、通り過ぎた経由点を通る経路を、この先も計算し直し続けないためだと説明している。原稿の文章は「0.5 以内」と書いているが、XML の値は 0.7 である（0.5 は、この節の <code>radius</code> の既定値）。</li>
-        <li><code>ReactiveSequence</code>: 子を順に tick するが、tick のたびに先頭の子から確かめ直す（4 節で詳しく見る）。ここでは、経路を計算する前に、必ず通った経由点を取り除く。</li>
+        <li><code>RemovePassedGoals</code>: ロボットが、並びの先頭（次に向かう経由点）から <code>radius</code>（0.7 m）以内に入ったら、その経由点を並びから取り除き、<code>{goals}</code> に書き戻す。Configuration Guide の説明では、近づいた点のほか、最近通り過ぎた点も取り除く。公式の原稿は、通り過ぎた経由点を通る経路を、この先も計算し直し続けないためだと説明している。原稿の文章は「0.5 以内」と書いているが、XML の値は 0.7 である（0.5 は、この節の <code>radius</code> の既定値）。</li>
+        <li><code>ReactiveSequence</code>: 子を順に tick するが、tick のたびに先頭の子から確かめ直す（4 節の図 1 の見張りの枝で、条件を毎回見張る使い方を詳しく見る）。ここでは、経路を計算する前に、必ず通った経由点を取り除く。</li>
         <li><code>ComputePathThroughPoses</code>: 残った経由点を順に通って最後の目標へ着く経路を計算し、<code>{path}</code> に書く。既定の木の <code>ComputePathToPose</code> に当たる。</li>
         <li>2 つめの子の <code>Sequence</code>: 経路の計算が失敗したときの立て直しで、既定の木と同じく、役に立ちそうな失敗なら global costmap を消す。公式の原稿は、ここに別の planner のやり方を試す、といった立て直しを足せると書いている。</li>
       </ul>
@@ -190,8 +190,8 @@ Goal finished with status: SUCCEEDED</code></pre>
       <div class="prose">
         <p><code>number_of_poses_remaining</code> は、まだ残っている位置の数である。最初は 2 で、走り始めてから約 3 秒の feedback で 1 に減った。そのときロボットは (-0.96, -0.57) にいて、1 つめの経由点 (-0.5, -0.5) まで約 0.47 m だった。<code>RemovePassedGoals</code> が、経由点の 0.7 m 以内に入ったロボットを見て、経由点を並びから取り除いたのである。<code>distance_remaining</code>（最後の目標までの残りの道のり。最初の feedback では 0 だった。まだ経路が無いためと読める）は、このとき約 1.5 m だった。</p>
         <p>経由点から 0.7 m 以内に入ったのは、もう少し前だったはずである。それでも約 3 秒の時点で減ったのは、<code>RemovePassedGoals</code> が <code>RateController hz="0.333"</code> の下にあり、約 3 秒ごとの経路の計算のときにしか tick されないためと読める（木の形からの読みで、Nav2 のソースでは確かめていない）。最後の目標は取り除かれず、<code>number_of_poses_remaining</code> は終わりまで 1 のままだった。T1 の <code>through 2 poses</code> は、2 つの位置を受け取ったという表示である。作成時の環境では、目標を受け付けてから約 6 秒で <code>SUCCEEDED</code> になり、回復は 1 回も起きなかった（feedback の <code>number_of_recoveries</code> が 0 のまま）。</p>
-        <p>経由点を取り除くかは約 3 秒ごとにしか確かめないので、その間に経由点の近くを過ぎてしまうと、取り除かれずに残ることもありうる（確かめていない）。数が本文と違ったときは、<code>number_of_poses_remaining</code> の数と、ロボットの位置（<code>current_pose</code>）とを見比べれば、何が起きたかを読める。</p>
-        <p><code>SUCCEEDED</code> にならなかったときや、もう一度試すときは、Quickstart の章の 7 節のとおりに止めて、3-1 節から起動し直す。目標に着いた後のロボットは (0.5, -0.5) にいるので、同じ座標を送り直すと、経由点はロボットの後ろになる。</p>
+        <p><code>number_of_poses_remaining</code> が 1 に減る時刻や位置は、ロボットの動きによって本文と違いうる。違ったときは、減った直後の feedback の <code>current_pose</code> と、1 つめの経由点 (-0.5, -0.5) との距離を比べる（0.7 m 以内か、すでに通り過ぎているか）。</p>
+        <p><code>SUCCEEDED</code> にならなかったときや、もう一度試すときは、Quickstart の章の 7 節のとおりに止めて、3-1 節から起動し直す。目標に着いた後のロボットは (0.5, -0.5) の近くにいるので、同じ座標を送り直すと、経由点はロボットの後ろになる。</p>
       </div>
     </div>
     <div class="prose">
@@ -203,7 +203,7 @@ Goal finished with status: SUCCEEDED</code></pre>
     <h2 id="s4">4. Navigate To Pose and Pause Near Goal-Obstacle：ゴールの前で待つ</h2>
     <div class="prose">
       <p>目標の近くに、一時的な障害物（フォークリフト・人など）が止まっていることがある。既定の木は、経路を計算し直して回り道をする。けれども、障害物がすぐに去るなら、回り道より少し待つほうが早く着く。この木は、そのための木で、公式の原稿は、仕事の 1 回にかかる時間（cycle time）を縮めたい現場に向けた例として紹介している。</p>
-      <p>既定の木との一番の違いは、経路を追う部分にある。既定の木では <code>FollowPath</code> を包む <code>RecoveryNode</code> がそのまま航行の最後の子だったが、この木では、その前に見張りの枝が入っている（図 1）。経路の計算の周期（1 秒に 1 回）と、回復の順番（costmap を両方消す → 回る → 待つ → 下がる）は、既定の木と同じである。ただし、既定の木にある <code>WouldAPlannerRecoveryHelp</code>・<code>WouldAControllerRecoveryHelp</code> の確かめ（Nav2 Behavior Trees の章の 5-2 節・5-3 節）が無く、失敗の理由によらず、立て直しと回復を試す。</p>
+      <p>既定の木との一番の違いは、経路を追う部分にある。既定の木では <code>FollowPath</code> を包む <code>RecoveryNode</code> がそのまま航行の最後の子だったが、この木では、それが <code>ReactiveSequence</code>（<code>MonitorAndFollowPath</code>）に包まれ、その前の子として見張りの枝が入っている（図 1）。経路の計算の周期（1 秒に 1 回）と、回復の順番（costmap を両方消す → 回る → 待つ → 下がる）は、既定の木と同じである。ただし、既定の木にある <code>WouldAPlannerRecoveryHelp</code>・<code>WouldAControllerRecoveryHelp</code> の確かめ（Nav2 Behavior Trees の章の 5-2 節・5-3 節）が無く、失敗の理由によらず、立て直しと回復を試す。</p>
     </div>
     <figure>
       <div class="diagram">
@@ -275,11 +275,11 @@ Goal finished with status: SUCCEEDED</code></pre>
       <p><code>Fallback</code> は、子を順に、どれかが成功するまで tick する（Nav2 Behavior Trees の章の 2 節）。1 つめの子の <code>ReactiveSequence</code> が成功すれば、2 つめの子の <code>ComputePathToPose</code> は tick されず、今の経路を使い続ける。1 つめの子が成功するのは、次の 3 つがすべて成り立つときである。</p>
       <ul>
         <li><code>PathExpiringTimer</code> は、経路が新しくなってから <code>seconds</code>（10 秒）たつと <code>SUCCESS</code> を返す condition の節である。<code>Inverter</code>（子の <code>SUCCESS</code> と <code>FAILURE</code> を入れ替える decorator）で包んであるので、「経路が新しくなってから 10 秒たっていない」が条件になる。</li>
-        <li><code>GlobalUpdatedGoal</code> は、目標が変わったら <code>SUCCESS</code> を返す。<code>Inverter</code> で包んで「目標が変わっていない」が条件になる。Nav2 Behavior Trees の章で見た <code>GoalUpdated</code> との違いは、公式の説明では、tick をまたいで今の目標を覚えておき、tick をまたいで目標を覚えているので、前の tick 以降の目標の変化を取りこぼさない点である。</li>
+        <li><code>GlobalUpdatedGoal</code> は、目標が変わったら <code>SUCCESS</code> を返す。<code>Inverter</code> で包んで「目標が変わっていない」が条件になる。Nav2 Behavior Trees の章で見た <code>GoalUpdated</code> との違いは、公式の説明では、tick をまたいで今の目標（<code>goals</code> も）を覚えておき、目標の全体での（"global" な）変化に応じる点である。</li>
         <li><code>IsPathValid</code> は、今の経路の上に障害物が無ければ <code>SUCCESS</code> を返す。</li>
       </ul>
       <p>裏返すと、<strong>経路が無効になった・目標が変わった・10 秒たった</strong>のどれかが起きたときだけ、経路を計算し直す。この確かめは <code>RateController hz="2.0"</code> の下にあり、1 秒に 2 回行われる。経路を追う部分と回復の順番は既定の木と同じだが、4 節の木と同じく <code>WouldA…RecoveryHelp</code> の確かめは無く、失敗の理由によらず立て直しと回復を試す。</p>
-      <p>公式の原稿は、この木の利点を述べていないので、ここからは教材としての見方である。経路をいつも計算し直すと、計算のたびに経路が少しずつ変わり、ロボットの動きが揺れることがありうる。この木は、経路が使えるうちは同じ経路を使い続け、それでも 10 秒ごとには計算し直して、新しく見えてきた近道も拾う。どちらを選ぶかは、planner の計算の重さと、動きの安定のどちらを重く見るかによる。</p>
+      <p>公式の原稿は、この木の利点を述べていないので、ここからは教材としての見方である。経路をいつも計算し直すと、計算のたびに経路が少しずつ変わり、ロボットの動きが揺れることがありうる。この木は、経路が使えるうちは同じ経路を使い続け、それでも 10 秒ごとには計算し直して、新しく見えてきた近道も拾う。その代わり、既定の木（1 秒ごとに計算し直す）に比べると、近道が空いたといった状況の変化を拾うのが、最大で 10 秒ほど遅れうる。計算の軽さと動きの安定を取るか、変化に応じる速さを取るかで選ぶ。</p>
     </div>
   </section>
 
@@ -331,7 +331,7 @@ Goal finished with status: SUCCEEDED</code></pre>
     <h2 id="s8">8. 製品に組み込むなら</h2>
     <div class="prose">
       <ul>
-        <li><strong>用意された木を部品として使う</strong>。このページの木の多くは、既定の木の一部を差し替えたものだった。製品の木を作るときも、近い木を選び、違いの部分（見張りの枝、経路を計算し直す条件、目標の差し替えなど）を組み合わせる。たとえば、ゴールの前で待つ見張りの枝を、経由点を回る木に入れることもできる。組み合わせた木は、Nav2 Behavior Trees の章の 4 節のように、目標の <code>behavior_tree</code> の欄で試してから既定にする（<code>navigate_through_poses</code> の目標にも、同じ欄がある）。</li>
+        <li><strong>用意された木を部品として使う</strong>。このページの木の多くは、既定の木の一部を差し替えたものだった。製品の木を作るときも、近い木を選び、違いの部分（見張りの枝、経路を計算し直す条件、目標の差し替えなど）を組み合わせる。たとえば、ゴールの前で待つ見張りの枝を、経由点を回る木に入れることも考えられる（確かめていない）。組み合わせた木は、Nav2 Behavior Trees の章の 4 節のように、目標の <code>behavior_tree</code> の欄で試してから既定にする（<code>navigate_through_poses</code> の目標にも、同じ欄がある）。</li>
         <li><strong>既定の木を設定で決める</strong>。2 つの action の既定の木は、bt_navigator の parameter の <code>default_nav_to_pose_bt_xml</code>・<code>default_nav_through_poses_bt_xml</code> で決める（空なら、このページで見た <code>nav2_bt_navigator</code> の木を使う）。どの木で動いているかが設定のファイルで分かるように、製品ではこちらを使う。</li>
         <li><strong>経由点の回り方を選ぶ</strong>。<code>navigate_through_poses</code> は、経由点を通る経路を計算して追う action で、この木には経由点ごとに仕事を挟む節は無い。経由点ごとに止まって仕事（写真を撮る・荷を受け取るなど）をしたいなら、Navigation Concepts の章の 5 節の waypoint following が、各地点の仕事を plugin で差し込める仕組みになっている。</li>
         <li><strong>終わらない木の止め方を決める</strong>。Follow Dynamic Point のように取り消すまで終わらない木を使うなら、アプリの側で、いつ取り消すか・相手を見失ったらどうするかを決めておく。</li>
@@ -345,7 +345,7 @@ Goal finished with status: SUCCEEDED</code></pre>
     <div class="prose">
       <p>このページで、公式の文書の Getting Started の範囲は終わりである。この後は、自分のロボットに Nav2 を組み込むための設定（First-Time Robot Setup Guide）へ進む予定である（準備中）。このページに出てきた用語は、<a href="glossary.html">用語集</a>にまとめてある。</p>
       <p>出典: Nav2 の公式の文書の木の例のページ「<a href="https://docs.nav2.org/jazzy/getting_started/nav2_behavior_trees/trees/nav_through_poses_recovery/">Navigate Through Poses</a>」「<a href="https://docs.nav2.org/jazzy/getting_started/nav2_behavior_trees/trees/nav_to_pose_and_pause_near_goal_obstacle/nav_to_pose_and_pause_near_goal_obstacle/">Navigate To Pose and Pause Near Goal-Obstacle</a>」「<a href="https://docs.nav2.org/jazzy/getting_started/nav2_behavior_trees/trees/nav_to_pose_with_consistent_replanning_and_if_path_becomes_invalid/">Navigate To Pose With Consistent Replanning And If Path Becomes Invalid</a>」「<a href="https://docs.nav2.org/jazzy/getting_started/nav2_behavior_trees/trees/follow_point/">Follow Dynamic Point</a>」「<a href="https://docs.nav2.org/jazzy/getting_started/nav2_behavior_trees/trees/odometry_calibration/odometry_calibration/">Odometry Calibration</a>」「<a href="https://docs.nav2.org/jazzy/getting_started/nav2_behavior_trees/trees/navigate_on_route_graph_w_recovery/">Navigate on Route Graph with Recovery</a>」（原稿: <a href="https://github.com/ros-navigation/docs.nav2.org/tree/b22554c/docs/getting_started/nav2_behavior_trees/trees">trees のフォルダ</a>、<code>ros-navigation/docs.nav2.org</code> の <code>jazzy</code> ブランチ、コミット <code>b22554c</code>、2026-08-31。著作者: Open Navigation LLC と Nav2 の文書の寄稿者）。節の振る舞いの説明の一部は、同じコミットの Configuration Guide の各節のページ（<code>RemovePassedGoals</code>・<code>PathLongerOnApproach</code>・<code>PathExpiringTimer</code>・<code>GlobalUpdatedGoal</code>・<code>IsPathValid</code>・<code>GoalUpdater</code>・<code>TruncatePath</code>）と「<a href="https://docs.nav2.org/jazzy/configuration_and_development/configuration_guide/core_servers/configuring_bt_navigator/">Behavior-Tree Navigator</a>」の設定の説明、Tutorials の「<a href="https://docs.nav2.org/jazzy/tutorials/general_tutorials/navigation2_dynamic_point_following/navigation2_dynamic_point_following/">Dynamic Object Following</a>」（<code>/goal_update</code> の topic）に拠った。ライセンスは <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>。このページは、その内容を日本語で再構成し、説明の追加（1 節の一覧と Jazzy の版との照合、3 節の実習、5 節の条件の読み方、8 節など）と省略（Navigate on Route Graph with Recovery の木の中身、木の全体の XML、原稿の図・GIF・動画）を加えたもので、逐語の翻訳ではない。</p>
-      <p>2 節・5 節・6 節の XML の抜粋は、上の公式の原稿の木の例のページに載っている XML から取り、5 節と 6 節では一部を「…」で省いた（Jazzy の apt の版 1.3.14 の <code>nav2_bt_navigator</code> の木のファイルと、節と値が同じであることを確かめた）。<code>RemovePassedGoals</code> の <code>radius</code> の既定値（0.5）は、同じ版の <code>nav2_behavior_tree</code> の節の一覧 <code>nav2_tree_nodes.xml</code> から読んだ。</p>
+      <p>2 節・5 節・6 節の XML の抜粋は、上の公式の原稿の木の例のページに載っている XML の一部を取り出したもので、6 節では属性の一部を「…」で省いた（Jazzy の apt の版 1.3.14 の <code>nav2_bt_navigator</code> の木のファイルと、節と値が同じであることを確かめた）。<code>RemovePassedGoals</code> の <code>radius</code> の既定値（0.5）は、同じ版の <code>nav2_behavior_tree</code> の節の一覧 <code>nav2_tree_nodes.xml</code> から読んだ。</p>
       <p>公式の画像は使っておらず、図はこの教材で作った。</p>
     </div>
   </section>
