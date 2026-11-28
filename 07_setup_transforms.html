@@ -65,7 +65,7 @@
           <tr><td>8</td><td>Setting Up The URDF</td><td><code>sam_bot</code> の形と座標系を URDF に書き、<code>robot_state_publisher</code> で固定の関係を配る。RViz で見る</td></tr>
           <tr><td>9</td><td>Setting Up The SDF</td><td>Gazebo が読むロボットのモデル（SDF）を作る</td></tr>
           <tr><td>10</td><td>Setting Up Odometry</td><td>Gazebo の plugin で車輪の odometry を作り、ROS 2 に橋渡しする</td></tr>
-          <tr><td>11</td><td>Smoothing Odometry using Robot Localization</td><td>IMU と車輪の odometry を、<code>robot_localization</code> で 1 つに合わせる</td></tr>
+          <tr><td>11</td><td>Smoothing Odometry using Robot Localization</td><td>IMU（加速度と角速度を測るセンサー）と車輪の odometry を、<code>robot_localization</code> で 1 つに合わせる</td></tr>
           <tr><td>12</td><td>Setting Up Sensors</td><td>LIDAR などのセンサーを Gazebo で模擬し、その値を ROS 2 に届ける</td></tr>
           <tr><td>13</td><td>Mapping and Localization</td><td>SLAM で地図を作り、AMCL で地図の上の位置を推定する。センサーの値を costmap に使う設定をする</td></tr>
           <tr><td>14</td><td>Setting Up the Robot's Footprint</td><td>ロボットの外形（footprint）を Nav2 に教える</td></tr>
@@ -74,7 +74,7 @@
       </table>
     </div>
     <div class="prose">
-      <p><code>sam_bot</code> は、公式の手引きのために作られた、2 つの車輪で動く箱形のロボットである。公式が仕上がりの形を、Nav2 の練習用のリポジトリ <a href="https://github.com/ros-navigation/navigation2_tutorials/tree/jazzy/sam_bot_description"><code>ros-navigation/navigation2_tutorials</code> の <code>sam_bot_description</code></a>（<code>jazzy</code> ブランチ）に置いている。Setting Up The URDF の章から、これを手元で少しずつ書いていく。</p>
+      <p><code>sam_bot</code> は、公式の手引きのために作られた練習用のロボットで、箱形の台車を後ろの 2 つの車輪で動かし、前を小さな車輪（キャスター）で支える。左右の車輪の回し方の差で向きを変える形（差動駆動）である。公式が仕上がりの形を、Nav2 の練習用のリポジトリ <a href="https://github.com/ros-navigation/navigation2_tutorials/tree/jazzy/sam_bot_description"><code>ros-navigation/navigation2_tutorials</code> の <code>sam_bot_description</code></a>（<code>jazzy</code> ブランチ）に置いている。Setting Up The URDF の章から、これを手元で少しずつ書いていく。</p>
     </div>
   </section>
 
@@ -126,8 +126,8 @@
       <figcaption>図 1　台車とセンサーの 2 つの座標系。左は横から見たロボットで、塗りつぶした点が座標系の原点、点線が原点から原点へのずれを表す。右は同じ関係を座標系の木で表したもので、矢印は親から子への向きである。括弧の中は (x, y, z) で、単位は m。横に長い図は、狭い画面では横にスクロールして見る。</figcaption>
     </figure>
     <div class="prose">
-      <p>座標系が 2 つなら、ずれを自分で足し引きしてもよい。けれども、座標系が増え、しかも互いに動く（地図の上をロボットが走る、など）と、手で管理するのは大変になる。tf2 を使うと、関係を一度登録しておけば、どの座標系からどの座標系への変換も、ライブラリに頼めば計算してくれる。</p>
-      <p>tf2 は、関係を木の形で持つ。木の 1 つ 1 つの点が座標系で、点と点を結ぶ枝が「親から子へ」の変換である。木なので、どの 2 つの座標系の間も、たどる道は 1 つに決まる。この例では、<code>base_link</code> を親、<code>base_laser</code> を子にする（図 1 の右）。後でほかのセンサーや車輪を足すときも、台車の中心を通して関係をたどるのが自然だからである。</p>
+      <p>座標系が 2 つなら、ずれを自分で足し引きしてもよい。けれども、座標系が増え、しかも互いに動く（地図の上をロボットが走る、など）と、手で管理するのは大変になる。tf2 を使うと、座標系どうしの関係を配っておけば（動かない関係は一度、動く関係は動くたびに）、どの座標系からどの座標系への変換も、ライブラリが計算してくれる。</p>
+      <p>tf2 は、関係を木の形で持つ。木の 1 つ 1 つの点が座標系で、点と点を結ぶ枝が「親から子へ」の変換である。木なので、どの 2 つの座標系の間も、たどる道は 1 つに決まる。そのために、1 つの座標系の親は 1 つだけと決まっている（子はいくつあってもよい）。この例では、<code>base_link</code> を親、<code>base_laser</code> を子にする（図 1 の右）。後でほかのセンサーや車輪を足すときも、台車の中心を通して関係をたどるのが自然だからである。</p>
       <p>枝に書くのは、親から見た子の位置と向きである。この例では、親の <code>base_link</code> から見て、子の <code>base_laser</code> は (x: 0.1 m, y: 0.0 m, z: 0.2 m) にあり、向きは同じである。逆に、子の <code>base_laser</code> から見ると、親の <code>base_link</code> は (−0.1, 0, −0.2) にある。木に登録するのは片方の向き（親から子）だけで、逆向きは tf2 が計算する。3 節で、これを確かめる。</p>
     </div>
   </section>
@@ -168,6 +168,9 @@ from 'base_link' to 'base_laser'</code></pre>
 source /opt/ros/jazzy/setup.bash
 
 ros2 run tf2_ros tf2_echo base_link base_laser</code></pre>
+    <div class="prose">
+      <p><code>tf2_echo A B</code> は、A の座標系から見た B の位置と向きを表示する。ここでは、<code>base_link</code> から見た <code>base_laser</code> である。</p>
+    </div>
     <div class="expect">
       <h4>期待する結果</h4>
 <pre class="out"><code>[INFO] [1795874078.339474110] [tf2_echo]: Waiting for transform base_link ->  base_laser: Invalid frame ID "base_link" passed to canTransform argument target_frame - frame does not exist
@@ -183,13 +186,13 @@ At time 0.0
   0.000  0.000  0.000  1.000
 （以下、At time から Matrix までの塊が 1 秒ごとに続く）</code></pre>
       <div class="prose">
-        <p>最初の <code>Waiting for transform</code> は、起動した直後でまだ関係を受け取っていないという意味で、すぐに次の表示が始まれば問題ない。この行が続くときは、T1 の <code>static_transform_publisher</code> が動いているか、2 つのターミナルで環境変数 <code>ROS_DOMAIN_ID</code>（同じ番号の node どうしだけがやり取りする）が同じかを確かめる。<code>Translation</code> が、親の <code>base_link</code> から見た子の <code>base_laser</code> の位置で、T1 で与えた (0.1, 0, 0.2) になっている。</p>
+        <p>最初の <code>Waiting for transform</code> は、起動した直後でまだ関係を受け取っていないという意味で、すぐに次の表示が始まれば問題ない。この行が続くときは、T1 の <code>static_transform_publisher</code> が動いているか、2 つのターミナルで環境変数 <code>ROS_DOMAIN_ID</code>（同じ番号の node どうしだけがやり取りする）が同じかを確かめる。それぞれのターミナルで <code>echo $ROS_DOMAIN_ID</code> を実行し、何も表示されなければ、決めていない（既定の 0）。<code>Translation</code> が、親の <code>base_link</code> から見た子の <code>base_laser</code> の位置で、T1 で与えた (0.1, 0, 0.2) になっている。</p>
         <ul>
           <li><code>Rotation</code>: 向きのずれを 3 通りで表す。四元数と、x・y・z の軸のまわりの回転（roll・pitch・yaw。RPY）のラジアンと度である。<code>-0.000</code> は、計算の途中で負の符号が付いたもの（負のゼロ、またはごく小さな負の値）で、0 と同じと読んでよい。</li>
           <li><code>Matrix</code>: 移動と回転をまとめた 4 行 4 列の行列（同次変換行列）である。左上の 3 行 3 列が回転（ここでは回転なし）、右の列の上の 3 つが移動量 (0.1, 0, 0.2) である。</li>
-          <li><code>At time 0.0</code>: 固定の変換は、どの時刻でも同じ値として扱われるため、時刻は 0.0 と表示される（Navigation Concepts の章の 6 節で見た <code>map</code> → <code>odom</code> は時間とともに変わる関係なので、時刻が付いていた）。</li>
+          <li><code>At time 0.0</code>: 引いた関係に付いている時刻である。<code>tf2_echo</code> は、時刻を指定しないと、時刻 0（「いちばん新しい値」の意味）で関係を引く。<code>/tf_static</code> で配られるメッセージには配った時刻が付いている（3-4 節）が、tf2 は固定の変換をどの時刻にも使える値として持つので、引いた結果の時刻は 0.0 と表示される（Navigation Concepts の章の 6 節で見た <code>map</code> → <code>odom</code> は時間とともに変わる関係なので、時刻が付いていた）。</li>
         </ul>
-        <p>公式の原稿の表示は、<code>Translation</code> と四元数の 2 行だけである。Jazzy の <code>tf2_echo</code> は、それに加えて RPY と行列の行も出す。確かめたら、T2 で <kbd>Ctrl</kbd>+<kbd>C</kbd> を押して止める。</p>
+        <p>公式の原稿の表示は、<code>At time</code>・<code>Translation</code>・四元数の 3 行である。Jazzy の <code>tf2_echo</code> は、それに加えて RPY と行列の行も出す。確かめたら、T2 で <kbd>Ctrl</kbd>+<kbd>C</kbd> を押して止める。</p>
       </div>
     </div>
 
@@ -213,7 +216,7 @@ At time 0.0
   0.000  0.000  0.000  1.000
 （以下、同じ塊が 1 秒ごとに続く）</code></pre>
       <div class="prose">
-        <p>今度は、子の <code>base_laser</code> から見た親の <code>base_link</code> の位置なので、符号が反対の (−0.1, 0, −0.2) になる。T1 では親から子への向きしか与えていないが、tf2 は、木の枝を逆にたどって、逆向きの変換を計算した。回転があるときは、逆向きの移動量は単に符号を変えただけにはならない（回転した軸で測り直すため）が、その計算も tf2 が行う。確かめたら、<kbd>Ctrl</kbd>+<kbd>C</kbd> で止める。</p>
+        <p>今度は、子の <code>base_laser</code> から見た親の <code>base_link</code> の位置なので、符号が反対の (−0.1, 0, −0.2) になる。T1 では親から子への向きしか与えていないが、tf2 は、木の枝を逆にたどって、逆向きの変換を計算した。回転があるときは、逆向きの移動量は単に符号を変えただけにはならない（回転した軸で測り直すため）が、その計算も tf2 が行う。これは 3-5 節で確かめる。確かめたら、<kbd>Ctrl</kbd>+<kbd>C</kbd> で止める。</p>
       </div>
     </div>
 
@@ -245,7 +248,39 @@ ros2 topic echo /tf_static --once</code></pre>
 ---</code></pre>
       <div class="prose">
         <p>型は <a href="https://github.com/ros2/geometry2/blob/jazzy/tf2_msgs/msg/TFMessage.msg"><code>tf2_msgs/msg/TFMessage</code></a> で、親（<code>frame_id</code>）・子（<code>child_frame_id</code>）・移動量・回転を並べたものである。<code>stamp</code> は配り始めた時刻で、実行のたびに変わる。</p>
-        <p>固定の変換は、変わらないので、くり返し送り直さない。代わりに <code>/tf_static</code> は、最後に配った値を残しておき、後から購読を始めた node にも届ける設定になっている。ROS 2 では、topic の届け方を QoS（Quality of Service。届け方の設定の組）で決め、そのうち「後から来た相手にも最後の値を届けるか」を durability と呼ぶ。<code>/tf_static</code> の durability は transient local（届ける）である。作成時の環境では、配り始めてから約 10 秒後に起動したこのコマンドでも、値を受け取れた。時間とともに変わる関係（<code>map</code> → <code>odom</code> など）は、別の topic の <code>/tf</code> で、くり返し配られる。</p>
+        <p>固定の変換は、変わらないので、くり返し送り直さない。代わりに <code>/tf_static</code> は、最後に配った値を残しておき、後から購読を始めた node にも届ける設定になっている。ROS 2 では、topic の届け方を QoS（Quality of Service。届け方の設定の組）で決め、そのうち「後から来た相手にも最後の値を届けるか」を durability と呼ぶ。<code>/tf_static</code> の durability は transient local（届ける）である。作成時の環境では、配り始めてから約 10 秒後に起動したこのコマンドでも、値を受け取れた。ただし、後からでも届くのは、受け取る側も transient local で購読したときだけである。tf2 のライブラリで受け取る node はそうなっていて、<code>ros2 topic echo</code> も、配る側がすべて transient local なら同じ設定で購読する。時間とともに変わる関係（<code>map</code> → <code>odom</code> など）は、別の topic の <code>/tf</code> で、くり返し配られる。</p>
+      </div>
+    </div>
+    <h3 id="s3-5">3-5. 回転を入れて、逆の向きを見る</h3>
+    <div class="prose">
+      <p>センサーを、左へ 90 度回して取り付けたとする（z の軸のまわりに π/2 ラジアン。約 1.5708）。T1 で <kbd>Ctrl</kbd>+<kbd>C</kbd> を押して止め、<code>--yaw</code> だけを変えて配り直す。</p>
+    </div>
+<pre class="cmd"><code># T1
+ros2 run tf2_ros static_transform_publisher --x 0.1 --y 0 --z 0.2 --roll 0 --pitch 0 --yaw 1.5708 --frame-id base_link --child-frame-id base_laser</code></pre>
+<pre class="cmd"><code># T2
+ros2 run tf2_ros tf2_echo base_laser base_link</code></pre>
+    <div class="expect">
+      <h4>期待する結果</h4>
+      <div class="prose">
+        <p>T1:</p>
+      </div>
+<pre class="out"><code>[INFO] [1795877121.751651070] [static_transform_publisher_38v0wdZEGHxKUIc0]: Spinning until stopped - publishing transform
+translation: ('0.100000', '0.000000', '0.200000')
+rotation: ('0.000000', '0.000000', '0.707108', '0.707105')
+from 'base_link' to 'base_laser'</code></pre>
+      <div class="prose">
+        <p>T2（抜粋）:</p>
+      </div>
+<pre class="out"><code>（Waiting for transform の行は 3-2 節と同じ。中略）
+At time 0.0
+- Translation: [0.000, 0.100, -0.200]
+- Rotation: in Quaternion (xyzw) [0.000, 0.000, -0.707, 0.707]
+- Rotation: in RPY (radian) [0.000, 0.000, -1.571]
+- Rotation: in RPY (degree) [0.000, 0.000, -90.000]
+（中略。以下、同じ塊が 1 秒ごとに続く）</code></pre>
+      <div class="prose">
+        <p>T1 の <code>rotation</code> は、z の軸のまわりに 90 度回したことを表す四元数で、最後の 2 つの数が 0.707108 と 0.707105 で少しだけ違うのは、1.5708 が π/2 を丸めた値だからである。親から見た子の位置は 3-1 節と同じ (0.1, 0, 0.2) で、向きだけが左へ 90 度回っている（<code>tf2_echo base_link base_laser</code> で見ると、RPY の yaw が 90.000 になる）。それでも、子の <code>base_laser</code> から見た親の <code>base_link</code> は (0, 0.1, −0.2) で、3-3 節の (−0.1, 0, −0.2) とは違う。左へ 90 度回った <code>base_laser</code> の座標系では、x の軸が <code>base_link</code> の左を、y の軸が <code>base_link</code> の後ろを向く。<code>base_link</code> の原点は、センサーから見て後ろへ 0.1 m・下へ 0.2 m にあるので、<code>base_laser</code> の座標系では y が 0.1・z が −0.2 になる。向き（yaw）も、逆に −90 度になる。</p>
+        <p>このように、回転を含む関係の逆向きは、符号を変えるだけでは求まらない。tf2 は、木の枝を逆にたどるときに、この計算も行う。確かめたら、T2 で <kbd>Ctrl</kbd>+<kbd>C</kbd> を押して止める。</p>
       </div>
     </div>
     <div class="prose">
@@ -257,10 +292,10 @@ ros2 topic echo /tf_static --once</code></pre>
   <section aria-labelledby="s4">
     <h2 id="s4">4. 座標系の決まり</h2>
     <div class="prose">
-      <p>ROS には、パッケージどうしが正しく組み合わさるための決まりの文書 REP（ROS Enhancement Proposal）がある。Nav2 は、座標系について次の 2 つに従っている。</p>
+      <p>ROS には、新しい機能や決まりを提案したり、利用者に情報を伝えたりする設計の文書 REP（ROS Enhancement Proposal）があり、番号で呼ぶ。そのうち座標系について、パッケージどうしが正しく組み合わさるように決めた次の 2 つに、Nav2 も従っている。</p>
       <ul>
         <li><strong><a href="https://www.ros.org/reps/rep-0103.html">REP 103</a></strong>（単位と座標の決まり）: 長さは m、角度はラジアン、時間は秒など、SI 単位を使う。座標系は右手系で、ロボットの体に付いた座標系では、x が前、y が左、z が上である。3 節で <code>--x 0.1</code> が「前へ 10 cm」、<code>--z 0.2</code> が「上へ 20 cm」になったのは、この決まりによる。</li>
-        <li><strong><a href="https://www.ros.org/reps/rep-0105.html">REP 105</a></strong>（移動ロボットの座標系の決まり）: <code>base_link</code>（ロボットの体に固定した座標系。ふつうは台車の中心や回転の中心に置く）・<code>odom</code>（出発した場所を原点にする座標系。近くでは途切れずなめらかだが、少しずつずれる）・<code>map</code>（世界に固定した座標系。ずれないが、値が飛ぶことがある）の名前と意味を決めている。詳しくは Navigation Concepts の章の 6 節で見た。</li>
+        <li><strong><a href="https://www.ros.org/reps/rep-0105.html">REP 105</a></strong>（移動ロボットの座標系の決まり）: <code>base_link</code>（ロボットの体に固定した座標系。REP 105 は体のどこに置いてもよいとし、Nav2 の原稿は、ふつうは台車の中心や回転の中心に置くとしている）・<code>odom</code>（世界に固定した座標系。この座標系で見たロボットの位置は、途切れずなめらかに変わるが、時間とともにずれていく。Nav2 の原稿は、ロボットが出発した場所に対して固定した座標系と説明している）・<code>map</code>（世界に固定した座標系。この座標系で見たロボットの位置は、長くたっても大きくはずれないが、飛ぶように変わることがある）の名前と意味を決めている。詳しくは Navigation Concepts の章の 6 節で見た。</li>
       </ul>
       <p>Nav2 が動くには、次の 3 つのつながりが配られている必要がある。Navigation Concepts の章の 6 節は、主なつながりを 2 つ（1 と 2）とし、3 を URDF で決める固定の関係として添えた。手引きは、3 も含めて 3 つとしている。</p>
       <ol>
@@ -268,7 +303,7 @@ ros2 topic echo /tf_static --once</code></pre>
         <li><code>odom</code> → <code>base_link</code>: ロボットの odometry の仕組みが配る。車輪の回転などから求め、複数のセンサー（IMU・車輪・カメラによる推定など）を合わせるときは <code>robot_localization</code> を使うことが多い（Setting Up Odometry の章と Smoothing Odometry using Robot Localization の章で扱う）。</li>
         <li><code>base_link</code> → センサーの座標系: ロボットの体に固定された関係。ロボットを作る側が、URDF と <code>robot_state_publisher</code> で用意する（Setting Up The URDF の章で扱う）。</li>
       </ol>
-      <p>まとめると、固定の値を自分で決めて書くのは 3 つめである。2 つめは、値は書かないが、自分のロボットの odometry の仕組み（車輪の回転を数える部分など）を用意し、必要なら <code>robot_localization</code> で合わせて配る。1 つめは、位置を推定するパッケージが計算して配る。<code>base_laser</code> は REP 105 に無い名前で、公式の手引きがレーザーのセンサーの座標系として使っている名前である。センサーがいくつもある（<code>camera_link</code>・<code>lidar_link</code> など）ときは、どのセンサーの座標系も、木をたどって <code>base_link</code> につながっている必要がある（公式の原稿は、それぞれについて <code>base_link</code> への変換が要る、と書いている）。</p>
+      <p>まとめると、固定の値を自分で決めて書くのは 3 つめである。2 つめは、値は書かないが、自分のロボットの odometry の仕組み（車輪の回転を数える部分など）を用意し、必要なら <code>robot_localization</code> で合わせて配る。1 つめは、位置を推定するパッケージが計算して配る。<code>base_laser</code> は REP 105 に無い名前で、原稿がこのページの例のレーザーのセンサーに付けた名前である（<code>sam_bot</code> では、Setting Up Sensors の章で <code>lidar_link</code> という名前を使う）。センサーがいくつもある（<code>camera_link</code>・<code>lidar_link</code> など）ときは、どのセンサーの座標系も、木をたどって <code>base_link</code> につながっている必要がある（公式の原稿は、それぞれについて <code>base_link</code> への変換が要る、と書いている）。</p>
       <p>実際のロボットの木には、REP 105 の座標系のほかの座標系も入る。たとえば Quickstart の章で動かした TurtleBot 3 の URDF には、<code>base_link</code> の真下に置く <code>base_footprint</code> という座標系があり、<code>base_footprint</code> → <code>base_link</code> は高さ 0.010 m の固定の変換である。Navigation Concepts の章の 6 節で <code>tf2_echo odom base_link</code> の高さが 0.010 だったのは、この分である。</p>
     </div>
   </section>
@@ -280,6 +315,7 @@ ros2 topic echo /tf_static --once</code></pre>
         <li><strong>固定の関係は URDF にまとめる</strong>。センサーごとに <code>static_transform_publisher</code> を起動すると、取り付け位置がいくつもの起動の引数に散らばる。製品では、形と取り付け位置を URDF にまとめ、<code>robot_state_publisher</code> に配らせる（Setting Up The URDF の章）。</li>
         <li><strong>取り付け位置を正しく測る</strong>。<code>base_link</code> → センサーの移動量や向きが実物とずれていると、センサーで見た障害物が、ずれた位置にあるものとして扱われる。図面の値を使うか実物を測り、センサーの取り付けを変えたら値も直す。</li>
         <li><strong>座標系の名前を設定とそろえる</strong>。Nav2 の各部品は、どの座標系を使うかを parameter（node が外から受け取る設定の値。起動時にファイルで与えることが多い）で受け取る。Quickstart の既定の設定（<code>nav2_bringup</code> の <code>nav2_params.yaml</code>）でも、costmap は <code>robot_base_frame: base_link</code>、AMCL は <code>base_frame_id: "base_footprint"</code> と、部品ごとに書いてある。自分のロボットの URDF の座標系の名前と、設定のファイルの名前を見比べる。</li>
+        <li><strong>1 つのつながりを配るのは 1 つだけにする</strong>。座標系の親は 1 つだけなので、同じつながりを 2 つの node が配ると、受け取る側には 2 つの値が混ざって届き、ロボットの位置が定まらなくなる。たとえば Setting Up Odometry の章では、Gazebo の車輪の plugin が <code>odom</code> → <code>base_link</code> を配る。Smoothing Odometry using Robot Localization の章で <code>robot_localization</code> に配らせるときは、公式の手引きは、Gazebo の側の <code>/tf</code> の橋渡しを外すとしている。</li>
         <li><strong>センサーの座標系の向きを確かめる</strong>。カメラでは、体の座標系とは別に、名前の末尾に <code>_optical</code> を付けた 2 つめの座標系を置くことが多く、REP 103 は、その座標系を z が前・x が右・y が下としている。センサーの値がどの向きの座標系で出ているかを確かめ、その向きどおりの回転を木に入れる。向きを取り違えると、木はつながっていても、見えたものが違う方向にあるものとして扱われる。</li>
       </ul>
     </div>
@@ -289,8 +325,8 @@ ros2 topic echo /tf_static --once</code></pre>
     <h2 id="s6">次に読むもの・出典</h2>
     <div class="prose">
       <p>次のページ（Setting Up The URDF）では、<code>sam_bot</code> の形と座標系を URDF に書き、<code>robot_state_publisher</code> で配る（準備中）。tf2 そのものをもっと知りたいときは、ROS 2 の公式の文書の <a href="https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Tf2/Tf2-Main.html">Tf2 のチュートリアル</a>が、自分で変換を配る node の書き方まで扱っている。このページに出てきた用語は、<a href="glossary.html">用語集</a>にまとめてある。</p>
-      <p>出典: Nav2 の公式の文書「<a href="https://docs.nav2.org/jazzy/configuration_and_development/first_time_robot_setup_guide/transformation/setup_transforms/">Setting Up Transformations</a>」「<a href="https://docs.nav2.org/jazzy/configuration_and_development/first_time_robot_setup_guide/">First-Time Robot Setup Guide</a>」「<a href="https://docs.nav2.org/jazzy/configuration_and_development/first_time_robot_setup_guide/gazebo/">Setup Guide for Gazebo</a>」（原稿: <a href="https://github.com/ros-navigation/docs.nav2.org/tree/b22554c/docs/configuration_and_development/first_time_robot_setup_guide">first_time_robot_setup_guide のフォルダ</a>の <code>transformation/setup_transforms.md</code>・<code>index.md</code>・<code>gazebo/index.md</code>、<code>ros-navigation/docs.nav2.org</code> の <code>jazzy</code> ブランチ、コミット <code>b22554c</code>、2026-08-31。著作者: Open Navigation LLC と Nav2 の文書の寄稿者。原稿の Transforms Introduction の節は、ROS 1 の Navigation の文書の「Setting Up You Robot using tf」を基にしたと注記している）。ライセンスは <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>。このページは、その内容を日本語で再構成し、説明の追加（1 節の流れの表、3 節の逆の向きと <code>/tf_static</code> の実習と Jazzy の表示の読み方、4 節の <code>base_footprint</code>、5 節など）と省略（原稿の図、Gazebo Classic の側のページへの案内）を加えたもので、逐語の翻訳ではない。</p>
-      <p>3 節のコマンドは、原稿のコマンドに、逆の向きの <code>tf2_echo</code> と <code>ros2 topic echo /tf_static --once</code> を足したものである。<code>/tf_static</code> の durability は、Jazzy の apt の版の <code>tf2_ros</code> の <code>qos.hpp</code>（<code>StaticBroadcasterQoS</code>）で、<code>base_footprint</code> → <code>base_link</code> の値は、<code>nav2_minimal_tb3_sim</code> の <code>turtlebot3_waffle.urdf</code> で、5 節の parameter は <code>nav2_bringup</code> の <code>nav2_params.yaml</code> で確かめた。</p>
+      <p>出典: Nav2 の公式の文書「<a href="https://docs.nav2.org/jazzy/configuration_and_development/first_time_robot_setup_guide/transformation/setup_transforms/">Setting Up Transformations</a>」「<a href="https://docs.nav2.org/jazzy/configuration_and_development/first_time_robot_setup_guide/">First-Time Robot Setup Guide</a>」「<a href="https://docs.nav2.org/jazzy/configuration_and_development/first_time_robot_setup_guide/gazebo/">Setup Guide for Gazebo</a>」（原稿: <a href="https://github.com/ros-navigation/docs.nav2.org/tree/b22554c/docs/configuration_and_development/first_time_robot_setup_guide">first_time_robot_setup_guide のフォルダ</a>の <code>transformation/setup_transforms.md</code>・<code>index.md</code>・<code>gazebo/index.md</code>、<code>ros-navigation/docs.nav2.org</code> の <code>jazzy</code> ブランチ、コミット <code>b22554c</code>、2026-08-31。著作者: Open Navigation LLC と Nav2 の文書の寄稿者。原稿の Transforms Introduction の節は、ROS 1 の Navigation の文書の「Setting Up You Robot using tf」を基にしたと注記している）。ライセンスは <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>。このページは、その内容を日本語で再構成し、説明の追加（1 節の流れの表、3 節の逆の向き・<code>/tf_static</code>・回転の実習と Jazzy の表示の読み方、4 節の <code>base_footprint</code>、5 節など）と省略（原稿の図、Gazebo Classic の側のページへの案内）を加えたもので、逐語の翻訳ではない。</p>
+      <p>3 節のコマンドは、原稿のコマンドに、逆の向きの <code>tf2_echo</code>、<code>ros2 topic echo /tf_static --once</code>、回転を入れた例（3-5 節）を足したものである。<code>ros2 topic echo</code> の購読の設定の選び方は、Jazzy の apt の版の <code>ros2topic</code> の <code>verb/echo.py</code>（<code>choose_qos</code>）で、5 節の <code>/tf</code> の橋渡しを外す話は、同じコミットの原稿の <code>odom/setup_robot_localization.md</code> で確かめた。<code>/tf_static</code> の durability は、Jazzy の apt の版の <code>tf2_ros</code> の <code>qos.hpp</code>（<code>StaticBroadcasterQoS</code>）で、<code>base_footprint</code> → <code>base_link</code> の値は、<code>nav2_minimal_tb3_sim</code> の <code>turtlebot3_waffle.urdf</code> で、5 節の parameter は <code>nav2_bringup</code> の <code>nav2_params.yaml</code> で確かめた。<code>tf2_echo</code> が時刻 0 で引くことと 1 秒ごとに表示することは、<code>ros2/geometry2</code> の <code>jazzy</code> ブランチの <a href="https://github.com/ros2/geometry2/blob/jazzy/tf2_ros/src/tf2_echo.cpp"><code>tf2_echo.cpp</code></a> で確かめた。4 節の REP 103・REP 105 の説明は、それぞれの本文に拠った。</p>
       <p>公式の画像は使っておらず、図はこの教材で作った。</p>
     </div>
   </section>

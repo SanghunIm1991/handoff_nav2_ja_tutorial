@@ -189,7 +189,7 @@ Action servers: 1
     <div class="prose">
       <p><span class="term">lifecycle node</span>（managed node とも呼ぶ）は、起動と終了の手順を、決まった状態の移り変わりとして持つ ROS 2 の node である。起動や終了の順番が毎回同じになるので、動きを予測しやすく、製品として使うときや不具合を調べるときにも、プログラムを整理しやすい。詳しくは ROS 2 の <a href="https://design.ros2.org/articles/node_lifecycle.html">設計の文書</a>にある。</p>
       <ul>
-        <li><strong>unconfigured</strong>: 起動した直後。コンストラクタだけが動いた状態である。コンストラクタには、通信の準備や parameter の読み込みを書かない決まりになっている。</li>
+        <li><strong>unconfigured</strong>: 起動した直後。コンストラクタだけが動いた状態である。コンストラクタには、通信の準備や parameter（node が外から受け取る設定の値。起動時にファイルで与えることが多い）の読み込みを書かない決まりになっている。</li>
         <li><strong>inactive</strong>: 設定の段階（<code>on_configure()</code>）を経た状態。parameter・通信の口を準備し、安全が大事なシステムでは、使うメモリもここで確保しておく。</li>
         <li><strong>active</strong>: 動き出す段階（<code>on_activate()</code>）を経た状態。通信の口が働き、処理を始める。</li>
         <li><strong>finalized</strong>: 終わるときは、止める・片づける・終える段階を順に経て、ここに至る。</li>
@@ -311,7 +311,7 @@ ros2 param get /local_costmap/local_costmap robot_radius</code></pre>
     <div class="prose">
       <ul>
         <li><strong><code>map</code> → <code>odom</code></strong>: 地図の上のどこにいるかを求める位置の推定（GPS・SLAM・モーションキャプチャなど）が配る。Nav2 には、決まった地図の上で位置を推定する AMCL（particle filter による方法）と、位置を推定しながら地図を作る <span class="term">SLAM</span> の既定として SLAM Toolbox が用意されている。</li>
-        <li><strong><code>odom</code> → <code>base_link</code></strong>: odometry（Quickstart の章の 1 節）が配る。元になるのは、車輪の回転、IMU、LIDAR、レーダー、カメラによる推定（VIO）などである。odometry の役目は、途切れずなめらかに変わる座標系を与えることで、少しずつずれていく。そのずれを、位置の推定が <code>map</code> → <code>odom</code> を直して埋める。複数のセンサーを合わせて 1 つの odometry にするには、<a href="https://github.com/cra-ros-pkg/robot_localization">robot_localization</a> がよく使われる。</li>
+        <li><strong><code>odom</code> → <code>base_link</code></strong>: odometry（Quickstart の章の 1 節）が配る。元になるのは、車輪の回転、IMU（加速度と角速度を測るセンサー）、LIDAR（レーザーの光で周りの距離を測るセンサー）、レーダー、カメラによる推定（VIO）などである。odometry の役目は、途切れずなめらかに変わる座標系を与えることで、少しずつずれていく。そのずれを、位置の推定が <code>map</code> → <code>odom</code> を直して埋める。複数のセンサーを合わせて 1 つの odometry にするには、<a href="https://github.com/cra-ros-pkg/robot_localization">robot_localization</a> がよく使われる。</li>
         <li><strong><code>base_link</code> → センサー</strong>: ロボットの体に固定された関係なので、URDF（Quickstart の章の 8 節）で決める。</li>
       </ul>
       <p>公式の文書は、LIDAR は必須ではないと強調している。カメラや深度センサーによる位置の推定でも、上の決まりの座標系をそろえさえすれば、Nav2 は使える。</p>
