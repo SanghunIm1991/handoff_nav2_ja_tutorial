@@ -111,6 +111,32 @@
 
 2 枚め（`06_provided_behavior_trees.html`）の骨組み: 冒頭・学習目標 → 木の一覧の表（何をする木か・ファイル名・既定の木との違い。Navigate To Pose は 1 枚めの 5 節で読むので、表から 1 枚めへ送る） → 木ごとの節（Navigate Through Poses・Pause Near Goal-Obstacle・Consistent Replanning・Follow Dynamic Point・Odometry Calibration） → Route Graph の木は「Jazzy の版には入っていない」と理由を添えて一言だけ触れ、公式へリンクする → 製品に組み込むなら。実習を置くかと細部は、1 枚めを書いた後に詰める。
 
+### 2 枚めの構成案（2026-11-28 に詰めた）
+
+元にする原稿: `trees/` の 7 本（写しは `notes/sources/05_nav2_behavior_trees/trees_*.md`。XML の照合は `apt_1.3.14/`）。前提: 1 枚め（`05_nav2_behavior_trees.html`）。1 枚めで説明済みの節（`PipelineSequence`・`RecoveryNode`・`RoundRobin`・`GoalUpdated`・`WouldA…RecoveryHelp`・`…Selector`）は、説明を繰り返さず 1 枚めの節へ送る。
+
+調べて分かったこと（根拠を添える）:
+- Navigate Through Poses の原稿の本文は「経由点の `0.5` 以内に入ったら取り除く」と書くが、XML は `radius="0.7"`（原稿・apt 1.3.14 とも）。`0.5` は `RemovePassedGoals` の `radius` の既定値（`nav2_tree_nodes.xml`）。本文では XML の値を書き、既定値が 0.5 であることを添える。
+- Navigate Through Poses の木は、`navigate_through_poses` の navigator の既定の木（`nav2_params.yaml` は `default_nav_through_poses_bt_xml` を指定せず、空なら `nav2_bt_navigator` の木を読む〈Configuration Guide の `configuring_bt_navigator.md`〉。読むファイル名は、apt の `/opt/ros/jazzy/lib/libnav2_navigate_through_poses.so` の中の文字列 `/behavior_trees/navigate_through_poses_w_replanning_and_recovery.xml` で確かめた）。目標の型 `NavigateThroughPoses` の feedback に `number_of_poses_remaining` があり、経由点を取り除いた結果を `--feedback` で見られる。
+- Follow Dynamic Point の `GoalUpdater` が購読する topic は、`bt_navigator` の parameter `goal_updater_topic`（既定 `goal_update`。Configuration Guide の `GoalUpdater.md`）。公式の Tutorials に、この木を使う実習（`navigation2_dynamic_point_following`）がある。木は取り消されるまで終わらず、回復の部分が無い。
+- `PathLongerOnApproach` の既定は `prox_len` 3.0 m・`length_factor` 2.0（XML も同じ値）。目標の手前 3 m で、新しい経路が前の 2 倍より長くなったら、子（制御の取り消しと 5 秒の待ち）を走らせる。
+- Odometry Calibration は、2 m の辺の正方形を左回りに 3 周する。Quickstart の世界（`tb3_sandbox`）の初期位置の付近には柱があり、2 m 四方の空きは無い見込み（確かめていない）。
+- apt の `behavior_trees/` には、原稿で説明していない木が 5 本ある（`navigate_w_replanning_time.xml` など）。原稿に説明が無いので、ページでは一覧に名前を挙げるだけにする。
+
+| 節 | 中身 | 公式との違い |
+| --- | --- | --- |
+| 冒頭 | 製品の要求（倉庫で棚を順に回る、人について行く、ゴールの前のフォークリフトが去るまで待つ）ごとに、木を選び替える、という物語調の導入。注記 | 足す |
+| 0. 学習目標と完了条件 | 用意されている木から用途に合うものを選び、既定の木（Navigate To Pose）との違いを、どの節が違いを生むかで説明できる | 足す |
+| 1. 木の一覧 | 表（木・ファイル名・何をする木か・既定の木との違い・使う action）。Navigate To Pose は 1 枚めへ送る。Route Graph の木は「Jazzy の版には入っていない」と理由を添えて一行。原稿で説明していない apt の木は名前だけ | 足す（公式は索引だけ） |
+| 2. Navigate Through Poses | `goals` の並び、`RemovePassedGoals`（`radius` 0.7）、3 秒ごとの再計画、文脈ごとの回復。`…Selector` の節を外から切り替えるより木の中で分けるのがよい、という公式の考え | 再構成 |
+| 3. 実習: 経由点を順に回る | Quickstart の起動 → 初期位置 → `ros2 action send_goal /navigate_through_poses … --feedback` で 2 つの経由点を送り、`number_of_poses_remaining` が減るのを見る（2026-11-28 に決めた。座標は確かめて選ぶ） | 足す |
+| 4. Pause Near Goal-Obstacle | `MonitorAndFollowPath`（`ReactiveSequence`）、`PathLongerOnApproach` の条件、取り消して待つ流れ。障害物が去った場合と去らない場合の 2 つの結末（自作の SVG の模式図。公式の GIF と動画はリンク） | 再構成。図は自作 |
+| 5. Consistent Replanning | 経路を計算し直す 3 つの条件（経路が無効・目標が更新された・10 秒たった）を、`Fallback` と `Inverter` の組み合わせで読む | 再構成 |
+| 6. Follow Dynamic Point | `GoalUpdater` と `/goal_update`、`TruncatePath`（1.0 m 手前で止まる）、`KeepRunningUntilFailure`、回復が無く取り消すまで終わらないこと。実習は Tutorials の章へ送る | 再構成 |
+| 7. Odometry Calibration | `DriveOnHeading` と `Spin` で正方形を 3 周する。目標を使わない木であること、広い場所が要ること | 再構成 |
+| 8. 製品に組み込むなら | 木を選ぶ・組み合わせる考え方、`default_nav_through_poses_bt_xml` などで既定の木を差し替える、自作の節は plugin の章へ | 足す |
+| 末尾 | 次のページ・出典・このページの用語 | — |
+
 ## Quickstart の構成案
 
 元にする公式のページ: Getting Started / Quickstart（`jazzy`、コミット `b22554c`）。前提: 環境構築のページ。
