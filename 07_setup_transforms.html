@@ -183,7 +183,7 @@ At time 0.0
   0.000  0.000  0.000  1.000
 （以下、At time から Matrix までの塊が 1 秒ごとに続く）</code></pre>
       <div class="prose">
-        <p>最初の <code>Waiting for transform</code> は、起動した直後でまだ関係を受け取っていないという意味で、すぐに次の表示が始まれば問題ない。この行が続くときは、T1 の <code>static_transform_publisher</code> が動いているか、T2 でも <code>source</code> したか、2 つのターミナルで環境変数 <code>ROS_DOMAIN_ID</code>（同じ番号の node どうしだけがやり取りする）が同じかを確かめる。<code>Translation</code> が、親の <code>base_link</code> から見た子の <code>base_laser</code> の位置で、T1 で与えた (0.1, 0, 0.2) になっている。</p>
+        <p>最初の <code>Waiting for transform</code> は、起動した直後でまだ関係を受け取っていないという意味で、すぐに次の表示が始まれば問題ない。この行が続くときは、T1 の <code>static_transform_publisher</code> が動いているか、2 つのターミナルで環境変数 <code>ROS_DOMAIN_ID</code>（同じ番号の node どうしだけがやり取りする）が同じかを確かめる。<code>Translation</code> が、親の <code>base_link</code> から見た子の <code>base_laser</code> の位置で、T1 で与えた (0.1, 0, 0.2) になっている。</p>
         <ul>
           <li><code>Rotation</code>: 向きのずれを 3 通りで表す。四元数と、x・y・z の軸のまわりの回転（roll・pitch・yaw。RPY）のラジアンと度である。<code>-0.000</code> は、計算の途中で負の符号が付いたもの（負のゼロ、またはごく小さな負の値）で、0 と同じと読んでよい。</li>
           <li><code>Matrix</code>: 移動と回転をまとめた 4 行 4 列の行列（同次変換行列）である。左上の 3 行 3 列が回転（ここでは回転なし）、右の列の上の 3 つが移動量 (0.1, 0, 0.2) である。</li>
@@ -262,7 +262,7 @@ ros2 topic echo /tf_static --once</code></pre>
         <li><strong><a href="https://www.ros.org/reps/rep-0103.html">REP 103</a></strong>（単位と座標の決まり）: 長さは m、角度はラジアン、時間は秒など、SI 単位を使う。座標系は右手系で、ロボットの体に付いた座標系では、x が前、y が左、z が上である。3 節で <code>--x 0.1</code> が「前へ 10 cm」、<code>--z 0.2</code> が「上へ 20 cm」になったのは、この決まりによる。</li>
         <li><strong><a href="https://www.ros.org/reps/rep-0105.html">REP 105</a></strong>（移動ロボットの座標系の決まり）: <code>base_link</code>（ロボットの体に固定した座標系。ふつうは台車の中心や回転の中心に置く）・<code>odom</code>（出発した場所を原点にする座標系。近くでは途切れずなめらかだが、少しずつずれる）・<code>map</code>（世界に固定した座標系。ずれないが、値が飛ぶことがある）の名前と意味を決めている。詳しくは Navigation Concepts の章の 6 節で見た。</li>
       </ul>
-      <p>Nav2 が動くには、次の 3 つのつながりが配られている必要がある。Navigation Concepts の章の 6 節では、位置の推定に関わる 2 つ（1 と 2）を挙げた。手引きは、センサーへの固定のつながり（3）も加えて 3 つとしている。</p>
+      <p>Nav2 が動くには、次の 3 つのつながりが配られている必要がある。Navigation Concepts の章の 6 節は、主なつながりを 2 つ（1 と 2）とし、3 を URDF で決める固定の関係として添えた。手引きは、3 も含めて 3 つとしている。</p>
       <ol>
         <li><code>map</code> → <code>odom</code>: 地図の上で位置を推定する node（AMCL や SLAM のパッケージ）が配る。時間とともに変わる関係なので、固定の値を書かない。</li>
         <li><code>odom</code> → <code>base_link</code>: ロボットの odometry の仕組みが配る。車輪の回転などから求め、複数のセンサー（IMU・車輪・カメラによる推定など）を合わせるときは <code>robot_localization</code> を使うことが多い（Setting Up Odometry の章と Smoothing Odometry using Robot Localization の章で扱う）。</li>
@@ -279,7 +279,7 @@ ros2 topic echo /tf_static --once</code></pre>
       <ul>
         <li><strong>固定の関係は URDF にまとめる</strong>。センサーごとに <code>static_transform_publisher</code> を起動すると、取り付け位置がいくつもの起動の引数に散らばる。製品では、形と取り付け位置を URDF にまとめ、<code>robot_state_publisher</code> に配らせる（Setting Up The URDF の章）。</li>
         <li><strong>取り付け位置を正しく測る</strong>。<code>base_link</code> → センサーの移動量や向きが実物とずれていると、センサーで見た障害物が、ずれた位置にあるものとして扱われる。図面の値を使うか実物を測り、センサーの取り付けを変えたら値も直す。</li>
-        <li><strong>座標系の名前を設定とそろえる</strong>。Nav2 の各部品は、どの座標系を使うかを parameter（node の起動時に外から与える設定の値）で受け取る。Quickstart の既定の設定（<code>nav2_bringup</code> の <code>nav2_params.yaml</code>）でも、costmap は <code>robot_base_frame: base_link</code>、AMCL は <code>base_frame_id: "base_footprint"</code> と、部品ごとに書いてある。自分のロボットの URDF の座標系の名前と、設定のファイルの名前を見比べる。</li>
+        <li><strong>座標系の名前を設定とそろえる</strong>。Nav2 の各部品は、どの座標系を使うかを parameter（node が外から受け取る設定の値。起動時にファイルで与えることが多い）で受け取る。Quickstart の既定の設定（<code>nav2_bringup</code> の <code>nav2_params.yaml</code>）でも、costmap は <code>robot_base_frame: base_link</code>、AMCL は <code>base_frame_id: "base_footprint"</code> と、部品ごとに書いてある。自分のロボットの URDF の座標系の名前と、設定のファイルの名前を見比べる。</li>
         <li><strong>センサーの座標系の向きを確かめる</strong>。カメラでは、体の座標系とは別に、名前の末尾に <code>_optical</code> を付けた 2 つめの座標系を置くことが多く、REP 103 は、その座標系を z が前・x が右・y が下としている。センサーの値がどの向きの座標系で出ているかを確かめ、その向きどおりの回転を木に入れる。向きを取り違えると、木はつながっていても、見えたものが違う方向にあるものとして扱われる。</li>
       </ul>
     </div>

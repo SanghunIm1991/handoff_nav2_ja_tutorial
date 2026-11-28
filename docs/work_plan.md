@@ -35,7 +35,7 @@
 
 | 順 | ページ | ファイル | 元にする公式のページ | 主に当たる到達点 | 状態 |
 | --- | --- | --- | --- | --- | --- |
-| 7 | Setting Up Transformations | `07_setup_transforms.html` | First-Time Robot Setup Guide / Setting Up Transformations（と案内の 2 ページ） | 5 | 書いた（1 回めのレビューに対応。2 回めのレビュー待ち） |
+| 7 | Setting Up Transformations | `07_setup_transforms.html` | First-Time Robot Setup Guide / Setting Up Transformations（と案内の 2 ページ） | 5 | レビュー済み（ユーザーの確認待ち） |
 | 8 | Setting Up The URDF | `08_setup_urdf.html` | 同 / Setting Up The URDF | 5 | 未着手 |
 | 9 | Setting Up The SDF | `09_setup_sdf.html` | 同 / Setting Up The SDF - Gazebo | 5 | 未着手 |
 | 10 | Setting Up Odometry | `10_setup_odom_gz.html` | 同 / Setting Up Odometry - Gazebo | 5 | 未着手 |
@@ -47,7 +47,7 @@
 
 書く順番は Quickstart を先にし、HTML のページの器をそこで決める。読む順番は表のとおり環境構築が先。ROS 2 の基礎は独立したページを作らず、各ページで初めて使う場面で説明する（`CLAUDE.md` の「内容の方針」）。一区切りの後の範囲は、公式の原稿の `docs/.nav.yml` の並びを基本にし、到達点で過不足を見て、区切りごとにユーザーに確かめてこの表に足す（2026-11-28）。2 つめの区切りより後は、Configuration & Development を公式の順（First-Time Robot Setup Guide → Navigation Plugins → Configuration Guide → Tuning Guide → Simple Commander API）に進める予定で、Tutorials は関係する章の後に差し込む。
 
-今の状態（2026-11-28）: 最初の一区切りの 4 ページと Dev Container の章を Pages に載せた（push の状態は `git status` で確かめる）。Nav2 Behavior Trees は 2 ページに分けると決め（QA 表の 2026-11-28 の構成案の行）、1 枚め `05_nav2_behavior_trees.html` の実習（`behavior_tree` の欄で木を切り替える）を画面なしで確かめた（結果は QA 表の「Nav2 Behavior Trees の確認」の行、表示の控えは `notes/outputs/05_nav2_behavior_trees/` の `launch.log`・`goal_*.txt`）。`05_nav2_behavior_trees.html` を書き、2 回のレビューに対応した（QA 表の「Nav2 Behavior Trees のレビュー」の行）。シミュレーションを起動して確かめるときは `tools/sim/sim.sh`（`docs/verification_notes.md` の「起動して確かめる」）を使い、承認の一覧もその動作で書く。2 枚め `06_provided_behavior_trees.html` は、構成案を決め（下の「2 枚めの構成案」）、3 節の実習（`navigate_through_poses` に経由点を送る）を画面なしで確かめ（QA 表の「用意されている木の確認」の行、控えは `notes/outputs/06_provided_behavior_trees/`）、書き、2 回のレビューに対応した（QA 表の「用意されている木のレビュー」の行）。これで 2 つめの区切り（Getting Started の残り）を書き終えた。3 つめの区切り（First-Time Robot Setup Guide の 9 ページ）の範囲を決め、範囲と順番の表に足した（QA 表の 2026-11-28 の「3 つめの区切りの範囲」の行）。7 `07_setup_transforms.html` は、構成案を作り（下の「First-Time Robot Setup Guide の構成案」）、3 節の実習を画面なしで確かめ（QA 表の 07 の「確認」の行、控えは `notes/outputs/07_setup_transforms/`）、書き、1 回めのレビューに対応した。次は、7 の 2 回めのレビュー。確認待ちの一覧と「Pages に載せた後に確かめること」には、ユーザーの印や指摘はまだ無い。
+今の状態（2026-11-28）: 最初の一区切りの 4 ページと Dev Container の章を Pages に載せた（push の状態は `git status` で確かめる）。Nav2 Behavior Trees は 2 ページに分けると決め（QA 表の 2026-11-28 の構成案の行）、1 枚め `05_nav2_behavior_trees.html` の実習（`behavior_tree` の欄で木を切り替える）を画面なしで確かめた（結果は QA 表の「Nav2 Behavior Trees の確認」の行、表示の控えは `notes/outputs/05_nav2_behavior_trees/` の `launch.log`・`goal_*.txt`）。`05_nav2_behavior_trees.html` を書き、2 回のレビューに対応した（QA 表の「Nav2 Behavior Trees のレビュー」の行）。シミュレーションを起動して確かめるときは `tools/sim/sim.sh`（`docs/verification_notes.md` の「起動して確かめる」）を使い、承認の一覧もその動作で書く。2 枚め `06_provided_behavior_trees.html` は、構成案を決め（下の「2 枚めの構成案」）、3 節の実習（`navigate_through_poses` に経由点を送る）を画面なしで確かめ（QA 表の「用意されている木の確認」の行、控えは `notes/outputs/06_provided_behavior_trees/`）、書き、2 回のレビューに対応した（QA 表の「用意されている木のレビュー」の行）。これで 2 つめの区切り（Getting Started の残り）を書き終えた。3 つめの区切り（First-Time Robot Setup Guide の 9 ページ）の範囲を決め、範囲と順番の表に足した（QA 表の 2026-11-28 の「3 つめの区切りの範囲」の行）。7 `07_setup_transforms.html` は、構成案を作り（下の「First-Time Robot Setup Guide の構成案」）、3 節の実習を画面なしで確かめ（QA 表の 07 の「確認」の行、控えは `notes/outputs/07_setup_transforms/`）、書き、2 回のレビューに対応した（QA 表の 07 の「レビュー」の行）。次は、8 `08_setup_urdf.html` の構成案を作る。確認待ちの一覧と「Pages に載せた後に確かめること」には、ユーザーの印や指摘はまだ無い。
 
 ## 環境構築の構成案
 

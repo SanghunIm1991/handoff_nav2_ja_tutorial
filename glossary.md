@@ -33,6 +33,7 @@ Nav2 日本語ガイド（非公式・作成中）の本文に出てきた用語
 | image | image〈像、写し〉 | Docker の container の元になる、ファイルとプログラムの一式 | [Dev Container の 1 節](03_devcontainer_guide.html#s1) |
 | launch file | launch〈始動する〉＋ file〈ファイル〉 | どの node を、どの設定で起動するかを書いたファイル。`ros2 launch` で、書かれた node をまとめて起動する。Python・XML・YAML で書ける | [Quickstart の 2 節](01_quickstart.html#s2) |
 | layer | layer〈層〉 | costmap を作るために重ねる 1 枚 1 枚。地図・障害物・ふくらませた値などを、それぞれの plugin が取り込む | [Navigation Concepts の 7 節](04_navigation_concepts.html#s7) |
+| LIDAR | Light Detection And Ranging の略 | レーザーの光を周りに当て、跳ね返るまでの時間で距離を測るセンサー | [Setting Up Transformations の 2 節](07_setup_transforms.html#s2) |
 | lifecycle manager | lifecycle ＋ manager〈管理するもの〉 | Nav2 で、各サーバー（lifecycle node）の状態を順に進めて、起動と終了を受け持つ node | [Navigation Concepts の 3 節](04_navigation_concepts.html#s3) |
 | lifecycle node | lifecycle〈一生、生涯〉＋ node | 起動と終了の手順を、unconfigured・inactive・active・finalized の状態の移り変わりとして持つ ROS 2 の node。managed node とも呼ぶ | [Navigation Concepts の 3 節](04_navigation_concepts.html#s3) |
 | locale | locale〈場所、地域〉 | 言語や文字の符号化など、地域ごとの設定。ROS 2 は UTF-8 の locale を前提にする | [環境構築の 3 節](00_setup.html#s3) |
@@ -41,21 +42,24 @@ Nav2 日本語ガイド（非公式・作成中）の本文に出てきた用語
 | odometry | odometry〈走った道のりを測ること〉 | 車輪の回転などから求めた、ロボットの移動量。ROS 2 では `odom` という名前の topic で流れることが多い | [Quickstart の 1 節](01_quickstart.html#s1) |
 | overlay | overlay〈上に重ねるもの〉 | 元からある環境（underlay）の上に重ねて読み込む workspace。同じ名前のパッケージは overlay のものが優先される | [Local Installation の 5 節](02_local_installation.html#s5) |
 | package.xml | package〈パッケージ〉＋ XML〈ファイルの書式〉 | ROS 2 のパッケージの名前・版・依存するものを書いたファイル。rosdep はこれを読んで、足りない依存を入れる | [Local Installation の 4-3 節](02_local_installation.html#s4-3) |
+| parameter | parameter〈媒介変数、設定の値〉 | node が外から受け取る設定の値。起動時にファイル（Nav2 では `nav2_params.yaml` など）で与えることが多い | [Setting Up Transformations の 5 節](07_setup_transforms.html#s5) |
 | particle cloud | particle〈粒子〉＋ cloud〈雲〉 | AMCL が考えている「ロボットがいるかもしれない位置」の候補の集まり。RViz では小さな矢印の群れとして描かれる | [Quickstart の 4 節](01_quickstart.html#s4) |
 | planner | planner〈計画するもの〉 | Nav2 で、目標までの経路を計算する部品。global costmap を使う | [Navigation Concepts の 5 節](04_navigation_concepts.html#s5) |
+| plugin | plugin〈差し込むもの〉 | 実行時に読み込む部品のライブラリ。ROS 2 の pluginlib の仕組みで、Nav2 のサーバーや costmap の layer は、計算を plugin に任せる | [Navigation Concepts の 4 節](04_navigation_concepts.html#s4) |
 | QoS | Quality of Service〈サービスの質〉の略 | ROS 2 で、topic の届け方を決める設定の組。後から購読を始めた node にも最後の値を届けるか（durability）などを決める | [Setting Up Transformations の 3-4 節](07_setup_transforms.html#s3-4) |
-| quaternion | quaternion〈四元数〉 | 向き（回転）を x・y・z・w の 4 つの数で表す書き方。(0, 0, 0, 1) は回転していないことを表す | [Setting Up Transformations の 3-1 節](07_setup_transforms.html#s3-1) |
+| quaternion（四元数） | quaternion〈四元数〉 | 向き（回転）を x・y・z・w の 4 つの数で表す書き方。(0, 0, 0, 1) は回転していないことを表す | [Setting Up Transformations の 3-1 節](07_setup_transforms.html#s3-1) |
 | REP | ROS Enhancement Proposal の略 | ROS のパッケージどうしが正しく組み合わさるための決まりの文書。座標系の名前（REP 105）や単位と向き（REP 103）など | [Navigation Concepts の 6 節](04_navigation_concepts.html#s6) |
+| ROS_DOMAIN_ID | ROS ＋ domain〈領域〉＋ ID | ROS 2 の環境変数。同じ番号の node どうしだけがやり取りする | [Setting Up Transformations の 3-2 節](07_setup_transforms.html#s3-2) |
 | rosdep | ROS ＋ dependency〈依存〉 | ソースのパッケージが必要とするほかのパッケージを調べ、apt でまとめて入れる道具 | [環境構築の 5 節](00_setup.html#s5) |
 | rosdep key | rosdep ＋ key〈鍵、見出しの名前〉 | パッケージが求めるものの名前（`package.xml` に書かれている）。rosdep が対応表で apt のパッケージの名前に置き換える | [Local Installation の 4-2 節](02_local_installation.html#s4-2) |
-| plugin | plugin〈差し込むもの〉 | 実行時に読み込む部品のライブラリ。ROS 2 の pluginlib の仕組みで、Nav2 のサーバーや costmap の layer は、計算を plugin に任せる | [Navigation Concepts の 4 節](04_navigation_concepts.html#s4) |
 | route | route〈道順〉 | Nav2 で、あらかじめ用意した道のグラフの上で道順を計算する部品（route_server） | [Navigation Concepts の 5 節](04_navigation_concepts.html#s5) |
+| RPY | roll・pitch・yaw の頭文字 | 向きを、x・y・z の軸のまわりの回転の角度で表す書き方 | [Setting Up Transformations の 3-2 節](07_setup_transforms.html#s3-2) |
 | RViz | ROS visualization〈ROS の可視化〉の略 | ROS 2 のデータ（地図・ロボットの位置・経路など）を画面に描く道具 | [環境構築の 2 節](00_setup.html#s2) |
 | service | service〈奉仕、役務〉 | ROS 2 で、依頼を送ると答えが 1 回返って終わる仕組み。action と違い、途中の経過は返らない | [Nav2 Behavior Trees の 2 節](05_nav2_behavior_trees.html#s2) |
 | SLAM | Simultaneous Localization and Mapping〈位置の推定と地図づくりを同時に行う〉の略 | 自分の位置を推定しながら地図を作る方法。Nav2 の既定は SLAM Toolbox | [Navigation Concepts の 6 節](04_navigation_concepts.html#s6) |
 | smoother | smoother〈なめらかにするもの〉 | Nav2 で、planner の経路のぎざぎざや急な向きの変化をならす部品 | [Navigation Concepts の 5 節](04_navigation_concepts.html#s5) |
 | stage | stage〈段階〉 | Dockerfile で、image を作る手順を区切った 1 つ 1 つ。前の stage の image に足していき、使う stage を選べる | [Dev Container の 4 節](03_devcontainer_guide.html#s4) |
-| static transform | static〈動かない〉＋ transform〈変換〉 | 時間がたっても変わらない座標系どうしの関係（固定の変換）。`/tf_static` の topic で配る | [Setting Up Transformations の 3 節](07_setup_transforms.html#s3) |
+| static transform（固定の変換） | static〈動かない〉＋ transform〈変換〉 | 時間がたっても変わらない座標系どうしの関係（固定の変換）。`/tf_static` の topic で配る | [Setting Up Transformations の 3 節](07_setup_transforms.html#s3) |
 | systemd | system ＋ daemon の d | Ubuntu で、裏で動くプログラム（Docker Engine など）を起動・管理する仕組み | [Dev Container の 3-1 節](03_devcontainer_guide.html#s3-1) |
 | tf | transform〈変換〉の略 | 座標系どうしの位置関係。また、それを配る ROS 2 の仕組みと topic の名前 | [Quickstart の 1 節](01_quickstart.html#s1) |
 | tf2 | tf（transform）の 2 代め | ROS 2 で、座標系どうしの関係を木の形で持ち、任意の 2 つの座標系の間の変換を計算するライブラリ | [Navigation Concepts の 6 節](04_navigation_concepts.html#s6) |
