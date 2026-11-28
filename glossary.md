@@ -27,6 +27,7 @@ Nav2 日本語ガイド（非公式・作成中）の本文に出てきた用語
 | decorator（BT の節） | decorator〈飾るもの〉 | behavior tree で、1 つの子を包んで tick の送り方を変える節（`RateController` など） | [Nav2 Behavior Trees の 1 節](05_nav2_behavior_trees.html#s1) |
 | dev container | development〈開発〉＋ container | 開発に要る道具と依存をすべて入れた Docker の container。設定はプロジェクトの `.devcontainer/devcontainer.json` に書く | [Dev Container の冒頭](03_devcontainer_guide.html) |
 | Dockerfile | Docker ＋ file | Docker の image の作り方を、順に書いたファイル | [Dev Container の 1 節](03_devcontainer_guide.html#s1) |
+| feedback | feedback〈帰ってくる知らせ〉 | ROS 2 の action で、仕事の途中に action server から届く経過の知らせ。Nav2 の目標では、今の位置・残りの道のり・回復の回数などが入る | [Navigation Concepts の 2 節](04_navigation_concepts.html#s2) |
 | footprint | footprint〈足跡、設置面〉 | costmap が使うロボットの外形。半径 `robot_radius` の円か、点の並びの多角形で表す | [Navigation Concepts の 5 節](04_navigation_concepts.html#s5-1) |
 | image | image〈像、写し〉 | Docker の container の元になる、ファイルとプログラムの一式 | [Dev Container の 1 節](03_devcontainer_guide.html#s1) |
 | launch file | launch〈始動する〉＋ file〈ファイル〉 | どの node を、どの設定で起動するかを書いたファイル。`ros2 launch` で、書かれた node をまとめて起動する。Python・XML・YAML で書ける | [Quickstart の 2 節](01_quickstart.html#s2) |
