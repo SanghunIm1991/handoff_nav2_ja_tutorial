@@ -33,7 +33,7 @@
 
 書く順番は Quickstart を先にし、HTML のページの器をそこで決める。読む順番は表のとおり環境構築が先。ROS 2 の基礎は独立したページを作らず、各ページで初めて使う場面で説明する（`CLAUDE.md` の「内容の方針」）。一区切りの後の範囲は、公式の原稿の `docs/.nav.yml` の並びを基本にし、到達点で過不足を見て、区切りごとにユーザーに確かめてこの表に足す（2026-11-28）。2 つめの区切りより後は、Configuration & Development を公式の順（First-Time Robot Setup Guide → Navigation Plugins → Configuration Guide → Tuning Guide → Simple Commander API）に進める予定で、Tutorials は関係する章の後に差し込む。
 
-今の状態（2026-11-28）: 最初の一区切りの 4 ページと Dev Container の章を Pages に載せた（`3645eb5` まで push 済み）。Nav2 Behavior Trees は 2 ページに分けると決め（QA 表の 2026-11-28 の構成案の行）、1 枚め `05_nav2_behavior_trees.html` の実習（`behavior_tree` の欄で木を切り替える）を画面なしで確かめた（結果は QA 表の「Nav2 Behavior Trees の確認」の行、表示の控えは `notes/outputs/05_nav2_behavior_trees/` の `launch.log`・`goal_*.txt`）。次は `05_nav2_behavior_trees.html` を書く（構成案は下の「Nav2 Behavior Trees の構成案」、写しは `notes/sources/05_nav2_behavior_trees/`）。その後、2 枚め `06_provided_behavior_trees.html` の細部を詰める。確認待ちの一覧と「Pages に載せた後に確かめること」には、ユーザーの印や指摘はまだ無い。
+今の状態（2026-11-28）: 最初の一区切りの 4 ページと Dev Container の章を Pages に載せた（push の状態は `git status` で確かめる）。Nav2 Behavior Trees は 2 ページに分けると決め（QA 表の 2026-11-28 の構成案の行）、1 枚め `05_nav2_behavior_trees.html` の実習（`behavior_tree` の欄で木を切り替える）を画面なしで確かめた（結果は QA 表の「Nav2 Behavior Trees の確認」の行、表示の控えは `notes/outputs/05_nav2_behavior_trees/` の `launch.log`・`goal_*.txt`）。次は `05_nav2_behavior_trees.html` を書く（構成案は下の「Nav2 Behavior Trees の構成案」、写しは `notes/sources/05_nav2_behavior_trees/`）。シミュレーションを起動して確かめるときは `tools/sim/sim.sh`（`docs/verification_notes.md` の「起動して確かめる」）を使い、承認の一覧もその動作で書く。その後、2 枚め `06_provided_behavior_trees.html` の細部を詰める。確認待ちの一覧と「Pages に載せた後に確かめること」には、ユーザーの印や指摘はまだ無い。
 
 ## 環境構築の構成案
 
